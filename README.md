@@ -38,7 +38,7 @@ Meet the team behind **Tarabaho**! 🚀
     <em>Frontend Developer</em><br>
     🛠 Specializes in UI development, React.<br>
     <a href="https://github.com/lowki0212"><strong>GitHub</strong></a> | 
-    <a href="https://www.linkedin.com/in/angeloquieta"><strong>LinkedIn</strong></a>
+    <a href="https://www.facebook.com/angelo.quieta.2024/"><strong>Facebook</strong></a>
   </td>
   <td align="center">
     <img src="images/derick.png" width="150" height="150"><br>
@@ -46,7 +46,7 @@ Meet the team behind **Tarabaho**! 🚀
     <em>Backend Developer</em><br>
     ⚙️ Focuses on API development, databases, and security.<br>
     <a href="https://github.com/biodio332"><strong>GitHub</strong></a> | 
-    <a href="https://www.linkedin.com/in/derickbatucan"><strong>LinkedIn</strong></a>
+    <a href="https://www.facebook.com/backup432"><strong>Facebook</strong></a>
   </td>
   <td align="center">
     <img src="images/andre.jpg" width="150" height="150"><br>
@@ -54,7 +54,7 @@ Meet the team behind **Tarabaho**! 🚀
     <em>UI/UX Designer</em><br>
     🎨 Expert in Figma, user experience, and interactive design.<br>
     <a href="https://github.com/AndreBacusmo"><strong>GitHub</strong></a> | 
-    <a href="https://www.behance.net/andrebacusmo"><strong>Behance</strong></a>
+    <a href="https://www.facebook.com/Smallsoupcan"><strong>Facebook</strong></a>
   </td>
 </tr>
 </table>
