@@ -3,7 +3,7 @@
 ## 📌 System Name
 **Tarabaho: Tara! Trabaho**  
 <p align="center">
-  <img src="images/tarabaho logo.png" width="200" alt="Tarabaho Logo">
+  <img src="images/tarabaho logo.png" width="800" alt="Tarabaho Logo">
 </p>
 
 ## 📝 Product Description
