@@ -2,7 +2,9 @@
 
 ## 📌 System Name
 **Tarabaho: Tara! Trabaho**  
-<img src="images/tarabaho logo.png" width="150" height="150"><br>
+<p align="center">
+  <img src="images/tarabaho_logo.png" width="200" alt="Tarabaho Logo">
+</p>
 
 ## 📝 Product Description
 Tarabaho is an on-demand job-matching platform designed to connect users seeking services with skilled Trabahadors. It provides an efficient, reliable, and accessible solution for hiring on-demand workers for various short-term and long-term tasks. The platform empowers job seekers by offering employment opportunities while ensuring a seamless experience for service requesters.
@@ -27,34 +29,36 @@ Tarabaho is an on-demand job-matching platform designed to connect users seeking
 
 ---
 
-## 👨‍💻 Developer Profiles
-Meet the team behind **Tarabaho**! 🚀
+## 👨‍💻 Developer Profiles  
+Meet the talented team behind **Tarabaho**! 🚀
 
-<table align="center">
-<tr>
-  <td align="center">
-    <img src="images/angelo.png" width="150" height="150"><br>
-    <strong>Angelo C. Quieta</strong><br>
-    <em>Frontend Developer</em><br>
-    🛠 Specializes in UI development, React.<br>
-    <a href="https://github.com/lowki0212"><strong>GitHub</strong></a> | 
-    <a href="https://www.facebook.com/angelo.quieta.2024/"><strong>Facebook</strong></a>
-  </td>
-  <td align="center">
-    <img src="images/derick.png" width="150" height="150"><br>
-    <strong>Derick Wayne A. Batucan</strong><br>
-    <em>Backend Developer</em><br>
-    ⚙️ Focuses on API development, databases, and security.<br>
-    <a href="https://github.com/biodio332"><strong>GitHub</strong></a> | 
-    <a href="https://www.facebook.com/backup432"><strong>Facebook</strong></a>
-  </td>
-  <td align="center">
-    <img src="images/andre.jpg" width="150" height="150"><br>
-    <strong>Vic Andre D. Bacusmo</strong><br>
-    <em>UI/UX Designer</em><br>
-    🎨 Expert in Figma, user experience, and interactive design.<br>
-    <a href="https://github.com/AndreBacusmo"><strong>GitHub</strong></a> | 
-    <a href="https://www.facebook.com/Smallsoupcan"><strong>Facebook</strong></a>
-  </td>
-</tr>
-</table>
+<p align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="images/angelo.png" width="150" height="150" style="border-radius: 10px;"><br><br>
+        <strong>Angelo C. Quieta</strong><br>
+        <em>Frontend Developer</em><br>
+        🛠 Specializes in UI development, React<br><br>
+        <a href="https://github.com/lowki0212"><img src="https://img.shields.io/badge/GitHub-000?style=for-the-badge&logo=github"></a>  
+        <a href="https://www.facebook.com/angelo.quieta.2024/"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"></a>
+      </td>
+      <td align="center">
+        <img src="images/derick.png" width="150" height="150" style="border-radius: 10px;"><br><br>
+        <strong>Derick Wayne A. Batucan</strong><br>
+        <em>Backend Developer</em><br>
+        ⚙️ Focuses on API development, databases, and security<br><br>
+        <a href="https://github.com/biodio332"><img src="https://img.shields.io/badge/GitHub-000?style=for-the-badge&logo=github"></a>  
+        <a href="https://www.facebook.com/backup432"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"></a>
+      </td>
+      <td align="center">
+        <img src="images/andre.jpg" width="150" height="150" style="border-radius: 10px;"><br><br>
+        <strong>Vic Andre D. Bacusmo</strong><br>
+        <em>UI/UX Designer</em><br>
+        🎨 Expert in Figma, user experience, and interactive design<br><br>
+        <a href="https://github.com/AndreBacusmo"><img src="https://img.shields.io/badge/GitHub-000?style=for-the-badge&logo=github"></a>  
+        <a href="https://www.facebook.com/Smallsoupcan"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"></a>
+      </td>
+    </tr>
+  </table>
+</p>
