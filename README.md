@@ -21,6 +21,4 @@ Tarabaho is an on-demand job-matching platform that connects users seeking servi
 - **Figma Design:** [Figma Prototype](https://www.figma.com/design/t7sT86vAsmKiS64jiRoaW8/Untitled?node-id=0-1&t=dDjY4RlPTyR1ONwd-1)
 
 ## Developer Profiles
-- **Angelo C. Quieta**
-- **Derick Wayne A. Batucan**
-- **Vic Andre D. Bacusmo**
+<table align="center"> <tr> <td align="center"> <img src="images/angelo.png" width="150" height="150"><br> <strong>Angelo C. Quieta</strong><br> Backend Developer<br> <a href="https://github.com/lowki0212">GitHub</a> </td> <td align="center"> <img src="images/derick.png" width="150" height="150"><br> <strong>Derick Wayne A. Batucan</strong><br> Frontend Developer<br> <a href="https://github.com/biodio332">GitHub</a> </td> <td align="center"> <img src="images/andre.jpg" width="150" height="150"><br> <strong>Vic Andre D. Bacusmo</strong><br> UI/UX Designer<br> <a href="https://github.com/AndreBacusmo">GitHub</a> </td> </tr> </table>
