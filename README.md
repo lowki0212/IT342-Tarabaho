@@ -7,7 +7,7 @@
 </p>
 
 ## 📝 Product Description
-Tarabaho is an on-demand job-matching platform designed to connect users seeking services with skilled Trabahadors. It provides an efficient, reliable, and accessible solution for hiring on-demand workers for various short-term and long-term tasks. The platform empowers job seekers by offering employment opportunities while ensuring a seamless experience for service requesters.
+Tarabaho is an on-demand job-matching platform designed to connect users seeking services with skilled trabahadors (workers), including teenagers aged 15-17.  It provides an efficient, reliable, and accessible solution for hiring on-demand workers for a variety of short-term and long-term tasks. The platform empowers job seekers by offering flexible employment opportunities while ensuring a seamless and secure experience for service requesters.  Tarabaho aims to bridge the gap between those needing assistance with everyday tasks and qualified individuals looking to earn income, fostering a thriving local economy.
 
 ## 🚀 List of Features
 ### 🌍 Mobile & Web Features:
