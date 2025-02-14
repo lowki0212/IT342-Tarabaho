@@ -2,7 +2,7 @@
 
 ## 📌 System Name
 **Tarabaho: Tara! Trabaho**  
-*A smart and efficient job-matching platform*
+<img src="images/tarabaho logo.png" width="150" height="150"><br>
 
 ## 📝 Product Description
 Tarabaho is an on-demand job-matching platform designed to connect users seeking services with skilled Trabahadors. It provides an efficient, reliable, and accessible solution for hiring on-demand workers for various short-term and long-term tasks. The platform empowers job seekers by offering employment opportunities while ensuring a seamless experience for service requesters.
