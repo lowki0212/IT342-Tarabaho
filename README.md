@@ -39,7 +39,7 @@ Meet the talented team behind **Tarabaho**! 🚀
         <img src="images/angelo.png" width="150" height="150" style="border-radius: 10px;"><br><br>
         <strong>Angelo C. Quieta</strong><br>
         <em>Frontend Developer</em><br>
-        🛠 Specializes in UI development, React<br><br>
+        🛠 Specializes in User Interface development, React<br><br>
         <a href="https://github.com/lowki0212"><img src="https://img.shields.io/badge/GitHub-000?style=for-the-badge&logo=github"></a>  
         <a href="https://www.facebook.com/angelo.quieta.2024/"><img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white"></a>
       </td>
