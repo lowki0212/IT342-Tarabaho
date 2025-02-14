@@ -26,7 +26,7 @@ Tarabaho is an on-demand job-matching platform designed to connect users seeking
 
 ## 🔗 Links
 - 🎨 **Figma Design:** [View Prototype](https://www.figma.com/design/t7sT86vAsmKiS64jiRoaW8/Untitled?node-id=0-1&t=dDjY4RlPTyR1ONwd-1)
-
+- 📈 **ERD:** [View ERD](https://lucid.app/lucidchart/86e62343-cce8-474b-b51c-832bfb2ef744/edit?viewport_loc=-1629%2C-320%2C2217%2C1076%2C0_0&invitationId=inv_27607358-248c-403b-a0db-259f8186b6e8)
 ---
 
 ## 👨‍💻 Developer Profiles  
