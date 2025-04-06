@@ -19,10 +19,14 @@ const Register = () => {
     navigate("/register-worker")
   }
 
+  const handleRegisterAsAdmin = () => {
+    navigate("/register-admin")
+  }
+
   return (
     <div className="register-container">
       <button className="back-button" onClick={handleBack}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -40,6 +44,12 @@ const Register = () => {
           </button>
           <button className="register-option-button" onClick={handleRegisterAsWorker}>
             REGISTER AS WORKER
+          </button>
+        </div>
+
+        <div className="admin-register-container">
+          <button className="admin-register-button" onClick={handleRegisterAsAdmin}>
+            REGISTER AS ADMIN
           </button>
         </div>
 

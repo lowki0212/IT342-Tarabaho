@@ -3,40 +3,35 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
-import "../styles/signin.css"
+import "../styles/admin-login.css"
 
-const SignIn = () => {
+const AdminLogin = () => {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const navigate = useNavigate()
 
   const handleLogin = (e) => {
     e.preventDefault()
-    // Add authentication logic here
-    console.log("Login attempt with:", username, password)
+    // Add admin authentication logic here
+    console.log("Admin login attempt with:", username, password)
   }
 
   const handleBack = () => {
-    navigate("/")
-  }
-
-  const handleAdminLogin = () => {
-    navigate("/admin-login")
+    navigate("/signin")
   }
 
   return (
-    <div className="signin-container">
+    <div className="admin-login-container">
       <button className="back-button" onClick={handleBack}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
       </button>
 
-      <div className="signin-content">
+      <div className="admin-login-content">
         <div className="logo-container">
           <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
         </div>
-        <div className="login-heading">SIGN IN</div>
+
+        <div className="admin-login-heading">ADMIN LOGIN</div>
+
         <div className="form-overlay">
           <form onSubmit={handleLogin} className="login-form">
             <div className="input-group">
@@ -125,13 +120,8 @@ const SignIn = () => {
           </form>
         </div>
       </div>
-
-      <button className="admin-login-button" onClick={handleAdminLogin}>
-        Admin Login
-      </button>
     </div>
   )
 }
 
-export default SignIn
-
+export default AdminLogin
