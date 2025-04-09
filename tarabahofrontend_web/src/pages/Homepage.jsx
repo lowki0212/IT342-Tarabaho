@@ -1,26 +1,12 @@
-import { Link } from "react-router-dom"
 import backgroundImage from "../assets/images/homepage.png"
-import logo from "../assets/images/logowhite.png"
+import Navbar from "../components/Navbar"
 import "../styles/homepage.css"
 
 const Homepage = () => {
   return (
     <div className="homepage-container">
       {/* NAVIGATION BAR */}
-      <nav className="navbar">
-        <div className="navbar-logo">
-          <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-        </div>
-
-        <div className="navbar-links">
-          <Link to="/" className="active">
-            HOME
-          </Link>
-          <Link to="/contact">CONTACT US</Link>
-          <Link to="/about">ABOUT US</Link>
-          <Link to="/signin">SIGN IN</Link>
-        </div>
-      </nav>
+      <Navbar activePage="home" />
 
       {/* MAIN CONTENT */}
       <div className="main-content" style={{ backgroundImage: `url(${backgroundImage})` }}>
@@ -69,4 +55,3 @@ const Homepage = () => {
 }
 
 export default Homepage
-

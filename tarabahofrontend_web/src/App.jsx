@@ -1,11 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import Homepage from "./components/Homepage"
-import SignIn from "./components/Signin"
-import Register from "./components/Register"
-import RegisterUser from "./components/RegisterUser"
-import RegisterAdmin from "./components/RegisterAdmin"
-import AdminLogin from "./components/AdminLogin"
-import ContactUs from "./components/ContactUs"
+import Homepage from "./pages/Homepage"
+import SignIn from "./pages/SignIn"
+import Register from "./pages/Register"
+import RegisterUser from "./pages/RegisterUser"
+import RegisterAdmin from "./pages/RegisterAdmin"
+import AdminLogin from "./pages/AdminLogin"
+import AdminHomepage from "./pages/AdminHomepage"
+import AdminContactUs from "./pages/AdminContactUs"
+import AdminProfile from "./pages/AdminProfile"
+import ContactUs from "./pages/ContactUs"
 
 function App() {
   return (
@@ -18,6 +21,9 @@ function App() {
         <Route path="/register-worker" element={<div>Worker Registration Form</div>} />
         <Route path="/register-admin" element={<RegisterAdmin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin/homepage" element={<AdminHomepage />} />
+        <Route path="/admin/contact" element={<AdminContactUs />} />
+        <Route path="/admin/profile" element={<AdminProfile />} />
         <Route path="/contact" element={<ContactUs />} />
       </Routes>
     </Router>
@@ -25,4 +31,3 @@ function App() {
 }
 
 export default App
-

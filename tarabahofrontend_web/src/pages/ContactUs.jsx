@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
-import logo from "../assets/images/logowhite.png"
+import Navbar from "../components/Navbar"
 import "../styles/contact-us.css"
 
 const ContactUs = () => {
@@ -52,20 +51,7 @@ const ContactUs = () => {
   return (
     <div className="contact-page-container">
       {/* NAVIGATION BAR */}
-      <nav className="navbar">
-        <div className="navbar-logo">
-          <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-        </div>
-
-        <div className="navbar-links">
-          <Link to="/">HOME</Link>
-          <Link to="/contact" className="active">
-            CONTACT US
-          </Link>
-          <Link to="/about">ABOUT US</Link>
-          <Link to="/signin">SIGN IN</Link>
-        </div>
-      </nav>
+      <Navbar activePage="contact" />
 
       {/* MAIN CONTENT */}
       <div className="contact-content">
@@ -191,4 +177,3 @@ const ContactUs = () => {
 }
 
 export default ContactUs
-
