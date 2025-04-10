@@ -1,0 +1,246 @@
+.trabahador-profile-page {
+    min-height: 100vh;
+    width: 100vw;
+    background-color: #f5f7fb;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+  
+  .trabahador-profile-content {
+    flex: 1;
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .trabahador-profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .trabahador-profile-heading {
+    color: #0078ff;
+    font-size: 2.5rem;
+    font-weight: 700;
+  }
+  
+  /* Logout button */
+  .logout-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+    border-radius: 4px;
+  }
+  
+  .logout-button:hover {
+    background-color: #ffecec;
+    transform: translateY(-1px);
+  }
+  
+  .profile-container {
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  .profile-card {
+    background-color: #8a8a8a;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .profile-top-section {
+    display: flex;
+    background-color: white;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  
+  .profile-image-section {
+    width: 120px;
+    height: 120px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #e0e0e0;
+  }
+  
+  .profile-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .profile-credentials-section {
+    flex: 1;
+    padding: 1rem;
+  }
+  
+  .credential-row {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .credential-label {
+    width: 120px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .credential-value {
+    flex: 1;
+    color: #333;
+  }
+  
+  .change-password-link {
+    color: #0078ff;
+    text-decoration: none;
+    margin-left: auto;
+    font-size: 0.9rem;
+  }
+  
+  .change-password-link:hover {
+    text-decoration: underline;
+  }
+  
+  .edit-profile-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+  
+  .edit-profile-btn {
+    background-color: #0078ff;
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .edit-profile-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .profile-details-section {
+    background-color: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .detail-row {
+    display: flex;
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+  
+  .detail-label {
+    width: 120px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .detail-value {
+    flex: 1;
+    color: #333;
+  }
+  
+  /* Tarabaho Watermark */
+  .tarabaho-watermark {
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #0066cc;
+    opacity: 0.5;
+    transform: rotate(-10deg);
+  }
+  
+  .watermark-text {
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+  
+  .watermark-subtext {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .trabahador-profile-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .profile-top-section {
+      flex-direction: column;
+    }
+  
+    .profile-image-section {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid #e0e0e0;
+    }
+  
+    .credential-row,
+    .detail-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .credential-label,
+    .detail-label {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+  
+    .change-password-link {
+      margin-left: 0;
+      margin-top: 0.5rem;
+    }
+  
+    .tarabaho-watermark {
+      bottom: 10px;
+      right: 20px;
+    }
+  
+    .watermark-text {
+      font-size: 1.5rem;
+    }
+  
+    .watermark-subtext {
+      font-size: 0.7rem;
+    }
+  }

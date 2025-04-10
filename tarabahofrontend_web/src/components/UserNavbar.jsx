@@ -8,13 +8,16 @@ const UserNavbar = () => {
   return (
     <nav className="user-navbar">
       <div className="user-navbar-logo">
-        <Link to="/browse">
           <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-        </Link>
+  
       </div>
 
       <div className="user-navbar-links">
-        <Link to="/browse" className={location.pathname === "/browse" ? "active" : ""}>
+      <Link to="/user-home" className={location.pathname === "/user-home" ? "active" : ""}>
+          HOME
+        </Link>
+
+        <Link to="/user-browse" className={location.pathname === "/user-browse" ? "active" : ""}>
           BROWSE
         </Link>
         <Link to="/user-contact" className={location.pathname === "/user-contact" ? "active" : ""}>

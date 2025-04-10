@@ -5,7 +5,7 @@ html {
   height: 100%;
   width: 100%;
   overflow-x: hidden;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .admin-homepage {
@@ -32,7 +32,7 @@ html {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.9));
   display: flex;
   justify-content: center;
   align-items: center;
@@ -41,15 +41,18 @@ html {
 }
 
 .admin-welcome-container {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(255, 255, 255, 0.95);
   padding: 3rem;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  border: 2px solid #0078ff;
+  animation: fadeIn 1s ease-in-out;
 }
 
 .admin-logo-container {
@@ -58,13 +61,14 @@ html {
 
 .admin-logo {
   color: #0078ff;
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.25em;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .admin-logo-icon {
@@ -73,18 +77,57 @@ html {
 
 .admin-tagline {
   color: #0078ff;
-  font-size: 1rem;
-  letter-spacing: 0.2em;
+  font-size: 1.1rem;
+  letter-spacing: 0.25em;
   font-weight: 500;
   margin-top: 0.5rem;
+  opacity: 0.9;
 }
 
 .admin-welcome-heading {
-  color: white;
+  color: #333;
   font-size: 3.5rem;
   font-weight: 700;
-  margin: 0 0 3rem;
+  margin: 0 0 1rem;
   letter-spacing: 0.1em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-welcome-subheading {
+  color: #666;
+  font-size: 1.2rem;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+/* Dashboard Summary */
+.admin-dashboard-summary {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f5f7fb;
+  border-radius: 0.5rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-label {
+  color: #666;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.summary-value {
+  color: #0078ff;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .admin-actions {
@@ -96,26 +139,70 @@ html {
 
 .admin-action-button {
   display: inline-block;
-  padding: 1rem 1.5rem;
-  background-color: transparent;
-  color: #0078ff;
-  border: 2px solid #0078ff;
-  border-radius: 0.25rem;
-  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   letter-spacing: 0.05em;
+  box-shadow: 0 4px 10px rgba(0, 120, 255, 0.3);
+  animation: pulse 2s infinite;
 }
 
 .admin-action-button:hover {
-  background-color: #0078ff;
-  color: white;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 120, 255, 0.3);
+  background-color: #0056b3;
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 120, 255, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 10px rgba(0, 120, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 15px rgba(0, 120, 255, 0.5);
+  }
+  100% {
+    box-shadow: 0 4px 10px rgba(0, 120, 255, 0.3);
+  }
 }
 
 /* Responsive adjustments */
+@media (max-width: 1024px) {
+  .admin-welcome-heading {
+    font-size: 3rem;
+  }
+
+  .admin-welcome-subheading {
+    font-size: 1.1rem;
+  }
+
+  .admin-dashboard-summary {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .summary-value {
+    font-size: 1.3rem;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-welcome-container {
     padding: 2rem;
@@ -124,7 +211,11 @@ html {
 
   .admin-welcome-heading {
     font-size: 2.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-welcome-subheading {
+    font-size: 1rem;
   }
 
   .admin-actions {
@@ -134,6 +225,8 @@ html {
 
   .admin-action-button {
     width: 100%;
+    padding: 0.9rem 1.5rem;
+    font-size: 1.1rem;
   }
 }
 
@@ -142,7 +235,24 @@ html {
     font-size: 2rem;
   }
 
+  .admin-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-tagline {
+    font-size: 0.9rem;
+  }
+
   .admin-welcome-heading {
     font-size: 2rem;
+  }
+
+  .admin-welcome-subheading {
+    font-size: 0.9rem;
+  }
+
+  .summary-value {
+    font-size: 1.2rem;
   }
 }

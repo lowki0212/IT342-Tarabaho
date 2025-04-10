@@ -3,6 +3,12 @@ import AdminNavbar from "../components/AdminNavbar"
 import "../styles/admin-homepage.css"
 
 const AdminHomepage = () => {
+  // Mock dashboard data (in a real app, this would come from an API)
+  const dashboardData = {
+    totalUsers: 150,
+    totalTrabahadors: 75,
+  }
+
   return (
     <div className="admin-homepage">
       {/* Navigation Bar */}
@@ -31,12 +37,34 @@ const AdminHomepage = () => {
             </div>
 
             <h1 className="admin-welcome-heading">WELCOME ADMIN!</h1>
+            <p className="admin-welcome-subheading">
+              Manage your platform with ease and efficiency.
+            </p>
+
+            <div className="admin-dashboard-summary">
+              <div className="summary-item">
+                <span className="summary-label">Total Users:</span>
+                <span className="summary-value">{dashboardData.totalUsers}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Total Trabahadors:</span>
+                <span className="summary-value">{dashboardData.totalTrabahadors}</span>
+              </div>
+            </div>
 
             <div className="admin-actions">
-              <Link to="/admin/manage-users" className="admin-action-button">
+              <Link
+                to="/admin/manage-users"
+                className="admin-action-button"
+                aria-label="Manage Users"
+              >
                 MANAGE USERS
               </Link>
-              <Link to="/admin/manage-trabahador" className="admin-action-button">
+              <Link
+                to="/admin/manage-trabahador"
+                className="admin-action-button"
+                aria-label="Manage Trabahador"
+              >
                 MANAGE TRABAHADOR
               </Link>
             </div>

@@ -17,6 +17,11 @@ const SignIn = () => {
     password: "password123",
   }
 
+  const mockTrabahador = {
+    username: "trabahador123",
+    password: "trabahador123",
+  }
+
   const handleLogin = (e) => {
     e.preventDefault()
     setError("")
@@ -29,7 +34,7 @@ const SignIn = () => {
       localStorage.setItem("username", username)
 
       // Redirect to browse page
-      navigate("/browse")
+      navigate("/user-browse")
     } else if (username === "admin" && password === "admin123") {
       // Admin login
       localStorage.setItem("isLoggedIn", "true")
@@ -38,6 +43,14 @@ const SignIn = () => {
 
       // Redirect to admin homepage
       navigate("/admin/homepage")
+    } else if (username === mockTrabahador.username && password === mockTrabahador.password) {
+      // Trabahador login
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userType", "trabahador")
+      localStorage.setItem("username", username)
+
+      // Redirect to trabahador homepage
+      navigate("/trabahador-homepage")
     } else {
       setError("Invalid username or password")
     }
@@ -144,7 +157,7 @@ const SignIn = () => {
 
               <div className="login-help">
                 <p className="login-tip">
-                  Use username: <strong>user123</strong> and password: <strong>password123</strong> to login
+                  Use username: <strong>user123</strong> and password: <strong>password123</strong> to login as a user, or <strong>trabahador123</strong> and <strong>trabahador123</strong> as a Trabahador.
                 </p>
               </div>
 
