@@ -1,0 +1,192 @@
+/* Ensure the page occupies the full viewport height */
+.browse-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure it takes at least the full viewport height */
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Hero section takes full viewport height */
+.hero-section {
+  background: linear-gradient(to right, #001a40, #003366);
+  padding: 3rem 2rem;
+  color: white;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 0 auto; /* Allow this section to take up available space */
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center content vertically and horizontally */
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: bold;
+  max-width: 600px;
+  margin-right: 2rem;
+}
+
+.become-trabahador-button {
+  background-color: rgba(0, 120, 255, 0.3);
+  color: white;
+  border: 2px solid #0078ff;
+  border-radius: 30px;
+  padding: 0.8rem 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.become-trabahador-button:hover {
+  background-color: rgba(0, 120, 255, 0.5);
+}
+
+.browse-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%; /* Changed from 1200px to 100% */
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1 0 auto; /* Allow this content to grow and fill the screen */
+  text-align: center;
+}
+
+.look-for-trabahador-button {
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.look-for-trabahador-button:hover {
+  background-color: #0066cc;
+}
+
+.browse-description {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #555;
+}
+
+.service-categories {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  width: 100%;
+}
+
+.service-category {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.service-category:hover {
+  transform: translateY(-5px);
+}
+
+.service-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f0f8ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  border: 2px solid #0078ff;
+}
+
+.service-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.service-name {
+  color: #0078ff;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+/* Ensure navbar takes full width */
+.user-navbar {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 1.5rem;
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .service-categories {
+    gap: 1.5rem;
+  }
+
+  .service-icon {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+@media (max-width: 576px) {
+  .service-categories {
+    gap: 1rem;
+  }
+
+  .service-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .service-icon svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .service-name {
+    font-size: 0.8rem;
+  }
+}

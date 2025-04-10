@@ -1,0 +1,137 @@
+.admin-manage-trabahador-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: white;
+  }
+  
+  .manage-trabahador-container {
+    padding: 20px;
+    flex: 1;
+  }
+  
+  .manage-trabahador-title {
+    color: #0078ff;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .trabahador-table-container {
+    background-color: #888888;
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    min-height: 500px;
+  }
+  
+  .trabahador-table {
+    background-color: transparent;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .trabahador-table-header {
+    display: flex;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .trabahador-table-row {
+    display: flex;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    color: black;
+  }
+  
+  .table-cell {
+    flex: 1;
+    padding: 0 5px;
+    color: black;
+  }
+  
+  .id-cell {
+    flex: 0.3;
+  }
+  
+  .name-cell {
+    flex: 1.5;
+  }
+  
+  .username-cell {
+    flex: 1;
+  }
+  
+  .email-cell {
+    flex: 1.5;
+  }
+  
+  .phone-cell {
+    flex: 1;
+  }
+  
+  .birthday-cell {
+    flex: 1;
+  }
+  
+  .actions-cell {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .view-details-button {
+    background: none;
+    border: none;
+    color: #0078ff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .tarabah-watermark {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: #0055aa;
+    font-size: 24px;
+    font-weight: bold;
+    opacity: 0.5;
+    text-align: right;
+  }
+  
+  .watermark-tagline {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .manage-trabahador-title {
+      font-size: 2rem;
+    }
+  
+    .trabahador-table-header,
+    .trabahador-table-row {
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .trabahador-table {
+      overflow-x: auto;
+    }
+  
+    .trabahador-table-header,
+    .trabahador-table-row {
+      font-size: 0.8rem;
+      padding: 10px;
+    }
+  }
+  

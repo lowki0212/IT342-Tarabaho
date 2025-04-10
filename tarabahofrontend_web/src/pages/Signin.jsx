@@ -8,11 +8,39 @@ import "../styles/signin.css"
 const SignIn = () => {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const navigate = useNavigate()
+
+  // Mock user credentials
+  const mockUser = {
+    username: "user123",
+    password: "password123",
+  }
 
   const handleLogin = (e) => {
     e.preventDefault()
-    console.log("Login attempt with:", username, password)
+    setError("")
+
+    // Check if the credentials match our mock user
+    if (username === mockUser.username && password === mockUser.password) {
+      // Store user info in localStorage to simulate authentication
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userType", "user")
+      localStorage.setItem("username", username)
+
+      // Redirect to browse page
+      navigate("/browse")
+    } else if (username === "admin" && password === "admin123") {
+      // Admin login
+      localStorage.setItem("isLoggedIn", "true")
+      localStorage.setItem("userType", "admin")
+      localStorage.setItem("username", username)
+
+      // Redirect to admin homepage
+      navigate("/admin/homepage")
+    } else {
+      setError("Invalid username or password")
+    }
   }
 
   const handleBack = () => {
@@ -41,6 +69,8 @@ const SignIn = () => {
 
           <div className="form-overlay">
             <form onSubmit={handleLogin} className="login-form">
+              {error && <div className="error-message">{error}</div>}
+
               <div className="input-group">
                 <svg
                   className="input-icon"
@@ -110,6 +140,12 @@ const SignIn = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="login-help">
+                <p className="login-tip">
+                  Use username: <strong>user123</strong> and password: <strong>password123</strong> to login
+                </p>
               </div>
 
               <div className="links-container">

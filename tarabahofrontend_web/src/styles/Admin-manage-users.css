@@ -1,0 +1,151 @@
+.admin-manage-users-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: white;
+  }
+  
+  .manage-users-container {
+    padding: 20px;
+    flex: 1;
+  }
+  
+  .manage-users-title {
+    color: #0078ff;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .users-table-container {
+    background-color: #888888;
+    border-radius: 15px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    min-height: 500px;
+  }
+  
+  .users-table {
+    background-color: transparent;
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .users-table-header {
+    display: flex;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: black;
+  }
+  
+  .users-table-row {
+    display: flex;
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    color: black;
+  }
+  
+  .table-cell {
+    flex: 1;
+    padding: 0 5px;
+  }
+  
+  .id-cell {
+    flex: 0.3;
+    color: black;
+  }
+  
+  .name-cell {
+    flex: 1.5;
+    color: black;
+  }
+  
+  .username-cell {
+    flex: 1;
+    color: black;
+  }
+  
+  .email-cell {
+    flex: 1.5;
+    color: black;
+  }
+  
+  .phone-cell {
+    flex: 1;
+    color: black;
+  }
+  
+  .birthday-cell {
+    flex: 1;
+    color: black;
+  }
+  
+  .actions-cell {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  
+  .edit-button {
+    background: none;
+    border: none;
+    color: #0078ff;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .delete-button {
+    background: none;
+    border: none;
+    color: #ff0000;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .tarabah-watermark {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: #0055aa;
+    font-size: 24px;
+    font-weight: bold;
+    opacity: 0.5;
+    text-align: right;
+  }
+  
+  .watermark-tagline {
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .manage-users-title {
+      font-size: 2rem;
+    }
+  
+    .users-table-header,
+    .users-table-row {
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .users-table {
+      overflow-x: auto;
+    }
+  
+    .users-table-header,
+    .users-table-row {
+      font-size: 0.8rem;
+      padding: 10px;
+    }
+  }
+  
