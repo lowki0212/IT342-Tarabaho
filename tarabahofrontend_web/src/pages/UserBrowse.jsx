@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom"
 import UserNavbar from "../components/UserNavbar"
 import "../styles/User-browse.css"
+import Footer from "../components/Footer"
 import cleaningImg from "../assets/images/cleaning.png"
 import errandsImg from "../assets/images/errands.png"
 import tutoringImg from "../assets/images/tutoring.png"
@@ -77,6 +78,7 @@ const Browse = () => {
           </Link>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

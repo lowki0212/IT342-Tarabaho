@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import AdminNavbar from "../components/AdminNavbar"
+import Footer from "../components/Footer"
 import "../styles/admin-manage-trabahador.css"
 
 const AdminManageTrabahador = () => {
@@ -155,6 +156,7 @@ const AdminManageTrabahador = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

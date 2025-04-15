@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import AdminNavbar from "../components/AdminNavbar"
+import Footer from "../components/Footer"
 import "../styles/admin-homepage.css"
 
 const AdminHomepage = () => {
@@ -71,6 +72,7 @@ const AdminHomepage = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

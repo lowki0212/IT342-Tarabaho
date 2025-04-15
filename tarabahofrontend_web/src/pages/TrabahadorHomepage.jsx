@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import TrabahadorNavbar from "../components/TrabahadorNavbar"
+import Footer from "../components/Footer"
 import "../styles/TrabahadorHomepage.css"
 
 const TrabahadorHomepage = () => {
@@ -43,6 +44,7 @@ const TrabahadorHomepage = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

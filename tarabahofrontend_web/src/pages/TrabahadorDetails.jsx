@@ -3,6 +3,7 @@
 import { useParams, useNavigate } from "react-router-dom"
 import AdminNavbar from "../components/AdminNavbar"
 import "../styles/trabahador-details.css"
+import Footer from "../components/Footer"
 import poldave from "../assets/images/poldave.png"
 
 const TrabahadorDetails = () => {
@@ -128,6 +129,7 @@ const TrabahadorDetails = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

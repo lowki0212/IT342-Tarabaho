@@ -3,6 +3,7 @@
 import { useState } from "react"
 import "../styles/contact-us.css"
 import UserNavbar from "../components/UserNavbar"
+import Footer from "../components/Footer"
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({
@@ -172,6 +173,7 @@ const ContactUs = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

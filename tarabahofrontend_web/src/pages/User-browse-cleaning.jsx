@@ -4,6 +4,7 @@ import UserNavbar from "../components/UserNavbar"
 import "../styles/User-browse-cleaning.css"
 import cleaningBanner from "../assets/images/cleaningbanner.png"
 import { FaStar, FaRegStar } from "react-icons/fa"
+import Footer from "../components/Footer"
 // Import all provider images
 import paulBImg from "../assets/images/paul b.png"
 import martinJohnTImg from "../assets/images/martin john t.png"
@@ -174,6 +175,7 @@ const UserBrowseCleaning = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

@@ -4,6 +4,7 @@
 import { Link } from "react-router-dom"
 import backgroundImage from "../assets/images/homepage.png"
 import UserNavbar from "../components/UserNavbar"
+import Footer from "../components/Footer"
 // Remove UserBrowse import as we're linking to it, not embedding it
 import "../styles/homepage.css"
 
@@ -58,6 +59,7 @@ const UserHomepage = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

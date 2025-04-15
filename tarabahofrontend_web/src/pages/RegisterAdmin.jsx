@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
+import Footer from "../components/Footer"
 import "../styles/register-admin.css"
 
 const RegisterAdmin = () => {
@@ -176,6 +177,7 @@ const RegisterAdmin = () => {
           </div>
         </div>
       </form>
+      <Footer/>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Navbar from "../components/Navbar"
+import Footer from "../components/Footer"
 import "../styles/contact-us.css"
 
 const ContactUs = () => {
@@ -172,6 +173,7 @@ const ContactUs = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

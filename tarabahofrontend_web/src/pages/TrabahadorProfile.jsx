@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import TrabahadorNavbar from "../components/TrabahadorNavbar"
 import TrabahadorLogoutConfirmation from "../components/TrabahadorLogoutConfirmation"
 import profilePlaceholder from "../assets/images/profile-placeholder.png"
+import Footer from "../components/Footer"
 import "../styles/TrabahadorProfile.css"
 
 const TrabahadorProfile = () => {
@@ -149,6 +150,7 @@ const TrabahadorProfile = () => {
       {showLogoutModal && (
         <TrabahadorLogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />
       )}
+      <Footer/>
     </div>
   )
 }

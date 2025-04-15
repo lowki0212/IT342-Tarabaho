@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
+import Footer from "../components/Footer"
 import "../styles/RegisterTrabahador.css"
 
 const RegisterTrabahador = () => {
@@ -413,6 +414,7 @@ const RegisterTrabahador = () => {
           </>
         )}
       </div>
+      <Footer/>
     </div>
   )
 }

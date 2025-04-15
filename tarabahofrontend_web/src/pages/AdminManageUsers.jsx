@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import AdminNavbar from "../components/AdminNavbar"
+import Footer from "../components/Footer"
 import "../styles/admin-manage-users.css"
 
 const AdminManageUsers = () => {
@@ -219,6 +220,7 @@ const AdminManageUsers = () => {
           </div>
         </div>
       )}
+      <Footer/>
     </div>
   )
 }

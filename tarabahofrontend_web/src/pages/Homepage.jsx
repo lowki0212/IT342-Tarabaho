@@ -1,5 +1,6 @@
 import backgroundImage from "../assets/images/homepage.png"
 import Navbar from "../components/Navbar"
+import Footer from "../components/Footer"
 import "../styles/homepage.css"
 
 const Homepage = () => {
@@ -50,7 +51,9 @@ const Homepage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
+    
   )
 }
 

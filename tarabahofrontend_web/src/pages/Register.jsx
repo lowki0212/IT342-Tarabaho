@@ -2,6 +2,7 @@
 
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
+import Footer from "../components/Footer"
 import "../styles/register.css"
 
 const Register = () => {
@@ -60,6 +61,7 @@ const Register = () => {
           </button>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

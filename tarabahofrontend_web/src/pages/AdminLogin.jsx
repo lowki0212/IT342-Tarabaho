@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
+import Footer from "../components/Footer"
 import "../styles/admin-login.css"
 
 const AdminLogin = () => {
@@ -152,6 +153,7 @@ const AdminLogin = () => {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   )
 }

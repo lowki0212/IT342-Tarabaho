@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import UserNavbar from "../components/UserNavbar"
+import Footer from "../components/Footer"
 import LogoutConfirmation from "../components/User-LogoutConfirmation"
 import "../styles/User-Profile.css"
 import angeloImg from "../assets/images/angelo.png"
@@ -188,6 +189,7 @@ const UserProfile = () => {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />}
+      <Footer/>
     </div>
   )
 }
