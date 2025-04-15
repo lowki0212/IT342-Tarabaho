@@ -174,7 +174,7 @@ const RegisterUser = () => {
           </div>
         </div>
       </form>
-      <Footer/>
+
     </div>
   )
 }

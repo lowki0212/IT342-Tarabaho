@@ -414,7 +414,7 @@ const RegisterTrabahador = () => {
           </>
         )}
       </div>
-      <Footer/>
+
     </div>
   )
 }
