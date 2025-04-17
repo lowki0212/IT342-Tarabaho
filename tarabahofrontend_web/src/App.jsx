@@ -18,8 +18,12 @@ import UserContactUs from "./pages/UserContactUs"
 import UserHomepage from "./pages/UserHomepage"
 import UserBrowseCleaning from "./pages/User-browse-cleaning"
 import UserProfile from "./pages/UserProfile"
-import TrabahadorHomepage from "./pages/TrabahadorHomepage" // Add this import
+import TrabahadorHomepage from "./pages/TrabahadorHomepage"
 import TrabahadorProfile from "./pages/TrabahadorProfile"
+import AboutUs from "./pages/AboutUs"
+import AdminAboutUs from "./pages/AdminAboutUs"
+import UserAboutUs from "./pages/UserAboutUs"
+import TrabahadorAboutUs from "./pages/TrabahadorAboutUs"
 
 function App() {
   return (
@@ -32,20 +36,23 @@ function App() {
         <Route path="/register-worker" element={<RegisterTrabahador />} />
         <Route path="/register-admin" element={<RegisterAdmin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/about" element={<AboutUs />} />
+
+        {/* Admin routes */}
         <Route path="/admin/homepage" element={<AdminHomepage />} />
         <Route path="/admin/contact" element={<AdminContactUs />} />
         <Route path="/admin/profile" element={<AdminProfile />} />
         <Route path="/admin/manage-users" element={<AdminManageUsers />} />
         <Route path="/admin/manage-trabahador" element={<AdminManageTrabahador />} />
         <Route path="/admin/trabahador/:id" element={<TrabahadorDetails />} />
-        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/admin/about" element={<AdminAboutUs />} />
 
         {/* User-specific routes */}
         <Route path="/user-home" element={<UserHomepage />} />
         <Route path="/user-browse" element={<UserBrowse />} />
         <Route path="/user-contact" element={<UserContactUs />} />
         <Route path="/user-profile" element={<UserProfile />} />
-        <Route path="/about" element={<div>About Us Page</div>} />
+        <Route path="/user-about" element={<UserAboutUs />} />
 
         {/* Service-specific browse routes */}
         <Route path="/user-browse-cleaning" element={<UserBrowseCleaning />} />
@@ -54,6 +61,10 @@ function App() {
         <Route path="/trabahador-homepage" element={<TrabahadorHomepage />} />
         <Route path="/trabahador-history" element={<div>Trabahador History Page</div>} />
         <Route path="/trabahador-profile" element={<TrabahadorProfile />} />
+        <Route path="/trabahador-about" element={<TrabahadorAboutUs />} />
+
+        {/* General routes */}
+        <Route path="/contact" element={<ContactUs />} />
       </Routes>
     </Router>
   )

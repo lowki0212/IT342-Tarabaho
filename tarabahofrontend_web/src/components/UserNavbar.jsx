@@ -8,12 +8,11 @@ const UserNavbar = () => {
   return (
     <nav className="user-navbar">
       <div className="user-navbar-logo">
-          <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-  
+        <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
       </div>
 
       <div className="user-navbar-links">
-      <Link to="/user-home" className={location.pathname === "/user-home" ? "active" : ""}>
+        <Link to="/user-home" className={location.pathname === "/user-home" ? "active" : ""}>
           HOME
         </Link>
 
@@ -23,7 +22,7 @@ const UserNavbar = () => {
         <Link to="/user-contact" className={location.pathname === "/user-contact" ? "active" : ""}>
           CONTACT US
         </Link>
-        <Link to="/about" className={location.pathname === "/about" ? "active" : ""}>
+        <Link to="/user-about" className={location.pathname === "/user-about" ? "active" : ""}>
           ABOUT US
         </Link>
         <Link to="/user-profile" className={location.pathname === "/user-profile" ? "active" : ""}>
