@@ -18,6 +18,7 @@ import tarabaho.tarabaho.jwt.JwtAuthFilter;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.service.CustomOAuth2UserService;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -78,11 +79,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://10.0.2.2:8080"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(List.of("*"));
-
+    
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

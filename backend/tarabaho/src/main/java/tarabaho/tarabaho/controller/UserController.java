@@ -10,10 +10,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.service.UserService;
@@ -62,31 +64,42 @@ public class UserController {
         return ResponseEntity.ok(savedUser);
     }
 
-    @Operation(summary = "Generate JWT token", description = "Authenticate user with username and password and set JWT token in cookie")
+    @Operation(
+    summary = "Generate JWT token",
+    description = "Authenticate user with username and password and return JWT token as JSON"
+    )
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Login successful, token set in cookie"),
-        @ApiResponse(responseCode = "401", description = "Invalid username or password")
+    @ApiResponse(responseCode = "200", description = "Login successful, token returned"),
+    @ApiResponse(responseCode = "401", description = "Invalid username or password")
     })
     @PostMapping("/token")
-    public ResponseEntity<?> generateToken(@RequestBody LoginRequest loginData, HttpServletResponse response) {
-        try {
-            User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
-            String jwtToken = jwtUtil.generateToken(user.getUsername());
-            System.out.println("Generated JWT for manual login: " + jwtToken);
+    public ResponseEntity<AuthResponse> generateToken(
+        @RequestBody LoginRequest loginData,
+        HttpServletResponse response
+    )    {
+    try {
+        // Authenticate
+        User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
+        // Generate JWT
+        String jwtToken = jwtUtil.generateToken(user.getUsername());
 
-            // Store token in cookie
-            Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
-            tokenCookie.setHttpOnly(true); // Prevent JavaScript access
-            tokenCookie.setSecure(false);  // Set to true in production with HTTPS
-            tokenCookie.setPath("/");      // Available across the app
-            tokenCookie.setMaxAge(24 * 60 * 60); // 1 day (matches JwtUtil expiration)
-            tokenCookie.setDomain("localhost");
-            response.addCookie(tokenCookie);
+        // (Optional) also set it as a cookie if you still need that:
+        Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
+        tokenCookie.setHttpOnly(true);
+        tokenCookie.setSecure(false);
+        tokenCookie.setPath("/");
+        tokenCookie.setMaxAge(24 * 60 * 60);
+        tokenCookie.setDomain("localhost");
+        response.addCookie(tokenCookie);
 
-            return ResponseEntity.ok("Login successful");
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid username or password.");
-        }
+        // Return JSON { "token": "..." }
+        AuthResponse body = new AuthResponse(jwtToken);
+        return ResponseEntity.ok(body);
+
+    } catch (Exception e) {
+        // On failure, return 401 with no body (or you can return an error JSON if you prefer)
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
     }
 
     @Operation(summary = "Login user (session-based)", description = "Authenticate user with username and password and store in session")
