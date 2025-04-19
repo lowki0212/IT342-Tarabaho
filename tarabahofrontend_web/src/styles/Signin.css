@@ -103,6 +103,51 @@ html {
   letter-spacing: 0.1em;
 }
 
+/* Login type selector */
+.login-type-selector {
+  display: flex;
+  width: 80%;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.login-type-btn {
+  flex: 1;
+  padding: 0.8rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.login-type-btn:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.login-type-btn.active {
+  background-color: #0056b3;
+  box-shadow: 0 0 10px rgba(0, 120, 255, 0.5);
+}
+
+.login-type-btn:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-overlay {
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 1rem;
+  box-sizing: border-box;
+}
+
 .login-form {
   width: 100%;
   display: flex;
@@ -173,7 +218,7 @@ html {
   border-radius: 0.25rem;
   cursor: pointer;
   transition: all 0.3s;
-  width: 50%;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -181,52 +226,12 @@ html {
   background-color: #0056b3;
 }
 
-.admin-login-button {
-  position: absolute;
-  bottom: 1.5rem;
-  left: 1.5rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  z-index: 3;
+.trabahador-button {
+  background-color: #0066cc;
 }
 
-.admin-login-button:hover {
-  background-color: #0056b3;
-}
-
-/* Dark overlay for the form area */
-.form-overlay {
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 2rem;
-  border-radius: 0.5rem;
-  width: 100%;
-  max-width: 400px;
-  margin-top: 1rem;
-  box-sizing: border-box;
-}
-
-/* Responsive adjustments */
-@media (max-width: 576px) {
-  .signin-content {
-    width: 90%;
-    padding: 1.5rem;
-  }
-
-  .form-overlay {
-    padding: 1.5rem;
-  }
-
-  .login-heading {
-    font-size: 1.2rem;
-    padding: 0.4rem 1.5rem;
-  }
+.trabahador-button:hover {
+  background-color: #004c99;
 }
 
 .google-login-button {
@@ -248,4 +253,56 @@ html {
 
 .google-login-button:hover {
   background-color: #c1351d; /* Darker red on hover */
+}
+
+.error-message {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* Admin login link */
+.admin-login-link {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.admin-link-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.3s;
+  text-decoration: underline;
+  padding: 0.5rem;
+}
+
+.admin-link-btn:hover {
+  color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .signin-content {
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .form-overlay {
+    padding: 1.5rem;
+  }
+
+  .login-heading {
+    font-size: 1.2rem;
+    padding: 0.4rem 1.5rem;
+  }
+
+  .login-type-selector {
+    width: 90%;
+  }
 }
