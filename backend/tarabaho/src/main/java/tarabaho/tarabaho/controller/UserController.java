@@ -14,14 +14,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.service.UserService;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/user")
@@ -65,41 +73,36 @@ public class UserController {
     }
 
     @Operation(
-    summary = "Generate JWT token",
-    description = "Authenticate user with username and password and return JWT token as JSON"
+        summary = "Generate JWT token",
+        description = "Authenticate user with username and password and return JWT token as JSON"
     )
     @ApiResponses({
-    @ApiResponse(responseCode = "200", description = "Login successful, token returned"),
-    @ApiResponse(responseCode = "401", description = "Invalid username or password")
+        @ApiResponse(responseCode = "200", description = "Login successful, token returned"),
+        @ApiResponse(responseCode = "401", description = "Invalid username or password")
     })
     @PostMapping("/token")
     public ResponseEntity<AuthResponse> generateToken(
-        @RequestBody LoginRequest loginData,
-        HttpServletResponse response
-    )    {
-    try {
-        // Authenticate
-        User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
-        // Generate JWT
-        String jwtToken = jwtUtil.generateToken(user.getUsername());
+            @RequestBody LoginRequest loginData,
+            HttpServletResponse response
+    ) {
+        try {
+            User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
+            String jwtToken = jwtUtil.generateToken(user.getUsername());
 
-        // (Optional) also set it as a cookie if you still need that:
-        Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
-        tokenCookie.setHttpOnly(true);
-        tokenCookie.setSecure(false);
-        tokenCookie.setPath("/");
-        tokenCookie.setMaxAge(24 * 60 * 60);
-        tokenCookie.setDomain("localhost");
-        response.addCookie(tokenCookie);
+            Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(false);
+            tokenCookie.setPath("/");
+            tokenCookie.setMaxAge(24 * 60 * 60);
+            tokenCookie.setDomain("localhost");
+            response.addCookie(tokenCookie);
 
-        // Return JSON { "token": "..." }
-        AuthResponse body = new AuthResponse(jwtToken);
-        return ResponseEntity.ok(body);
+            AuthResponse body = new AuthResponse(jwtToken);
+            return ResponseEntity.ok(body);
 
-    } catch (Exception e) {
-        // On failure, return 401 with no body (or you can return an error JSON if you prefer)
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @Operation(summary = "Login user (session-based)", description = "Authenticate user with username and password and store in session")
@@ -132,7 +135,7 @@ public class UserController {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
-        String username = authentication.getName(); // Username from JWT
+        String username = authentication.getName();
         Optional<User> user = userService.findByUsername(username);
         return user.orElse(null);
     }
@@ -144,8 +147,8 @@ public class UserController {
     })
     @PutMapping("/update-phone")
     public String updatePhone(
-        Authentication authentication,
-        @RequestBody PhoneUpdateRequest request
+            Authentication authentication,
+            @RequestBody PhoneUpdateRequest request
     ) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return "User not authenticated.";
@@ -163,6 +166,123 @@ public class UserController {
         return "User not found.";
     }
 
+    @Operation(summary = "Upload profile picture", description = "Uploads a profile picture for the currently logged-in user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Profile picture uploaded successfully"),
+        @ApiResponse(responseCode = "400", description = "No file uploaded or invalid file"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "500", description = "Failed to upload file")
+    })
+    @PostMapping("/upload-picture")
+    public ResponseEntity<?> uploadProfilePicture(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile file
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+        }
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("No file uploaded.");
+        }
+
+        try {
+            String contentType = file.getContentType();
+            if (!contentType.startsWith("image/")) {
+                return ResponseEntity.badRequest().body("Only image files are allowed.");
+            }
+
+            String username = authentication.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+            }
+
+            String uploadDir = "uploads/profiles/";
+            File directory = new File(uploadDir);
+            if (!directory.exists()) {
+                boolean created = directory.mkdirs();
+                if (!created) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("Failed to create upload directory: " + uploadDir);
+                }
+            }
+
+            if (!directory.canWrite()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Upload directory is not writable: " + uploadDir);
+            }
+
+            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
+            System.out.println("Saving file to: " + filePath.toString());
+
+            Files.write(filePath, file.getBytes());
+
+            User user = userOpt.get();
+            user.setProfilePicture("/profiles/" + fileName);
+            userService.saveUser(user);
+
+            return ResponseEntity.ok(user);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload file: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Update user profile", description = "Updates email, address, birthday, and password for the currently logged-in user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PutMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(
+            Authentication authentication,
+            @RequestBody ProfileUpdateRequest request
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+        }
+
+        String username = authentication.getName();
+        Optional<User> userOpt = userService.findByUsername(username);
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
+
+        User user = userOpt.get();
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            if (userService.findByEmail(request.getEmail()).isPresent() && !request.getEmail().equals(user.getEmail())) {
+                return ResponseEntity.badRequest().body("⚠️ Email already exists.");
+            }
+            user.setEmail(request.getEmail());
+        }
+        if (request.getLocation() != null) {
+            user.setLocation(request.getLocation());
+        }
+        if (request.getBirthday() != null) {
+            try {
+                LocalDate birthday = LocalDate.parse(request.getBirthday());
+                user.setBirthday(birthday);
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body("Invalid birthday format. Use YYYY-MM-DD.");
+            }
+        }
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(request.getPassword());
+        }
+
+        userService.saveUser(user);
+        return ResponseEntity.ok(user);
+    }
+
     @Operation(summary = "Logout user", description = "Logs out the currently authenticated user")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "User logged out successfully"),
@@ -172,12 +292,11 @@ public class UserController {
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
             System.out.println("Entering /logout endpoint");
-            request.logout(); // For session-based auth (optional for JWT)
+            request.logout();
             System.out.println("After request.logout()");
 
-            // Clear the cookie on logout
             Cookie tokenCookie = new Cookie("jwtToken", null);
-            tokenCookie.setMaxAge(0); // Expire immediately
+            tokenCookie.setMaxAge(0);
             tokenCookie.setPath("/");
             tokenCookie.setDomain("localhost");
             tokenCookie.setHttpOnly(true);
@@ -188,12 +307,11 @@ public class UserController {
             return ResponseEntity.ok("User logged out successfully.");
         } catch (Exception e) {
             System.err.println("Logout failed: " + e.getMessage());
-            e.printStackTrace(); // Full stack trace for debugging
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Logout failed: " + e.getMessage());
         }
     }
 
-    // DTOs remain unchanged
     static class LoginRequest {
         private String username;
         private String password;
@@ -209,5 +327,21 @@ public class UserController {
 
         public String getPhoneNumber() { return phoneNumber; }
         public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    }
+
+    static class ProfileUpdateRequest {
+        private String email;
+        private String location;
+        private String birthday;
+        private String password;
+
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
+        public String getBirthday() { return birthday; }
+        public void setBirthday(String birthday) { this.birthday = birthday; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
     }
 }

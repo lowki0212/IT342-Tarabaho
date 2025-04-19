@@ -1,39 +1,37 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import logo from "../assets/images/logowhite.png"
-import Footer from "../components/Footer"
-import "../styles/admin-login.css"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios"; // Add axios import
+import logo from "../assets/images/logowhite.png";
+import "../styles/admin-login.css";
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  // Dummy admin credentials
-  const ADMIN_USERNAME = "admin"
-  const ADMIN_PASSWORD = "admin123"
-
-  const handleLogin = (e) => {
-    e.preventDefault()
-
-    // Check if credentials match the dummy admin credentials
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      console.log("Admin login successful!")
-      setError("")
-      // Navigate to admin homepage after successful login
-      navigate("/admin/homepage")
-    } else {
-      console.log("Admin login failed - incorrect credentials")
-      setError("Invalid username or password")
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(
+        "http://localhost:8080/api/admin/login",
+        { username, password },
+        { withCredentials: true } // Ensure cookie is set
+      );
+      console.log("Admin login successful!");
+      setError("");
+      navigate("/admin/homepage"); // Updated to match your original navigation
+    } catch (err) {
+      console.log("Admin login failed:", err.response?.data || err.message);
+      setError("Invalid username or password");
     }
-  }
+  };
 
   const handleBack = () => {
-    navigate("/signin")
-  }
+    navigate("/signin");
+  };
 
   return (
     <div className="admin-login-page">
@@ -52,17 +50,6 @@ const AdminLogin = () => {
           <div className="admin-login-heading">ADMIN LOGIN</div>
 
           <div className="form-overlay">
-            {/* Dummy credentials hint */}
-            <div className="dummy-credentials-hint">
-              <p>Use these credentials to test:</p>
-              <p>
-                Username: <strong>{ADMIN_USERNAME}</strong>
-              </p>
-              <p>
-                Password: <strong>{ADMIN_PASSWORD}</strong>
-              </p>
-            </div>
-
             <form onSubmit={handleLogin} className="login-form">
               {error && <div className="error-message">{error}</div>}
 
@@ -153,9 +140,8 @@ const AdminLogin = () => {
           </div>
         </div>
       </div>
-      <Footer/>
     </div>
-  )
-}
+  );
+};
 
-export default AdminLogin
+export default AdminLogin;

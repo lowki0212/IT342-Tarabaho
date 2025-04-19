@@ -1,25 +1,25 @@
 package tarabaho.tarabaho.config;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.Customizer;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import tarabaho.tarabaho.jwt.JwtAuthFilter;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.service.CustomOAuth2UserService;
-
-import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -37,11 +37,12 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-            	.requestMatchers("/api/admin/register", "/api/admin/login", "/api/admin/logout").permitAll() // Ensure /logout is here
+            	.requestMatchers("/api/admin/register", "/api/admin/login", "/api/admin/logout").permitAll()
                 .requestMatchers("/api/admin/**").authenticated()
                 .requestMatchers("/api/user/login", "/api/user/register", "/api/user/token").permitAll()
                 .requestMatchers("/api/user/me", "/api/user/update-phone").authenticated()
                 .requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
+                .requestMatchers("/profiles/**").permitAll() // Allow public access to images
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth -> oauth	

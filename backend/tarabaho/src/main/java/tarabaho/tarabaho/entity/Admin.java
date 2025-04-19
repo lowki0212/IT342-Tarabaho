@@ -19,18 +19,20 @@ public class Admin {
     private String username;
     private String password;
     private String email;
-    private String address; // New field
+    private String address;
+    private String profilePicture; // New field for profile picture path
 
     // Constructors
     public Admin() {}
 
-    public Admin(String firstname, String lastname, String username, String password, String email, String address) {
+    public Admin(String firstname, String lastname, String username, String password, String email, String address, String profilePicture) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
         this.password = password;
         this.email = email;
         this.address = address;
+        this.profilePicture = profilePicture;
     }
 
     // Getters and setters
@@ -84,5 +86,13 @@ public class Admin {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
     }
 }

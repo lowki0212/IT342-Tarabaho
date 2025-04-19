@@ -1,13 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import logo from "../assets/images/logowhite.png"
-import Footer from "../components/Footer"
-import "../styles/register-user.css"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Cookies from "js-cookie";
+import logo from "../assets/images/logowhite.png";
+import "../styles/register-user.css";
 
 const RegisterUser = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,31 +19,62 @@ const RegisterUser = () => {
     username: "",
     password: "",
     confirmPassword: "",
-  })
+  });
+  const [error, setError] = useState(""); // Added for error handling
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Add registration logic here
-    console.log("Registration data:", formData)
-    // Navigate to success page or login page after successful registration
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(""); // Clear previous errors
+
+    // Basic password confirmation check
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    // Prepare payload for API (excluding confirmPassword)
+    const payload = {
+      firstname: formData.firstName,
+      lastname: formData.lastName,
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+      phoneNumber: formData.contactNo,
+      birthday: formData.birthday,
+      location: formData.address, // Mapping address to location for consistency with UserAuth
+    };
+
+    console.log("Registration Payload:", payload);
+
+    try {
+      const res = await axios.post("http://localhost:8080/api/user/register", payload, {
+        withCredentials: true,
+      });
+
+      console.log("Registration successful");
+      alert("Registered successfully! Please log in.");
+      navigate("/signin"); // Redirect to login page after signup, matching UserAuth
+    } catch (err) {
+      setError("Registration Error: " + (err.response?.data || "Something went wrong"));
+    }
+  };
 
   const handleBack = () => {
-    navigate("/register")
-  }
+    navigate("/register");
+  };
 
   return (
     <div className="register-user-container">
       <button className="back-button" onClick={handleBack}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
@@ -61,6 +93,8 @@ const RegisterUser = () => {
               Sign up now and get started quickly. Create your online account with a few clicks.
             </p>
 
+            {error && <div className="error-message">{error}</div>} {/* Added error display */}
+
             <div className="form-group">
               <label htmlFor="username">
                 Username <span className="required">*</span>
@@ -76,7 +110,9 @@ const RegisterUser = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password">
+                Password <span className="required">*</span>
+              </label>
               <input
                 type="password"
                 id="password"
@@ -128,12 +164,23 @@ const RegisterUser = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">Email address</label>
-              <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required />
+              <label htmlFor="email">
+                Email address <span className="required">*</span>
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-group">
-              <label htmlFor="address">Address</label>
+              <label htmlFor="address">
+                Address <span className="required">*</span>
+              </label>
               <input
                 type="text"
                 id="address"
@@ -145,7 +192,9 @@ const RegisterUser = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="contactNo">Contact no.</label>
+              <label htmlFor="contactNo">
+                Contact no. <span className="required">*</span>
+              </label>
               <input
                 type="tel"
                 id="contactNo"
@@ -157,7 +206,9 @@ const RegisterUser = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="birthday">Birthday</label>
+              <label htmlFor="birthday">
+                Birthday <span className="required">*</span>
+              </label>
               <input
                 type="date"
                 id="birthday"
@@ -174,10 +225,8 @@ const RegisterUser = () => {
           </div>
         </div>
       </form>
-
     </div>
-  )
-}
+  );
+};
 
-export default RegisterUser
-
+export default RegisterUser;

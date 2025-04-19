@@ -1,19 +1,20 @@
 package tarabaho.tarabaho.controller;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.repository.UserRepository;
-
-import java.io.IOException;
-import java.util.Optional;
 
 @RestController
 public class OAuth2Controller {
@@ -24,6 +25,7 @@ public class OAuth2Controller {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @SuppressWarnings("null")
     @GetMapping("/oauth2-success")
     @Transactional
     public void oauth2Success(

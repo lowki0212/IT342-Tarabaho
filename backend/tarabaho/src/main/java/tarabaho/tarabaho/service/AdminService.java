@@ -1,11 +1,12 @@
 package tarabaho.tarabaho.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import tarabaho.tarabaho.entity.Admin;
 import tarabaho.tarabaho.repository.AdminRepository;
-
-import java.util.List;
 
 @Service
 public class AdminService {
@@ -57,7 +58,8 @@ public class AdminService {
         existingAdmin.setUsername(updatedAdmin.getUsername());
         existingAdmin.setPassword(updatedAdmin.getPassword());
         existingAdmin.setEmail(updatedAdmin.getEmail());
-        existingAdmin.setAddress(updatedAdmin.getAddress()); // New field
+        existingAdmin.setAddress(updatedAdmin.getAddress());
+        existingAdmin.setProfilePicture(updatedAdmin.getProfilePicture()); // Update profile picture
         
         // Check for duplicates (excluding this admin)
         Admin byUsername = adminRepository.findByUsername(updatedAdmin.getUsername());
@@ -70,5 +72,12 @@ public class AdminService {
         }
         
         return adminRepository.save(existingAdmin);
+    }
+
+    public Admin updateProfilePicture(Long id, String filePath) throws Exception {
+        Admin admin = adminRepository.findById(id)
+            .orElseThrow(() -> new Exception("Admin not found"));
+        admin.setProfilePicture(filePath);
+        return adminRepository.save(admin);
     }
 }

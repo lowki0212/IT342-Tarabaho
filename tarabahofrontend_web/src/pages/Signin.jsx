@@ -1,82 +1,99 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import logo from "../assets/images/logowhite.png"
-import Footer from "../components/Footer"
-import "../styles/signin.css"
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import Cookies from "js-cookie";
+import logo from "../assets/images/logowhite.png";
+import "../styles/signin.css";
 
 const SignIn = () => {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const navigate = useNavigate()
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  // Mock user credentials
-  const mockUser = {
-    username: "user123",
-    password: "password123",
-  }
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
 
-  const mockTrabahador = {
-    username: "trabahador123",
-    password: "trabahador123",
-  }
+    const payload = { username, password };
+    console.log("Login Payload:", payload);
 
-  const handleLogin = (e) => {
-    e.preventDefault()
-    setError("")
+    try {
+      const res = await axios.post(
+        "http://localhost:8080/api/user/token",
+        payload,
+        {
+          withCredentials: true,
+        }
+      );
 
-    // Check if the credentials match our mock user
-    if (username === mockUser.username && password === mockUser.password) {
-      // Store user info in localStorage to simulate authentication
-      localStorage.setItem("isLoggedIn", "true")
-      localStorage.setItem("userType", "user")
-      localStorage.setItem("username", username)
+      console.log("Login successful, token set in cookie");
+      alert("Logged in successfully!");
 
-      // Redirect to browse page
-      navigate("/user-browse")
-    } else if (username === "admin" && password === "admin123") {
-      // Admin login
-      localStorage.setItem("isLoggedIn", "true")
-      localStorage.setItem("userType", "admin")
-      localStorage.setItem("username", username)
+      // Store minimal user info in localStorage (optional, depending on your needs)
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("username", username);
 
-      // Redirect to admin homepage
-      navigate("/admin/homepage")
-    } else if (username === mockTrabahador.username && password === mockTrabahador.password) {
-      // Trabahador login
-      localStorage.setItem("isLoggedIn", "true")
-      localStorage.setItem("userType", "trabahador")
-      localStorage.setItem("username", username)
-
-      // Redirect to trabahador homepage
-      navigate("/trabahador-homepage")
-    } else {
-      setError("Invalid username or password")
+      // Determine user type and redirect accordingly
+      // This assumes your backend returns user type or role in res.data
+      // For now, we'll check username as a fallback; adjust based on your API response
+      if (username === "admin") {
+        localStorage.setItem("userType", "admin");
+        navigate("/admin/homepage");
+      } else if (username.includes("trabahador")) {
+        localStorage.setItem("userType", "trabahador");
+        navigate("/trabahador-homepage");
+      } else {
+        localStorage.setItem("userType", "user");
+        navigate("/user-browse");
+      }
+    } catch (err) {
+      setError("Login Error: " + (err.response?.data || "Something went wrong"));
     }
-  }
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+  };
 
   const handleBack = () => {
-    navigate("/")
-  }
+    navigate("/");
+  };
 
   const handleAdminLogin = () => {
-    navigate("/admin-login")
-  }
+    navigate("/admin-login");
+  };
 
   return (
     <div className="signin-page">
       <div className="signin-container">
         <button className="back-button" onClick={handleBack}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15 19L8 12L15 5"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
 
         <div className="signin-content">
           <div className="logo-container">
-            <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
+            <img
+              src={logo || "/placeholder.svg"}
+              alt="Tarabaho Logo"
+              className="logo"
+            />
           </div>
 
           <div className="login-heading">SIGN IN</div>
@@ -157,9 +174,6 @@ const SignIn = () => {
               </div>
 
               <div className="login-help">
-                <p className="login-tip">
-                  Use username: <strong>user123</strong> and password: <strong>password123</strong> to login as a user, or <strong>trabahador123</strong> and <strong>trabahador123</strong> as a Trabahador.
-                </p>
               </div>
 
               <div className="links-container">
@@ -174,6 +188,15 @@ const SignIn = () => {
               <button type="submit" className="login-button">
                 Login
               </button>
+
+              {/* Google Login Button */}
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="google-login-button"
+              >
+                Continue with Google
+              </button>
             </form>
           </div>
         </div>
@@ -182,9 +205,8 @@ const SignIn = () => {
           Admin Login
         </button>
       </div>
-      <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default SignIn
+export default SignIn;
