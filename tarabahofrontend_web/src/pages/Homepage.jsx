@@ -1,9 +1,18 @@
+"use client"
+
+import { useNavigate } from "react-router-dom"
 import backgroundImage from "../assets/images/homepage.png"
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
 import "../styles/homepage.css"
 
 const Homepage = () => {
+  const navigate = useNavigate()
+
+  const handleExploreClick = () => {
+    navigate("/signin")
+  }
+
   return (
     <div className="homepage-container">
       {/* NAVIGATION BAR */}
@@ -46,14 +55,15 @@ const Homepage = () => {
               </div>
             </div>
             <div className="content-bottom">
-              <button className="explore-button">EXPLORE</button>
+              <button className="explore-button" onClick={handleExploreClick}>
+                EXPLORE
+              </button>
             </div>
           </div>
         </div>
       </div>
       <Footer />
     </div>
-    
   )
 }
 
