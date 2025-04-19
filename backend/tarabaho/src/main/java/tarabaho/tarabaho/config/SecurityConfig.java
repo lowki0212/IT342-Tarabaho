@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/user/login", "/api/user/register", "/api/user/token").permitAll()
                 .requestMatchers("/api/user/me", "/api/user/update-phone").authenticated()
                 .requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
+                .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/profiles/**").permitAll() // Allow public access to images
                 .anyRequest().authenticated()
             )

@@ -34,6 +34,7 @@ const UserProfile = () => {
   })
   const [selectedFile, setSelectedFile] = useState(null)
   const [profileImage, setProfileImage] = useState("/placeholder.svg")
+  const [isUploading, setIsUploading] = useState(false) // Added loading state
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [connectedAccounts, setConnectedAccounts] = useState({
     facebook: false,
@@ -41,7 +42,7 @@ const UserProfile = () => {
     tiktok: false,
   })
   const [error, setError] = useState("")
-  const fileInputRef = useRef(null) // Ref for the hidden file input
+  const fileInputRef = useRef(null)
 
   const BACKEND_URL = "http://localhost:8080"
 
@@ -59,15 +60,23 @@ const UserProfile = () => {
             birthday: response.data.birthday || "",
             password: "",
           })
-          setProfileImage(response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : "/placeholder.svg")
+          setProfileImage(
+            response.data.profilePicture
+              ? `${BACKEND_URL}${response.data.profilePicture}`
+              : "/placeholder.svg"
+          )
         }
       } catch (err) {
         console.error("Failed to fetch user:", err)
-        setError("Failed to load profile. Please try again.")
+        if (err.response?.status === 401) {
+          navigate("/signin")
+        } else {
+          setError("Failed to load profile. Please try again.")
+        }
       }
     }
     fetchUser()
-  }, [])
+  }, [navigate]) // Added navigate as a dependency
 
   const handleConnectToggle = (platform) => {
     setConnectedAccounts((prev) => ({
@@ -83,31 +92,44 @@ const UserProfile = () => {
       return
     }
     setSelectedFile(file)
+    setIsUploading(true) // Show loading state
     console.log("Selected file:", file.name)
 
-    // Automatically upload the file
     const formData = new FormData()
     formData.append("file", file)
 
     try {
       console.log("Uploading file:", file.name)
-      const response = await axios.post(`${BACKEND_URL}/api/user/upload-picture`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      const response = await axios.post(
+        `${BACKEND_URL}/api/user/upload-picture`,
+        formData,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      )
       setUser(response.data)
-      setProfileImage(response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : profileImage)
+      setProfileImage(
+        response.data.profilePicture
+          ? `${BACKEND_URL}${response.data.profilePicture}`
+          : "/placeholder.svg"
+      )
       setSelectedFile(null)
       setError("")
       console.log("Upload successful:", response.data)
     } catch (err) {
       console.error("Failed to upload picture:", err)
-      setError(err.response?.data || "Failed to upload picture. Please try again.")
+      if (err.response?.status === 401) {
+        navigate("/signin")
+      } else {
+        setError(err.response?.data || "Failed to upload picture. Please try again.")
+      }
+    } finally {
+      setIsUploading(false) // Hide loading state
     }
   }
 
   const handleImageClick = () => {
-    // Trigger the hidden file input when the image is clicked
     fileInputRef.current.click()
   }
 
@@ -123,15 +145,23 @@ const UserProfile = () => {
 
   const handleSaveChanges = async () => {
     try {
-      const response = await axios.put(`${BACKEND_URL}/api/user/update-profile`, formData, {
-        withCredentials: true,
-      })
+      const response = await axios.put(
+        `${BACKEND_URL}/api/user/update-profile`,
+        formData,
+        {
+          withCredentials: true,
+        }
+      )
       setUser(response.data)
       setIsEditing(false)
       setError("")
     } catch (err) {
       console.error("Failed to update profile:", err)
-      setError(err.response?.data || "Failed to update profile. Please try again.")
+      if (err.response?.status === 401) {
+        navigate("/signin")
+      } else {
+        setError(err.response?.data || "Failed to update profile. Please try again.")
+      }
     }
   }
 
@@ -192,13 +222,14 @@ const UserProfile = () => {
                   className="profile-image"
                   onClick={handleImageClick}
                 />
+                {isUploading && <div className="uploading-spinner">Uploading...</div>}
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
                   className="file-input"
                   ref={fileInputRef}
-                  style={{ display: "none" }} // Hidden input
+                  style={{ display: "none" }}
                 />
               </div>
 
