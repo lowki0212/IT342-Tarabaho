@@ -51,7 +51,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         "/api/worker/token",
         "/api/worker/login",
         "/api/worker/*/upload-initial-picture",
-        "/api/worker/*/upload-picture",
         "/api/certificate/worker/**",
         "/oauth2/**",
         "/login/**",

@@ -52,8 +52,7 @@ public class SecurityConfig {
                         "/api/worker/check-duplicates",
                         "/api/worker/token",
                         "/api/worker/login",
-                        "/api/worker/{workerId}/upload-initial-picture",
-                        "/api/worker/{workerId}/upload-picture"
+                        "/api/worker/{workerId}/upload-initial-picture"
                     ).permitAll()
                     .requestMatchers("/api/certificate/worker/**").permitAll()
                     .requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
