@@ -24,6 +24,7 @@ import AboutUs from "./pages/AboutUs"
 import AdminAboutUs from "./pages/AdminAboutUs"
 import UserAboutUs from "./pages/UserAboutUs"
 import TrabahadorAboutUs from "./pages/TrabahadorAboutUs"
+import TrabahadorContactUs from "./pages/TrabahadorContactUs"
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
 
         {/* Trabahador-specific routes */}
         <Route path="/trabahador-homepage" element={<TrabahadorHomepage />} />
+        <Route path="/trabahador-contact" element={<TrabahadorContactUs />} />
         <Route path="/trabahador-history" element={<div>Trabahador History Page</div>} />
         <Route path="/trabahador-profile" element={<TrabahadorProfile />} />
         <Route path="/trabahador-about" element={<TrabahadorAboutUs />} />

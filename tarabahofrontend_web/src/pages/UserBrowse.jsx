@@ -21,9 +21,6 @@ const Browse = () => {
           <h1 className="hero-title">
             Find on-demand help for your daily tasks anytime, anywhere with Tarabaho!
           </h1>
-          <button className="become-trabahador-button" aria-label="Become a Trabahador">
-            Become a Trabahador!
-          </button>
         </div>
       </div>
 

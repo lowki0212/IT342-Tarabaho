@@ -1,0 +1,253 @@
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.Trabahador-contact-page-container {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to right, #001233, #023e8a);
+  overflow-x: hidden;
+}
+
+/* Contact Content */
+.Trabahador-contact-content {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.Trabahador-contact-left {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.Trabahador-contact-heading {
+  color: white;
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.Trabahador-contact-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  max-width: 500px;
+}
+
+.Trabahador-contact-info {
+  margin-top: 2rem;
+}
+
+.Trabahador-contact-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.Trabahador-contact-item svg {
+  margin-right: 1rem;
+  min-width: 24px;
+}
+
+.Trabahador-contact-right {
+  flex: 1.2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.Trabahador-contact-form-container {
+  background-color: rgba(0, 60, 130, 0.7);
+  border-radius: 10px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 550px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.Trabahador-form-heading {
+  color: white;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.Trabahador-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.Trabahador-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.Trabahador-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.Trabahador-form-row .Trabahador-form-group {
+  flex: 1;
+}
+
+.Trabahador-form-group label {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.Trabahador-form-group input,
+.Trabahador-form-group textarea {
+  padding: 0.85rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+  color: #333;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.Trabahador-form-group input:focus,
+.Trabahador-form-group textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.5), 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.Trabahador-form-group textarea {
+  resize: vertical;
+  min-height: 150px;
+}
+
+.required {
+  color: #ff6b6b;
+  margin-left: 2px;
+}
+
+.Trabahador-send-button {
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  padding: 0.85rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  align-self: center;
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 200px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.Trabahador-send-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.Trabahador-send-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .Trabahador-contact-left {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .Trabahador-contact-content {
+    flex-direction: column;
+  }
+
+  .Trabahador-contact-left {
+    padding: 2rem;
+    align-items: center;
+    text-align: center;
+  }
+
+  .Trabahador-contact-description {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .Trabahador-contact-heading {
+    font-size: 2.2rem;
+  }
+
+  .Trabahador-contact-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .Trabahador-contact-form-container {
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .Trabahador-contact-form-container {
+    padding: 1.5rem;
+  }
+
+  .Trabahador-form-heading {
+    font-size: 1.5rem;
+  }
+
+  .Trabahador-form-row {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .Trabahador-contact-heading {
+    font-size: 1.8rem;
+  }
+
+  .Trabahador-contact-description {
+    font-size: 1rem;
+  }
+
+  .Trabahador-contact-item {
+    font-size: 1rem;
+  }
+
+  .Trabahador-form-group label {
+    font-size: 0.9rem;
+  }
+
+  .Trabahador-form-group input,
+  .Trabahador-form-group textarea {
+    padding: 0.75rem;
+  }
+}

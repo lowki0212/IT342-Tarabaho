@@ -14,6 +14,11 @@ const TrabahadorNavbar = ({ activePage }) => {
         <Link to="/trabahador-homepage" className={activePage === "homepage" ? "active" : ""}>
           HOME
         </Link>
+
+        <Link to="/trabahador-contact" className={activePage === "contact" ? "active" : ""}>
+          CONTACT US
+        </Link>
+
         <Link to="/trabahador-history" className={activePage === "history" ? "active" : ""}>
           HISTORY
         </Link>
