@@ -1,246 +1,543 @@
 .trabahador-profile-page {
-    min-height: 100vh;
-    width: 100vw;
-    background-color: #f5f7fb;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-  }
-  
-  .trabahador-profile-content {
-    flex: 1;
-    padding: 2rem;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-  }
-  
+  min-height: 100vh;
+  width: 100vw;
+  background-color: #f5f7fb;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.trabahador-profile-content {
+  flex: 1;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.trabahador-profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.trabahador-profile-heading {
+  color: #0078ff;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Logout button */
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #ff3b30;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.logout-button:hover {
+  background-color: #ffecec;
+  transform: translateY(-1px);
+}
+
+.error-message {
+  color: #ff3b30;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.profile-container {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.profile-card {
+  background-color: #8a8a8a;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-top-section {
+  display: flex;
+  background-color: #2c2e3f;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.profile-image-section {
+  width: 120px;
+  height: 120px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #e0e0e0;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.profile-credentials-section {
+  flex: 1;
+  padding: 1rem;
+  color: white;
+}
+
+.profile-credentials-section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.worker-bio {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.worker-rating {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 0.5rem;
+}
+
+.star-icon {
+  color: #f1c40f;
+  font-size: 1rem;
+}
+
+.worker-rate {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.worker-skills {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.skill-tag {
+  background-color: #000;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.edit-profile-container {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.edit-profile-btn {
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-profile-btn:hover {
+  background-color: #0056b3;
+}
+
+.edit-form {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-group:last-child {
+  border-bottom: none;
+}
+
+.credential-label {
+  width: 120px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.form-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  background-color: #d32f2f;
+}
+
+.profile-details-section {
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.detail-row {
+  display: flex;
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  width: 120px;
+  font-weight: 600;
+  color: #333;
+}
+
+.detail-value {
+  flex: 1;
+  color: #333;
+}
+
+.certificates-section {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.certificates-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.add-certificate-btn {
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.3s;
+}
+
+.add-certificate-btn:hover {
+  background-color: #0056b3;
+}
+
+.certificate-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.certificate-details {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.certificate-details:hover {
+  background-color: #f5f7fb;
+}
+
+.certificate-icon {
+  color: #0078ff;
+  font-size: 1.2rem;
+}
+
+.certificate-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.2rem;
+}
+
+.certificate-details p {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.2rem;
+}
+
+.certificate-date {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.certificate-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn {
+  background-color: #0078ff;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.edit-btn:hover {
+  background-color: #0056b3;
+}
+
+.delete-btn {
+  background-color: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.certificate-form {
+  background-color: #f9f9f9;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.certificate-image-upload {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.certificate-preview-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 0.25rem;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+}
+
+.certificate-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.certificate-modal-content {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.certificate-modal-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.certificate-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.certificate-modal-close:hover {
+  color: #ff3b30;
+}
+
+/* Tarabaho Watermark */
+.tarabaho-watermark {
+  position: absolute;
+  bottom: 20px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #0066cc;
+  opacity: 0.5;
+  transform: rotate(-10deg);
+}
+
+.watermark-text {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.watermark-subtext {
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
   .trabahador-profile-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  .trabahador-profile-heading {
-    color: #0078ff;
-    font-size: 2.5rem;
-    font-weight: 700;
-  }
-  
-  /* Logout button */
-  .logout-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: none;
-    border: none;
-    color: #ff3b30;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    transition: all 0.2s;
-    border-radius: 4px;
-  }
-  
-  .logout-button:hover {
-    background-color: #ffecec;
-    transform: translateY(-1px);
-  }
-  
-  .profile-container {
-    width: 100%;
-    margin: 0 auto;
-  }
-  
-  .profile-card {
-    background-color: #8a8a8a;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .profile-top-section {
-    display: flex;
-    background-color: white;
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    overflow: hidden;
-  }
-  
-  .profile-image-section {
-    width: 120px;
-    height: 120px;
-    padding: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: 1px solid #e0e0e0;
-  }
-  
-  .profile-image {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .profile-credentials-section {
-    flex: 1;
-    padding: 1rem;
-  }
-  
-  .credential-row {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .credential-label {
-    width: 120px;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .credential-value {
-    flex: 1;
-    color: #333;
-  }
-  
-  .change-password-link {
-    color: #0078ff;
-    text-decoration: none;
-    margin-left: auto;
-    font-size: 0.9rem;
-  }
-  
-  .change-password-link:hover {
-    text-decoration: underline;
-  }
-  
-  .edit-profile-container {
-    display: flex;
-    justify-content: center;
-    margin: 1rem 0;
-  }
-  
-  .edit-profile-btn {
-    background-color: #0078ff;
-    color: white;
-    border: none;
-    border-radius: 0.25rem;
-    padding: 0.5rem 1.5rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  
-  .edit-profile-btn:hover {
-    background-color: #0056b3;
-  }
-  
-  .profile-details-section {
-    background-color: white;
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-  
-  .detail-row {
-    display: flex;
-    padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  
-  .detail-row:last-child {
-    border-bottom: none;
-  }
-  
-  .detail-label {
-    width: 120px;
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .detail-value {
-    flex: 1;
-    color: #333;
-  }
-  
-  /* Tarabaho Watermark */
-  .tarabaho-watermark {
-    position: absolute;
-    bottom: 20px;
-    right: 40px;
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    color: #0066cc;
-    opacity: 0.5;
-    transform: rotate(-10deg);
+    align-items: flex-start;
   }
-  
-  .watermark-text {
-    font-size: 2rem;
-    font-weight: bold;
-    letter-spacing: 2px;
+
+  .profile-top-section {
+    flex-direction: column;
   }
-  
-  .watermark-subtext {
+
+  .profile-image-section {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .profile-credentials-section h3 {
+    font-size: 1rem;
+  }
+
+  .worker-bio {
     font-size: 0.8rem;
-    letter-spacing: 1px;
   }
-  
-  /* Responsive */
-  @media (max-width: 768px) {
-    .trabahador-profile-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  
-    .profile-top-section {
-      flex-direction: column;
-    }
-  
-    .profile-image-section {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid #e0e0e0;
-    }
-  
-    .credential-row,
-    .detail-row {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  
-    .credential-label,
-    .detail-label {
-      width: 100%;
-      margin-bottom: 0.5rem;
-    }
-  
-    .change-password-link {
-      margin-left: 0;
-      margin-top: 0.5rem;
-    }
-  
-    .tarabaho-watermark {
-      bottom: 10px;
-      right: 20px;
-    }
-  
-    .watermark-text {
-      font-size: 1.5rem;
-    }
-  
-    .watermark-subtext {
-      font-size: 0.7rem;
-    }
+
+  .worker-rate {
+    font-size: 0.9rem;
   }
+
+  .skill-tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .detail-row,
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .credential-label,
+  .detail-label {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .certificate-preview-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .tarabaho-watermark {
+    bottom: 10px;
+    right: 20px;
+  }
+
+  .watermark-text {
+    font-size: 1.5rem;
+  }
+
+  .watermark-subtext {
+    font-size: 0.7rem;
+  }
+}

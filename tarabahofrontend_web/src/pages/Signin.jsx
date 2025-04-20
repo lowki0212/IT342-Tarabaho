@@ -8,17 +8,16 @@ import "../styles/signin.css"
 
 const SignIn = () => {
   const [loginType, setLoginType] = useState("user") // Default to user login
-
-  // Separate state for user and trabahador credentials
   const [userCredentials, setUserCredentials] = useState({ username: "", password: "" })
   const [trabahadorCredentials, setTrabahadorCredentials] = useState({ username: "", password: "" })
-
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false) // Added loading state
   const navigate = useNavigate()
 
   const handleUserLogin = async (e) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     const payload = userCredentials
     console.log("User Login Payload:", payload)
@@ -39,25 +38,24 @@ const SignIn = () => {
       // Redirect to user dashboard
       navigate("/user-browse")
     } catch (err) {
-      setError("User Login Error: " + (err.response?.data || "Invalid user credentials"))
+      setError(err.response?.data || "Invalid username or password")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleTrabahadorLogin = async (e) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     const payload = trabahadorCredentials
     console.log("Trabahador Login Payload:", payload)
 
     try {
-      const res = await axios.post(
-        "http://localhost:8080/api/trabahador/token", // Different endpoint for trabahador
-        payload,
-        {
-          withCredentials: true,
-        },
-      )
+      const res = await axios.post("http://localhost:8080/api/worker/token", payload, {
+        withCredentials: true,
+      })
 
       console.log("Trabahador login successful, token set in cookie")
       alert("Logged in as Trabahador successfully!")
@@ -70,7 +68,9 @@ const SignIn = () => {
       // Redirect to trabahador dashboard
       navigate("/trabahador-homepage")
     } catch (err) {
-      setError("Trabahador Login Error: " + (err.response?.data || "Invalid trabahador credentials"))
+      setError(err.response?.data || "Invalid username or password")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -89,11 +89,13 @@ const SignIn = () => {
   const handleUserInputChange = (e) => {
     const { name, value } = e.target
     setUserCredentials((prev) => ({ ...prev, [name]: value }))
+    setError("") // Clear error on input change
   }
 
   const handleTrabahadorInputChange = (e) => {
     const { name, value } = e.target
     setTrabahadorCredentials((prev) => ({ ...prev, [name]: value }))
+    setError("") // Clear error on input change
   }
 
   return (
@@ -163,6 +165,7 @@ const SignIn = () => {
                     value={userCredentials.username}
                     onChange={handleUserInputChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -202,6 +205,7 @@ const SignIn = () => {
                     value={userCredentials.password}
                     onChange={handleUserInputChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -214,12 +218,12 @@ const SignIn = () => {
                   </Link>
                 </div>
 
-                <button type="submit" className="login-button">
-                  Login as User
+                <button type="submit" className="login-button" disabled={isLoading}>
+                  {isLoading ? "Logging In..." : "Login as User"}
                 </button>
 
                 {/* Google Login Button */}
-                <button type="button" onClick={handleGoogleLogin} className="google-login-button">
+                <button type="button" onClick={handleGoogleLogin} className="google-login-button" disabled={isLoading}>
                   Continue with Google
                 </button>
               </form>
@@ -256,6 +260,7 @@ const SignIn = () => {
                     value={trabahadorCredentials.username}
                     onChange={handleTrabahadorInputChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -295,6 +300,7 @@ const SignIn = () => {
                     value={trabahadorCredentials.password}
                     onChange={handleTrabahadorInputChange}
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -307,8 +313,8 @@ const SignIn = () => {
                   </Link>
                 </div>
 
-                <button type="submit" className="login-button trabahador-button">
-                  Login as Trabahador
+                <button type="submit" className="login-button trabahador-button" disabled={isLoading}>
+                  {isLoading ? "Logging In..." : "Login as Trabahador"}
                 </button>
 
                 {/* Google Login Button */}
@@ -316,7 +322,7 @@ const SignIn = () => {
             )}
 
             <div className="admin-login-link">
-              <button onClick={handleAdminLogin} className="admin-link-btn">
+              <button onClick={handleAdminLogin} className="admin-link-btn" disabled={isLoading}>
                 Admin Login
               </button>
             </div>
