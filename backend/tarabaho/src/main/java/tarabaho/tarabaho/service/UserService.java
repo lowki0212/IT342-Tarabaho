@@ -20,6 +20,10 @@ public class UserService {
     }
 
     public User registerUser(User user) {
+        // Validate new fields
+        if (user.getPreferredRadius() != null && user.getPreferredRadius() <= 0) {
+            throw new IllegalArgumentException("Preferred radius must be greater than 0.");
+        }
         return userRepository.save(user);
     }
 
@@ -58,6 +62,11 @@ public class UserService {
     public User updateUserPhone(String email, String phoneNumber) throws Exception {
         User user = findByEmail(email)
             .orElseThrow(() -> new Exception("User not found with email: " + email));
+        if (phoneNumber != null && !phoneNumber.isEmpty() &&
+            userRepository.findByPhoneNumber(phoneNumber).isPresent() &&
+            !phoneNumber.equals(user.getPhoneNumber())) {
+            throw new IllegalArgumentException("Phone number already exists.");
+        }
         user.setPhoneNumber(phoneNumber);
         return userRepository.save(user);
     }
@@ -66,15 +75,33 @@ public class UserService {
         User existingUser = userRepository.findById(id)
             .orElseThrow(() -> new Exception("User not found"));
 
+        // Update existing fields
         existingUser.setFirstname(updatedUser.getFirstname());
         existingUser.setLastname(updatedUser.getLastname());
         existingUser.setUsername(updatedUser.getUsername());
         existingUser.setPassword(updatedUser.getPassword());
         existingUser.setEmail(updatedUser.getEmail());
         existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
-        existingUser.setBirthday(updatedUser.getBirthday());
         existingUser.setLocation(updatedUser.getLocation());
+        existingUser.setBirthday(updatedUser.getBirthday());
         existingUser.setProfilePicture(updatedUser.getProfilePicture());
+
+        // Update new fields
+        if (updatedUser.getLatitude() != null) {
+            existingUser.setLatitude(updatedUser.getLatitude());
+        }
+        if (updatedUser.getLongitude() != null) {
+            existingUser.setLongitude(updatedUser.getLongitude());
+        }
+        if (updatedUser.getPreferredRadius() != null) {
+            if (updatedUser.getPreferredRadius() <= 0) {
+                throw new IllegalArgumentException("Preferred radius must be greater than 0.");
+            }
+            existingUser.setPreferredRadius(updatedUser.getPreferredRadius());
+        }
+        if (updatedUser.getIsVerified() != null) {
+            existingUser.setIsVerified(updatedUser.getIsVerified());
+        }
 
         return userRepository.save(existingUser);
     }

@@ -1,26 +1,5 @@
 package tarabaho.tarabaho.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import tarabaho.tarabaho.dto.AuthResponse;
-import tarabaho.tarabaho.entity.User;
-import tarabaho.tarabaho.jwt.JwtUtil;
-import tarabaho.tarabaho.service.UserService;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +9,34 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import tarabaho.tarabaho.dto.AuthResponse;
+import tarabaho.tarabaho.entity.User;
+import tarabaho.tarabaho.jwt.JwtUtil;
+import tarabaho.tarabaho.service.UserService;
 
 @RestController
 @RequestMapping("/api/user")
@@ -53,10 +60,12 @@ public class UserController {
     @Operation(summary = "Register a new user", description = "Registers a new user after checking for uniqueness")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "User registered successfully"),
-        @ApiResponse(responseCode = "400", description = "Username, email, or phone already exists")
+        @ApiResponse(responseCode = "400", description = "Username, email, phone, or invalid input")
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
+        System.out.println("UserController: Received registration request for username: " + user.getUsername());
+
         if (userService.findByUsername(user.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Username already exists.");
         }
@@ -67,8 +76,12 @@ public class UserController {
                 userService.findByPhoneNumber(user.getPhoneNumber()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
         }
+        if (user.getPreferredRadius() != null && user.getPreferredRadius() <= 0) {
+            return ResponseEntity.badRequest().body("⚠️ Preferred radius must be greater than 0.");
+        }
 
         User savedUser = userService.registerUser(user);
+        System.out.println("UserController: User registered successfully, ID: " + savedUser.getId());
         return ResponseEntity.ok(savedUser);
     }
 
@@ -86,6 +99,7 @@ public class UserController {
             HttpServletResponse response
     ) {
         try {
+            System.out.println("UserController: Attempting login for username: " + loginData.getUsername());
             User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
             String jwtToken = jwtUtil.generateToken(user.getUsername());
 
@@ -96,12 +110,13 @@ public class UserController {
             tokenCookie.setMaxAge(24 * 60 * 60);
             tokenCookie.setDomain("localhost");
             response.addCookie(tokenCookie);
+            System.out.println("UserController: Token generated and cookie set for username: " + user.getUsername());
 
             AuthResponse body = new AuthResponse(jwtToken);
             return ResponseEntity.ok(body);
-
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            System.out.println("UserController: Login failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null));
         }
     }
 
@@ -113,11 +128,13 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginData, HttpServletRequest request) {
         try {
+            System.out.println("UserController: Attempting session login for username: " + loginData.getUsername());
             User user = userService.loginUser(loginData.getUsername(), loginData.getPassword());
             request.getSession(true).setAttribute("user", user);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid username or password.");
+            System.out.println("UserController: Session login failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password.");
         }
     }
 
@@ -143,27 +160,34 @@ public class UserController {
     @Operation(summary = "Update phone number", description = "Updates the phone number for the currently logged-in user")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Phone number updated"),
+        @ApiResponse(responseCode = "400", description = "Phone number already exists"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PutMapping("/update-phone")
-    public String updatePhone(
+    public ResponseEntity<?> updatePhone(
             Authentication authentication,
             @RequestBody PhoneUpdateRequest request
     ) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            return "User not authenticated.";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
         }
         String username = authentication.getName();
         Optional<User> userOpt = userService.findByUsername(username);
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            user.setPhoneNumber(request.getPhoneNumber());
-            userService.saveUser(user);
-            return "Phone number updated successfully.";
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
         }
 
-        return "User not found.";
+        try {
+            User user = userOpt.get();
+            userService.updateUserPhone(user.getEmail(), request.getPhoneNumber());
+            return ResponseEntity.ok("Phone number updated successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+        }
     }
 
     @Operation(summary = "Upload profile picture", description = "Uploads a profile picture for the currently logged-in user")
@@ -188,7 +212,7 @@ public class UserController {
 
         try {
             String contentType = file.getContentType();
-            if (!contentType.startsWith("image/")) {
+            if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest().body("Only image files are allowed.");
             }
 
@@ -235,7 +259,7 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Update user profile", description = "Updates email, address, birthday, and password for the currently logged-in user")
+    @Operation(summary = "Update user profile", description = "Updates profile details for the currently logged-in user")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid input"),
@@ -278,6 +302,18 @@ public class UserController {
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(request.getPassword());
         }
+        if (request.getLatitude() != null) {
+            user.setLatitude(request.getLatitude());
+        }
+        if (request.getLongitude() != null) {
+            user.setLongitude(request.getLongitude());
+        }
+        if (request.getPreferredRadius() != null) {
+            if (request.getPreferredRadius() <= 0) {
+                return ResponseEntity.badRequest().body("⚠️ Preferred radius must be greater than 0.");
+            }
+            user.setPreferredRadius(request.getPreferredRadius());
+        }
 
         userService.saveUser(user);
         return ResponseEntity.ok(user);
@@ -308,7 +344,7 @@ public class UserController {
         } catch (Exception e) {
             System.err.println("Logout failed: " + e.getMessage());
             e.printStackTrace();
-            return ResponseEntity.status(500).body("Logout failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
         }
     }
 
@@ -334,6 +370,9 @@ public class UserController {
         private String location;
         private String birthday;
         private String password;
+        private Double latitude;
+        private Double longitude;
+        private Double preferredRadius;
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
@@ -343,5 +382,11 @@ public class UserController {
         public void setBirthday(String birthday) { this.birthday = birthday; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getPreferredRadius() { return preferredRadius; }
+        public void setPreferredRadius(Double preferredRadius) { this.preferredRadius = preferredRadius; }
     }
 }
