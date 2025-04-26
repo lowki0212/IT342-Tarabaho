@@ -1,6 +1,7 @@
 package tarabaho.tarabaho.entity;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,22 +32,22 @@ public class User {
     @Column(unique = true, nullable = true)
     private String phoneNumber;
 
-    private String location; // General location (e.g., city or address)
+    private String location;
 
     private LocalDate birthday;
     private String profilePicture;
 
     @Column(nullable = true)
-    private Double latitude; // For geolocation-based urgent job postings
+    private Double latitude;
 
     @Column(nullable = true)
-    private Double longitude; // For geolocation-based urgent job postings
+    private Double longitude;
 
     @Column(nullable = true)
-    private Double preferredRadius; // Preferred radius for urgent job searches (in km)
+    private Double preferredRadius;
 
     @Column(nullable = false)
-    private Boolean isVerified = false; // Verification status (e.g., email or ID verification)
+    private Boolean isVerified = false;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -77,4 +78,18 @@ public class User {
     public void setPreferredRadius(Double preferredRadius) { this.preferredRadius = preferredRadius; }
     public Boolean getIsVerified() { return isVerified; }
     public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
+
+    // Override equals and hashCode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

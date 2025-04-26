@@ -160,6 +160,7 @@
 /* Chat Page */
 .chat-card {
   max-width: 600px;
+  width: 100%;
 }
 
 .chat-card h2 {
@@ -196,15 +197,16 @@
   padding: 10px;
   border-radius: 8px;
   max-width: 70%;
+  word-wrap: break-word;
 }
 
 .chat-message.user .chat-message-content {
-  background-color: #007bff; /* Blue for user messages */
+  background-color: #007bff;
   color: white;
 }
 
 .chat-message.worker .chat-message-content {
-  background-color: #e9ecef; /* Gray for worker messages */
+  background-color: #e9ecef;
 }
 
 .chat-message-timestamp {
@@ -214,6 +216,7 @@
 
 .chat-form {
   display: flex;
+  flex-wrap: nowrap;
 }
 
 .chat-form input {
@@ -221,6 +224,7 @@
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px 0 0 4px;
+  font-size: 1rem;
 }
 
 .chat-form button {
@@ -230,10 +234,16 @@
   background-color: #007bff;
   color: #fff;
   cursor: pointer;
+  font-size: 1rem;
 }
 
 .chat-form button:hover {
   background-color: #0056b3;
+}
+
+.chat-form button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
 }
 
 /* Booking History */
@@ -345,4 +355,42 @@
 
 .booking-table .chat-button {
   margin: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .content-container {
+      padding: 10px;
+  }
+
+  .chat-card {
+      padding: 15px;
+  }
+
+  .chat-card h2 {
+      font-size: 1.4rem;
+  }
+
+  .chat-box {
+      height: 300px; /* Smaller height for mobile */
+  }
+
+  .chat-message-content {
+      max-width: 85%; /* Wider messages on small screens */
+      font-size: 0.9rem;
+  }
+
+  .chat-message-timestamp {
+      font-size: 0.7rem;
+  }
+
+  .chat-form input {
+      font-size: 0.9rem;
+      padding: 8px;
+  }
+
+  .chat-form button {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+  }
 }

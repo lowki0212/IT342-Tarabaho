@@ -50,6 +50,7 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // Existing endpoints (unchanged)
     @Operation(summary = "Get all users", description = "Retrieve a list of all registered users")
     @ApiResponse(responseCode = "200", description = "List of users returned successfully")
     @GetMapping("/all")
@@ -138,6 +139,36 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Get JWT token from cookie", description = "Retrieve the JWT token from the HttpOnly cookie for WebSocket authentication")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "No valid token found")
+    })
+    @GetMapping("/get-token")
+    public ResponseEntity<?> getToken(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("UserController: getToken failed: Not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+            }
+            String username = authentication.getName();
+            System.out.println("UserController: getToken for username: " + username);
+            
+            Optional<User> user = userService.findByUsername(username);
+            if (!user.isPresent()) {
+                System.out.println("UserController: User not found for username: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+            }
+            
+            String token = jwtUtil.generateToken(username);
+            System.out.println("UserController: Generated token for user: " + username);
+            return ResponseEntity.ok(new TokenResponse(token));
+        } catch (Exception e) {
+            System.err.println("UserController: getToken failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
     @Operation(summary = "Delete user", description = "Deletes a user by ID")
     @ApiResponse(responseCode = "200", description = "User deleted successfully")
     @DeleteMapping("/{id}")
@@ -222,7 +253,7 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
             }
 
-            String uploadDir = "uploads/profiles/";
+            String uploadDir = "Uploads/profiles/";
             File directory = new File(uploadDir);
             if (!directory.exists()) {
                 boolean created = directory.mkdirs();
@@ -388,5 +419,11 @@ public class UserController {
         public void setLongitude(Double longitude) { this.longitude = longitude; }
         public Double getPreferredRadius() { return preferredRadius; }
         public void setPreferredRadius(Double preferredRadius) { this.preferredRadius = preferredRadius; }
+    }
+    static class TokenResponse {
+        private String token;
+        public TokenResponse(String token) { this.token = token; }
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
     }
 }

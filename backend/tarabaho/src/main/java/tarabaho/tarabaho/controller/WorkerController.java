@@ -119,7 +119,6 @@ public class WorkerController {
     public ResponseEntity<?> registerWorker(@RequestBody WorkerRegisterDTO workerDTO, HttpServletResponse response) {
         System.out.println("WorkerController: Received registration request for username: " + workerDTO.getUsername());
 
-        // Check for duplicates
         if (workerService.findByUsername(workerDTO.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Username already exists.");
         }
@@ -131,15 +130,13 @@ public class WorkerController {
             return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
         }
 
-        // Validate hourly rate
         if (workerDTO.getHourly() <= 0) {
             return ResponseEntity.badRequest().body("⚠️ Hourly rate must be provided and greater than 0.");
         }
 
-        // Map DTO to Worker entity
         Worker worker = new Worker();
         worker.setUsername(workerDTO.getUsername());
-        worker.setPassword(workerDTO.getPassword()); // Password hashing should be handled in WorkerService
+        worker.setPassword(workerDTO.getPassword());
         worker.setFirstName(workerDTO.getFirstName());
         worker.setLastName(workerDTO.getLastName());
         worker.setEmail(workerDTO.getEmail());
@@ -147,12 +144,10 @@ public class WorkerController {
         worker.setAddress(workerDTO.getAddress());
         worker.setHourly(workerDTO.getHourly());
 
-        // Parse birthday if provided
         if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
             worker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
         }
 
-        // Register worker via service
         Worker registeredWorker = workerService.registerWorker(worker);
         System.out.println("WorkerController: Worker registered successfully, ID: " + registeredWorker.getId());
         return ResponseEntity.ok(registeredWorker);
@@ -189,7 +184,7 @@ public class WorkerController {
                 return ResponseEntity.badRequest().body("No file uploaded.");
             }
 
-            long maxFileSize = 5 * 1024 * 1024; // 5MB
+            long maxFileSize = 5 * 1024 * 1024;
             if (file.getSize() > maxFileSize) {
                 System.out.println("WorkerController: File size exceeds limit for workerId: " + workerId + ", size: " + file.getSize());
                 return ResponseEntity.badRequest().body("File size exceeds 5MB limit.");
@@ -278,6 +273,36 @@ public class WorkerController {
         }
     }
 
+    @Operation(summary = "Get JWT token from cookie", description = "Retrieve the JWT token from the HttpOnly cookie for WebSocket authentication")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "No valid token found")
+    })
+    @GetMapping("/get-token")
+    public ResponseEntity<?> getToken(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("WorkerController: getToken failed: Not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+            }
+            String username = authentication.getName();
+            System.out.println("WorkerController: getToken for username: " + username);
+            
+            Optional<Worker> worker = workerService.findByUsername(username);
+            if (!worker.isPresent()) {
+                System.out.println("WorkerController: Worker not found for username: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not found");
+            }
+            
+            String token = jwtUtil.generateToken(username);
+            System.out.println("WorkerController: Generated token for worker: " + username);
+            return ResponseEntity.ok(new TokenResponse(token));
+        } catch (Exception e) {
+            System.err.println("WorkerController: getToken failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
     @Operation(summary = "Login worker (session-based)", description = "Authenticate a worker using username and password")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Worker logged in successfully"),
@@ -312,53 +337,66 @@ public class WorkerController {
     ) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("WorkerController: Upload picture failed: Worker not authenticated");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
             }
 
             String username = authentication.getName();
-            Worker worker = workerService.findByUsername(username)
-                    .orElseThrow(() -> new Exception("Worker not found for username: " + username));
+            Optional<Worker> workerOpt = workerService.findByUsername(username);
+            if (!workerOpt.isPresent()) {
+                System.out.println("WorkerController: Upload picture failed: Worker not found for username: " + username);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found for username: " + username);
+            }
+            Worker worker = workerOpt.get();
 
             if (!worker.getId().equals(workerId)) {
+                System.out.println("WorkerController: Upload picture failed: Unauthorized for workerId: " + workerId + ", authenticated workerId: " + worker.getId());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("Unauthorized: Cannot upload picture for another worker");
             }
 
             if (file == null || file.isEmpty()) {
+                System.out.println("WorkerController: Upload picture failed: No file uploaded for workerId: " + workerId);
                 return ResponseEntity.badRequest().body("No file uploaded.");
             }
 
             String contentType = file.getContentType();
-            if (!contentType.startsWith("image/")) {
+            if (contentType == null || !contentType.startsWith("image/")) {
+                System.out.println("WorkerController: Upload picture failed: Invalid file type for workerId: " + workerId);
                 return ResponseEntity.badRequest().body("Only image files are allowed.");
             }
 
             String uploadDir = "Uploads/profiles/";
             File directory = new File(uploadDir);
             if (!directory.exists()) {
+                System.out.println("WorkerController: Creating upload directory: " + uploadDir);
                 boolean created = directory.mkdirs();
                 if (!created) {
+                    System.out.println("WorkerController: Failed to create upload directory: " + uploadDir);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                             .body("Failed to create upload directory: " + uploadDir);
                 }
             }
 
             if (!directory.canWrite()) {
+                System.out.println("WorkerController: Upload directory is not writable: " + uploadDir);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Upload directory is not writable: " + uploadDir);
             }
 
             String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
             Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
+            System.out.println("WorkerController: Saving file to: " + filePath);
             Files.write(filePath, file.getBytes());
 
             String profilePicturePath = "/profiles/" + fileName;
             worker.setProfilePicture(profilePicturePath);
             workerService.editWorker(workerId, worker);
 
+            System.out.println("WorkerController: Profile picture uploaded successfully for workerId: " + workerId);
             return ResponseEntity.ok(worker);
         } catch (Exception e) {
-            System.out.println("WorkerController: Upload failed: " + e.getMessage());
+            System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file: " + e.getMessage());
         }
@@ -484,7 +522,6 @@ public class WorkerController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No available workers found nearby.");
             }
 
-            // TODO: Implement notification logic later
             System.out.println("Found " + nearbyWorkers.size() + " workers for urgent job in category: " + urgentJobRequest.getCategoryName());
             return ResponseEntity.ok(new UrgentJobResponse(nearbyWorkers.size()));
         } catch (Exception e) {
@@ -505,17 +542,16 @@ public class WorkerController {
         System.out.println("WorkerController: Received update request for worker ID: " + id);
 
         try {
-            // Fetch the existing worker
-            Worker existingWorker = workerService.findById(id);
-                
-
-            // Verify the authenticated user is the worker being updated
-            String authenticatedUsername = authentication.getName();
-            if (!existingWorker.getUsername().equals(authenticatedUsername)) {
-                return ResponseEntity.status(403).body("⚠️ You are not authorized to update this profile.");
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
             }
 
-            // Check for duplicate email (if changed)
+            Worker existingWorker = workerService.findById(id);
+            String authenticatedUsername = authentication.getName();
+            if (!existingWorker.getUsername().equals(authenticatedUsername)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("⚠️ You are not authorized to update this profile.");
+            }
+
             if (workerDTO.getEmail() != null && !workerDTO.getEmail().equals(existingWorker.getEmail())) {
                 if (workerService.findByEmail(workerDTO.getEmail()).isPresent()) {
                     return ResponseEntity.badRequest().body("⚠️ Email already exists.");
@@ -523,7 +559,6 @@ public class WorkerController {
                 existingWorker.setEmail(workerDTO.getEmail());
             }
 
-            // Check for duplicate phone number (if changed)
             if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().equals(existingWorker.getPhoneNumber())) {
                 if (!workerDTO.getPhoneNumber().isEmpty() && workerService.findByPhoneNumber(workerDTO.getPhoneNumber()).isPresent()) {
                     return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
@@ -531,7 +566,6 @@ public class WorkerController {
                 existingWorker.setPhoneNumber(workerDTO.getPhoneNumber());
             }
 
-            // Update other fields if provided
             if (workerDTO.getAddress() != null) {
                 existingWorker.setAddress(workerDTO.getAddress());
             }
@@ -554,10 +588,9 @@ public class WorkerController {
                 existingWorker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
             }
             if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
-                existingWorker.setPassword(workerDTO.getPassword()); // Hashing should be handled in WorkerService
+                existingWorker.setPassword(workerDTO.getPassword());
             }
 
-            // Update worker via service
             Worker updatedWorker = workerService.updateWorker(existingWorker);
             System.out.println("WorkerController: Worker updated successfully, ID: " + updatedWorker.getId());
             return ResponseEntity.ok(updatedWorker);
@@ -568,24 +601,12 @@ public class WorkerController {
         }
     }
 
-    // Added endpoints for booking system compatibility
-    @Operation(summary = "Get available workers by category", description = "Retrieve a list of available workers for a specific category")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "List of available workers returned successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid category name")
-    })
     @GetMapping("/category/{categoryName}/available")
     public ResponseEntity<List<Worker>> getAvailableWorkersByCategory(@PathVariable String categoryName) {
         List<Worker> workers = workerService.getAvailableWorkersByCategory(categoryName);
         return ResponseEntity.ok(workers);
     }
 
-    @Operation(summary = "Get nearby available workers by category", description = "Retrieve a list of available workers for a specific category within a radius")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "List of nearby available workers returned successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid input"),
-        @ApiResponse(responseCode = "401", description = "User not authenticated or not verified")
-    })
     @GetMapping("/category/{categoryName}/nearby/available")
     public ResponseEntity<?> getNearbyAvailableWorkersByCategory(
             @PathVariable String categoryName,
@@ -679,5 +700,11 @@ public class WorkerController {
 
         public int getWorkersNotified() { return workersNotified; }
         public void setWorkersNotified(int workersNotified) { this.workersNotified = workersNotified; }
+    }
+    static class TokenResponse {
+        private String token;
+        public TokenResponse(String token) { this.token = token; }
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
     }
 }
