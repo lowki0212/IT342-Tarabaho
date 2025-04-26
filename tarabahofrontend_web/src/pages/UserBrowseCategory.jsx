@@ -158,8 +158,8 @@ const UserBrowseCategory = () => {
             <p>No workers found for {displayCategoryName}.</p>
           )}
         </div>
-        <Footer />
       </div>
+      <Footer />
     </ErrorBoundary>
   )
 }

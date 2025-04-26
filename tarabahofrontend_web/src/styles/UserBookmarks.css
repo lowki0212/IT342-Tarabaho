@@ -1,0 +1,228 @@
+/* UserBookmarks.css */
+.bookmarks-page {
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    overflow-y: auto;
+  }
+  
+  .bookmarks-content {
+    padding: 30px;
+    position: relative;
+  }
+  
+  .bookmarks-title {
+    color: #0066cc;
+    font-size: 2.8rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+  }
+  
+  .bookmarks-container {
+    display: flex;
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    min-height: 600px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Sidebar Styles */
+  .bookmarks-sidebar {
+    width: 220px;
+    padding: 30px 0;
+    background-color: transparent;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin-bottom: 10px;
+  }
+  
+  .sidebar-item:hover,
+  .sidebar-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+  }
+  
+  .sidebar-icon {
+    margin-right: 12px;
+    font-size: 1.3rem;
+  }
+  
+  .sidebar-item.logout {
+    margin-top: auto;
+    color: #ff4d4d;
+  }
+  
+  .sidebar-item.logout:hover {
+    background-color: rgba(255, 77, 77, 0.2);
+  }
+  
+  /* Main Content */
+  .bookmarks-main {
+    flex: 1;
+    padding: 30px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Bookmarked Workers Grid */
+  .bookmarked-workers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .worker-card {
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .worker-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .worker-image-container {
+    width: 100%;
+    height: 180px;
+    overflow: hidden;
+  }
+  
+  .worker-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .worker-info {
+    padding: 15px;
+  }
+  
+  .worker-name-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .worker-name {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .bookmark-icon {
+    color: #0066cc;
+    font-size: 1.2rem;
+  }
+  
+  .view-profile-btn {
+    width: 100%;
+    padding: 8px 0;
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .view-profile-btn:hover {
+    background-color: #0055aa;
+  }
+  
+  /* Tarabaho Watermark */
+  .tarabaho-watermark {
+    position: absolute;
+    bottom: 30px;
+    right: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #0066cc;
+    opacity: 0.4;
+    transform: rotate(-10deg);
+    pointer-events: none;
+  }
+  
+  .watermark-text {
+    font-size: 2.5rem;
+    font-weight: bold;
+    letter-spacing: 3px;
+  }
+  
+  .watermark-subtext {
+    font-size: 0.9rem;
+    letter-spacing: 1.5px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .bookmarked-workers-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .bookmarks-container {
+      flex-direction: column;
+    }
+  
+    .bookmarks-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 15px 0;
+      display: flex;
+      justify-content: space-around;
+    }
+  
+    .sidebar-item {
+      padding: 10px 15px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .bookmarks-title {
+      font-size: 2.2rem;
+      text-align: center;
+    }
+  
+    .bookmarks-content {
+      padding: 20px;
+    }
+  
+    .bookmarked-workers-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .bookmarks-main {
+      padding: 20px;
+    }
+  
+    .tarabaho-watermark {
+      bottom: 20px;
+      right: 20px;
+    }
+  
+    .watermark-text {
+      font-size: 1.8rem;
+    }
+  
+    .watermark-subtext {
+      font-size: 0.7rem;
+    }
+  }
+  

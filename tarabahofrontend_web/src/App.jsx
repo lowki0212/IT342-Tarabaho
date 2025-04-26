@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Homepage from "./pages/Homepage"
-import SignIn from "./pages/SignIn"
+import SignIn from "./pages/Signin"
 import Register from "./pages/Register"
 import RegisterUser from "./pages/RegisterUser"
 import RegisterAdmin from "./pages/RegisterAdmin"
@@ -30,7 +30,9 @@ import PaymentPage from "./pages/PaymentPage"
 import BookingRequest from "./pages/BookingRequest"
 import BookingHistory from "./pages/BookingHistory"
 import TrabahadorHistory from "./pages/TrabahadorHistory" // Add import
+import UserBookmarks from "./pages/UserBookmarks" // Add the new import
 import ChatPage from "./pages/ChatPage"
+import WorkerProfileDetail from "./pages/WorkerProfileDetail" // Add the new import
 
 function App() {
   return (
@@ -61,7 +63,7 @@ function App() {
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/user-about" element={<UserAboutUs />} />
         <Route path="/booking-history" element={<BookingHistory />} />
-
+        <Route path="/user-bookmarks" element={<UserBookmarks />} /> {/* Add the new route */}
         {/* Dynamic category browse route */}
         <Route path="/user-browse/:categoryName" element={<UserBrowseCategory />} />
 
@@ -71,7 +73,7 @@ function App() {
         <Route path="/trabahador-history" element={<TrabahadorHistory />} /> {/* Update route */}
         <Route path="/trabahador-profile" element={<TrabahadorProfile />} />
         <Route path="/trabahador-about" element={<TrabahadorAboutUs />} />
-
+        <Route path="/worker-profile-detail/:workerId" element={<WorkerProfileDetail />} /> {/* Add the new route */}
         {/* General routes */}
         <Route path="/contact" element={<ContactUs />} />
 

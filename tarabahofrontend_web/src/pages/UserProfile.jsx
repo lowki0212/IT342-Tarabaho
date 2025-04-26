@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom" // Add useLocation
+import { useNavigate, useLocation } from "react-router-dom"
 import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
@@ -24,7 +24,7 @@ import {
 
 const UserProfile = () => {
   const navigate = useNavigate()
-  const location = useLocation() // Add location hook
+  const location = useLocation()
   const [user, setUser] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -60,7 +60,9 @@ const UserProfile = () => {
             birthday: response.data.birthday || "",
             password: "",
           })
-          setProfileImage(response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : "/placeholder.svg")
+          setProfileImage(
+            response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : "/placeholder.svg",
+          )
         }
       } catch (err) {
         console.error("Failed to fetch user:", err)
@@ -153,6 +155,10 @@ const UserProfile = () => {
     setShowLogoutModal(false)
   }
 
+  const handleBookmarksClick = () => {
+    navigate("/user-bookmarks")
+  }
+
   const handleHistoryClick = () => {
     navigate("/booking-history")
   }
@@ -172,7 +178,10 @@ const UserProfile = () => {
               <FaUser className="sidebar-icon" />
               <span>PROFILE</span>
             </div>
-            <div className="sidebar-item">
+            <div
+              className={`sidebar-item ${location.pathname === "/user-bookmarks" ? "active" : ""}`}
+              onClick={handleBookmarksClick}
+            >
               <FaBookmark className="sidebar-icon" />
               <span>BOOKMARKS</span>
             </div>
@@ -193,7 +202,7 @@ const UserProfile = () => {
             <div className="profile-info-section">
               <div className="profile-image-container">
                 <img
-                  src={profileImage}
+                  src={profileImage || "/placeholder.svg"}
                   alt="User Profile"
                   className="profile-image"
                   onClick={handleImageClick}
@@ -275,9 +284,7 @@ const UserProfile = () => {
                       <span className="detail-label">
                         <FaUser className="detail-icon" /> Name:
                       </span>
-                      <span className="detail-value">
-                        {user ? `${user.firstname} ${user.lastname}` : "Loading..."}
-                      </span>
+                      <span className="detail-value">{user ? `${user.firstname} ${user.lastname}` : "Loading..."}</span>
                     </div>
                     <div className="profile-detail-item">
                       <span className="detail-label">
