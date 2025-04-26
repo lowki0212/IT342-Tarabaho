@@ -61,18 +61,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
-        String method = request.getMethod();
-        System.out.println("JwtAuthFilter: Checking if should not filter for URI: " + path);
-        System.out.println("JwtAuthFilter: Request method: " + method);
-
-        boolean shouldNotFilter = SKIP_FILTER_PATHS.stream()
-                .anyMatch(pattern -> pathMatcher.match(pattern, path));
-
-        System.out.println("JwtAuthFilter: shouldNotFilter = " + shouldNotFilter + " for URI: " + path);
-        return shouldNotFilter;
-    }
+protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    String path = request.getRequestURI();
+    String method = request.getMethod();
+    System.out.println("JwtAuthFilter: Checking URI: " + path + ", Method: " + method);
+    boolean shouldNotFilter = SKIP_FILTER_PATHS.stream()
+            .peek(pattern -> System.out.println("JwtAuthFilter: Comparing with pattern: " + pattern))
+            .anyMatch(pattern -> {
+                boolean match = pathMatcher.match(pattern, path);
+                System.out.println("JwtAuthFilter: Pattern " + pattern + " matches: " + match);
+                return match;
+            });
+    System.out.println("JwtAuthFilter: shouldNotFilter = " + shouldNotFilter + " for URI: " + path);
+    return shouldNotFilter;
+}
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)

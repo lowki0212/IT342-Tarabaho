@@ -24,6 +24,7 @@ const RegisterTrabahador = () => {
     address: "",
     picture: null, // 2x2 picture, will be used as profile picture
     certificates: [], // Array to store multiple certificates
+    hourly: "", // Added hourly field
   })
 
   // Certificate state for dynamic form
@@ -123,7 +124,7 @@ const RegisterTrabahador = () => {
     })
 
     // Reset file input
-    document.getElementName("certificateFile").value = null
+    document.getElementById("certificateFile").value = null
     setErrors({})
   }
 
@@ -188,6 +189,7 @@ const RegisterTrabahador = () => {
     }
     if (!formData.contactNo.trim()) newErrors.contactNo = "Contact number is required"
     if (!formData.address.trim()) newErrors.address = "Address is required"
+    if (!formData.hourly || formData.hourly <= 0) newErrors.hourly = "Hourly rate must be greater than 0"
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -232,7 +234,7 @@ const RegisterTrabahador = () => {
     }
 
     setIsSubmitting(true)
-    setErrors({}) // Clear previous errors
+    setErrors({})
 
     try {
       // Step 1: Register the worker
@@ -245,6 +247,7 @@ const RegisterTrabahador = () => {
         phoneNumber: formData.contactNo,
         birthday: formData.birthday,
         address: formData.address,
+        hourly: parseFloat(formData.hourly), // Added hourly rate
       }
 
       console.log("Sending registration request with data:", workerData)
@@ -490,6 +493,22 @@ const RegisterTrabahador = () => {
                   {errors.address && <div className="error-message">{errors.address}</div>}
                 </div>
 
+                <div className="form-group">
+                  <label htmlFor="hourly">
+                    Hourly Rate (in PHP) <span className="required">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="hourly"
+                    name="hourly"
+                    value={formData.hourly}
+                    onChange={handleInputChange}
+                    placeholder="Enter hourly rate"
+                    min="1"
+                  />
+                  {errors.hourly && <div className="error-message">{errors.hourly}</div>}
+                </div>
+
                 <button className="next-button" onClick={handleNext} disabled={isLoading}>
                   {isLoading ? "Checking..." : "Next"}
                 </button>
@@ -632,11 +651,7 @@ const RegisterTrabahador = () => {
                   {errors.certificates && <div className="error-message">{errors.certificates}</div>}
                 </div>
 
-                <button
-                  className="signup-button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
+                <button className="signup-button" onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Sign Up"}
                 </button>
               </div>

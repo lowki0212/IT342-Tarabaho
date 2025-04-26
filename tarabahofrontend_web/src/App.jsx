@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import Homepage from "./pages/Homepage"
-import SignIn from "./pages/Signin"
+import SignIn from "./pages/SignIn"
 import Register from "./pages/Register"
 import RegisterUser from "./pages/RegisterUser"
 import RegisterAdmin from "./pages/RegisterAdmin"
@@ -16,7 +16,7 @@ import ContactUs from "./pages/ContactUs"
 import UserBrowse from "./pages/UserBrowse"
 import UserContactUs from "./pages/UserContactUs"
 import UserHomepage from "./pages/UserHomepage"
-import UserBrowseCleaning from "./pages/User-browse-cleaning"
+import UserBrowseCategory from "./pages/UserBrowseCategory" // Fix import name
 import UserProfile from "./pages/UserProfile"
 import TrabahadorHomepage from "./pages/TrabahadorHomepage"
 import TrabahadorProfile from "./pages/TrabahadorProfile"
@@ -25,6 +25,11 @@ import AdminAboutUs from "./pages/AdminAboutUs"
 import UserAboutUs from "./pages/UserAboutUs"
 import TrabahadorAboutUs from "./pages/TrabahadorAboutUs"
 import TrabahadorContactUs from "./pages/TrabahadorContactUs"
+
+import WorkerProfile from "./pages/WorkerProfile"
+import PaymentPage from "./pages/PaymentPage"
+import BookingRequest from "./pages/BookingRequest"
+import ChatPage from "./pages/ChatPage"
 
 function App() {
   return (
@@ -55,8 +60,8 @@ function App() {
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/user-about" element={<UserAboutUs />} />
 
-        {/* Service-specific browse routes */}
-        <Route path="/user-browse-cleaning" element={<UserBrowseCleaning />} />
+        {/* Dynamic category browse route */}
+        <Route path="/user-browse/:categoryName" element={<UserBrowseCategory />} />
 
         {/* Trabahador-specific routes */}
         <Route path="/trabahador-homepage" element={<TrabahadorHomepage />} />
@@ -67,6 +72,12 @@ function App() {
 
         {/* General routes */}
         <Route path="/contact" element={<ContactUs />} />
+
+        <Route path="/category/:categoryName" element={<UserBrowseCategory />} />
+        <Route path="/worker/:workerId" element={<WorkerProfile />} />
+        <Route path="/booking/:workerId/payment" element={<PaymentPage />} />
+        <Route path="/booking/:workerId/request" element={<BookingRequest />} />
+        <Route path="/chat/:bookingId" element={<ChatPage />} />
       </Routes>
     </Router>
   )

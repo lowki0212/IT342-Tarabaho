@@ -1,6 +1,8 @@
 "use client"
 
+import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import "../styles/User-browse.css"
 import Footer from "../components/Footer"
@@ -10,73 +12,139 @@ import tutoringImg from "../assets/images/tutoring.png"
 import babysittingImg from "../assets/images/babysitting.png"
 import gardeningImg from "../assets/images/gardening.png"
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-message">
+          <h2>Something went wrong.</h2>
+          <p>{this.state.error?.message || "An unexpected error occurred."}</p>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 const Browse = () => {
+  const [categories, setCategories] = useState([])
+  const [error, setError] = useState("")
+  const BACKEND_URL = "http://localhost:8080"
+
+  // Fallback icons and taglines
+  const categoryIcons = {
+    Cleaning: cleaningImg,
+    Errands: errandsImg,
+    Tutoring: tutoringImg,
+    Babysitting: babysittingImg,
+    Gardening: gardeningImg,
+  }
+
+  const categoryTaglines = {
+    Cleaning: "Keep your space spotless",
+    Errands: "Get your tasks done",
+    Tutoring: "Learn with ease",
+    Babysitting: "Care for your kids",
+    Gardening: "Grow your green space",
+  }
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${BACKEND_URL}/api/categories`, {
+          withCredentials: true,
+        })
+        // Normalize response data
+        const data = Array.isArray(response.data) ? response.data : [];
+        setCategories(data)
+        if (data.length === 0) {
+          setError("No categories available.")
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err)
+        setError(
+          err.response?.status === 401
+            ? "Please log in to view categories."
+            : `Failed to load categories: ${err.message}`
+        )
+      }
+    }
+    fetchCategories()
+  }, [])
+
   return (
-    <div className="browse-page">
-      <UserNavbar activePage="user-browse" />
+    <ErrorBoundary>
+      <div className="browse-page">
+        <UserNavbar activePage="user-browse" />
 
-      <div className="hero-section">
-        <div className="hero-overlay"></div>
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Find on-demand help for your daily tasks anytime, anywhere with Tarabaho!
-          </h1>
+        <div className="hero-section">
+          <div className="hero-overlay"></div>
+          <div className="hero-content">
+            <h1 className="hero-title">
+              Find on-demand help for your daily tasks anytime, anywhere with Tarabaho!
+            </h1>
+          </div>
         </div>
-      </div>
 
-      <div className="browse-content">
-        <button className="look-for-trabahador-button" aria-label="Look for Trabahador">
-          Look for Trabahador
-        </button>
+        <div className="browse-content">
+          <button className="look-for-trabahador-button" aria-label="Look for Trabahador">
+            Look for Trabahador
+          </button>
 
-        <p className="browse-description">
-          Browse Trabahador profiles and find the perfect match for your task.
-        </p>
+          <p className="browse-description">
+            Browse Trabahador profiles and find the perfect match for your task.
+          </p>
 
-        <div className="service-categories">
-          <Link to="/user-browse-cleaning" className="service-category" aria-label="Browse Cleaning Services">
-            <div className="service-icon cleaning-icon">
-              <img src={cleaningImg || "/placeholder.svg"} alt="Cleaning" className="service-img" />
-            </div>
-            <div className="service-name">Cleaning</div>
-            <p className="service-tagline">Keep your space spotless</p>
-          </Link>
+          {error && <div className="error-message">{error}</div>}
 
-          <Link to="/user-browse-errands" className="service-category" aria-label="Browse Errands Services">
-            <div className="service-icon errands-icon">
-              <img src={errandsImg || "/placeholder.svg"} alt="Errands" className="service-img" />
-            </div>
-            <div className="service-name">Errands</div>
-            <p className="service-tagline">Get your tasks done</p>
-          </Link>
-
-          <Link to="/user-browse-tutoring" className="service-category" aria-label="Browse Tutoring Services">
-            <div className="service-icon tutoring-icon">
-              <img src={tutoringImg || "/placeholder.svg"} alt="Tutoring" className="service-img" />
-            </div>
-            <div className="service-name">Tutoring</div>
-            <p className="service-tagline">Learn with ease</p>
-          </Link>
-
-          <Link to="/user-browse-babysitting" className="service-category" aria-label="Browse Babysitting Services">
-            <div className="service-icon babysitting-icon">
-              <img src={babysittingImg || "/placeholder.svg"} alt="Babysitting" className="service-img" />
-            </div>
-            <div className="service-name">Babysitting</div>
-            <p className="service-tagline">Care for your kids</p>
-          </Link>
-
-          <Link to="/user-browse-gardening" className="service-category" aria-label="Browse Gardening Services">
-            <div className="service-icon gardening-icon">
-              <img src={gardeningImg || "/placeholder.svg"} alt="Gardening" className="service-img" />
-            </div>
-            <div className="service-name">Gardening</div>
-            <p className="service-tagline">Grow your green space</p>
-          </Link>
+          <div className="service-categories">
+            {categories.length > 0 ? (
+              categories.map((category) => {
+                // Defensive checks
+                if (!category || !category.name) {
+                  console.warn("Invalid category:", category)
+                  return null
+                }
+                return (
+                  <Link
+                    key={category.id || category.name}
+                    to={`/user-browse/${category.name.toLowerCase()}`}
+                    className="service-category"
+                    aria-label={`Browse ${category.name} Services`}
+                  >
+                    <div className={`service-icon ${category.name.toLowerCase()}-icon`}>
+                      <img
+                        src={
+                          category.iconUrl
+                            ? `${BACKEND_URL}${category.iconUrl}`
+                            : categoryIcons[category.name] || "/placeholder.svg"
+                        }
+                        alt={category.name}
+                        className="service-img"
+                      />
+                    </div>
+                    <div className="service-name">{category.name}</div>
+                    <p className="service-tagline">
+                      {category.tagline || categoryTaglines[category.name] || "Explore this service"}
+                    </p>
+                  </Link>
+                )
+              }).filter(Boolean)
+            ) : (
+              <p>No categories available.</p>
+            )}
+          </div>
         </div>
+        <Footer />
       </div>
-      <Footer/>
-    </div>
+    </ErrorBoundary>
   )
 }
 

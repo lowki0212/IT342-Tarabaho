@@ -4,7 +4,9 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,8 +30,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import tarabaho.tarabaho.dto.WorkerDuplicateCheckDTO;
+import tarabaho.tarabaho.dto.WorkerRegisterDTO;
+import tarabaho.tarabaho.dto.WorkerUpdateDTO;
+import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.jwt.JwtUtil;
+import tarabaho.tarabaho.repository.WorkerRepository;
+import tarabaho.tarabaho.service.UserService;
 import tarabaho.tarabaho.service.WorkerService;
 
 @RestController
@@ -43,7 +50,42 @@ public class WorkerController {
     private WorkerService workerService;
 
     @Autowired
+    private WorkerRepository workerRepository;
+
+    @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private UserService userService;
+
+    @Operation(summary = "Get worker by ID", description = "Retrieve a worker by their ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Worker retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Worker not found")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getWorkerById(@PathVariable Long id) {
+        try {
+            System.out.println("WorkerController: Handling GET /api/worker/" + id);
+            Optional<Worker> workerOpt = workerRepository.findById(id);
+            if (workerOpt.isPresent()) {
+                System.out.println("WorkerController: Worker found with ID: " + id);
+                return ResponseEntity.ok(workerOpt.get());
+            }
+            System.out.println("WorkerController: Worker not found for ID: " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found with id: " + id);
+        } catch (Exception e) {
+            System.out.println("WorkerController: Error retrieving worker with ID: " + id + ", error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to retrieve worker: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/category/{categoryName}/workers")
+    public ResponseEntity<List<Worker>> getWorkersByCategory(@PathVariable String categoryName) {
+        List<Worker> workers = workerService.getWorkersByCategory(categoryName);
+        return ResponseEntity.ok(workers);
+    }
 
     @Operation(summary = "Check for duplicate worker details", description = "Checks if username, email, or phone number already exists")
     @ApiResponses({
@@ -51,17 +93,17 @@ public class WorkerController {
         @ApiResponse(responseCode = "400", description = "Username, email, or phone number already exists")
     })
     @PostMapping("/check-duplicates")
-    public ResponseEntity<?> checkDuplicates(@RequestBody Worker worker) {
-        System.out.println("WorkerController: Checking duplicates for username: " + worker.getUsername());
+    public ResponseEntity<?> checkDuplicates(@RequestBody WorkerDuplicateCheckDTO workerDTO) {
+        System.out.println("WorkerController: Checking duplicates for username: " + workerDTO.getUsername());
         
-        if (workerService.findByUsername(worker.getUsername()).isPresent()) {
+        if (workerService.findByUsername(workerDTO.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Username already exists.");
         }
-        if (workerService.findByEmail(worker.getEmail()).isPresent()) {
+        if (workerService.findByEmail(workerDTO.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Email already exists.");
         }
-        if (worker.getPhoneNumber() != null && !worker.getPhoneNumber().isEmpty() &&
-                workerService.findByPhoneNumber(worker.getPhoneNumber()).isPresent()) {
+        if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().isEmpty() &&
+                workerService.findByPhoneNumber(workerDTO.getPhoneNumber()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
         }
 
@@ -71,23 +113,46 @@ public class WorkerController {
     @Operation(summary = "Register new worker", description = "Registers a new worker in the system after checking for uniqueness")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Worker registered successfully"),
-        @ApiResponse(responseCode = "400", description = "Username, email, or phone already exists")
+        @ApiResponse(responseCode = "400", description = "Username, email, phone, or invalid input")
     })
     @PostMapping("/register")
-    public ResponseEntity<?> registerWorker(@RequestBody Worker worker, HttpServletResponse response) {
-        System.out.println("WorkerController: Received registration request for username: " + worker.getUsername());
-        
-        if (workerService.findByUsername(worker.getUsername()).isPresent()) {
+    public ResponseEntity<?> registerWorker(@RequestBody WorkerRegisterDTO workerDTO, HttpServletResponse response) {
+        System.out.println("WorkerController: Received registration request for username: " + workerDTO.getUsername());
+
+        // Check for duplicates
+        if (workerService.findByUsername(workerDTO.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Username already exists.");
         }
-        if (workerService.findByEmail(worker.getEmail()).isPresent()) {
+        if (workerService.findByEmail(workerDTO.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Email already exists.");
         }
-        if (worker.getPhoneNumber() != null && !worker.getPhoneNumber().isEmpty() &&
-                workerService.findByPhoneNumber(worker.getPhoneNumber()).isPresent()) {
+        if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().isEmpty() &&
+                workerService.findByPhoneNumber(workerDTO.getPhoneNumber()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
         }
 
+        // Validate hourly rate
+        if (workerDTO.getHourly() <= 0) {
+            return ResponseEntity.badRequest().body("⚠️ Hourly rate must be provided and greater than 0.");
+        }
+
+        // Map DTO to Worker entity
+        Worker worker = new Worker();
+        worker.setUsername(workerDTO.getUsername());
+        worker.setPassword(workerDTO.getPassword()); // Password hashing should be handled in WorkerService
+        worker.setFirstName(workerDTO.getFirstName());
+        worker.setLastName(workerDTO.getLastName());
+        worker.setEmail(workerDTO.getEmail());
+        worker.setPhoneNumber(workerDTO.getPhoneNumber());
+        worker.setAddress(workerDTO.getAddress());
+        worker.setHourly(workerDTO.getHourly());
+
+        // Parse birthday if provided
+        if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
+            worker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+        }
+
+        // Register worker via service
         Worker registeredWorker = workerService.registerWorker(worker);
         System.out.println("WorkerController: Worker registered successfully, ID: " + registeredWorker.getId());
         return ResponseEntity.ok(registeredWorker);
@@ -108,41 +173,35 @@ public class WorkerController {
         try {
             System.out.println("WorkerController: Starting upload-initial-picture for workerId: " + workerId);
 
-            // Validate worker
             Worker worker = workerService.findById(workerId);
             if (worker == null) {
                 System.out.println("WorkerController: Worker not found for ID: " + workerId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found.");
             }
 
-            // Check existing profile picture
             if (worker.getProfilePicture() != null && !worker.getProfilePicture().isEmpty()) {
                 System.out.println("WorkerController: Profile picture already exists for workerId: " + workerId);
                 return ResponseEntity.badRequest().body("Profile picture already exists.");
             }
 
-            // Validate file
             if (file == null || file.isEmpty()) {
                 System.out.println("WorkerController: No file uploaded for workerId: " + workerId);
                 return ResponseEntity.badRequest().body("No file uploaded.");
             }
 
-            // Check file size (max 5MB)
             long maxFileSize = 5 * 1024 * 1024; // 5MB
             if (file.getSize() > maxFileSize) {
                 System.out.println("WorkerController: File size exceeds limit for workerId: " + workerId + ", size: " + file.getSize());
                 return ResponseEntity.badRequest().body("File size exceeds 5MB limit.");
             }
 
-            // Validate content type
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 System.out.println("WorkerController: Invalid file type for workerId: " + workerId + ", contentType: " + contentType);
                 return ResponseEntity.badRequest().body("Only image files are allowed.");
             }
 
-            // Set up upload directory
-            String uploadDir = "uploads/profiles/";
+            String uploadDir = "Uploads/profiles/";
             File directory = new File(uploadDir);
             if (!directory.exists()) {
                 System.out.println("WorkerController: Creating upload directory: " + uploadDir);
@@ -154,14 +213,12 @@ public class WorkerController {
                 }
             }
 
-            // Check directory permissions
             if (!directory.canWrite()) {
                 System.out.println("WorkerController: Upload directory is not writable: " + uploadDir);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Upload directory is not writable: " + uploadDir);
+                    .body("Upload directory is not writable: " + uploadDir);
             }
 
-            // Generate file name and path
             String originalFileName = file.getOriginalFilename();
             if (originalFileName == null || originalFileName.isEmpty()) {
                 System.out.println("WorkerController: Invalid original filename for workerId: " + workerId);
@@ -171,11 +228,9 @@ public class WorkerController {
             Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
             System.out.println("WorkerController: Saving file to: " + filePath);
 
-            // Save file
             Files.write(filePath, file.getBytes());
             System.out.println("WorkerController: File saved successfully: " + filePath);
 
-            // Update worker
             String profilePicturePath = "/profiles/" + fileName;
             worker.setProfilePicture(profilePicturePath);
             workerService.editWorker(workerId, worker);
@@ -184,7 +239,7 @@ public class WorkerController {
             System.out.println("WorkerController: Initial profile picture uploaded successfully for workerId: " + workerId);
             return ResponseEntity.ok(worker);
         } catch (Exception e) {
-            e.printStackTrace(); // Log full stack trace
+            e.printStackTrace();
             System.out.println("WorkerController: Initial profile picture upload failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file: " + e.getMessage());
@@ -316,11 +371,126 @@ public class WorkerController {
         return workerService.getAllWorkers();
     }
 
-    @Operation(summary = "Delete worker", description = "Deletes a worker by ID")
-    @ApiResponse(responseCode = "200", description = "Worker deleted successfully")
-    @DeleteMapping("/{id}")
-    public void deleteWorker(@PathVariable Long id) {
-        workerService.deleteWorker(id);
+    @Operation(summary = "Get available workers", description = "Retrieve a list of all available workers")
+    @ApiResponse(responseCode = "200", description = "List of available workers returned successfully")
+    @GetMapping("/available")
+    public List<Worker> getAvailableWorkers() {
+        return workerRepository.findAllAvailable();
+    }
+
+    @Operation(summary = "Get workers by minimum rating", description = "Retrieve workers with a minimum star rating")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of workers returned successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid rating value")
+    })
+    @GetMapping("/stars/{minStars}")
+    public ResponseEntity<List<Worker>> getWorkersByMinimumStars(@PathVariable Double minStars) {
+        if (minStars < 1.0 || minStars > 5.0) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(workerRepository.findByMinimumStars(minStars));
+    }
+
+    @Operation(summary = "Get workers by maximum hourly rate", description = "Retrieve workers with an hourly rate below a specified value")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of workers returned successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid hourly rate")
+    })
+    @GetMapping("/hourly/{maxHourly}")
+    public ResponseEntity<List<Worker>> getWorkersByMaxHourly(@PathVariable Double maxHourly) {
+        if (maxHourly <= 0) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        return ResponseEntity.ok(workerRepository.findByMaxHourly(maxHourly));
+    }
+
+    @Operation(summary = "Rate a worker", description = "Submit a rating (1.0–5.0) for a worker")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Rating submitted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid rating value"),
+        @ApiResponse(responseCode = "404", description = "Worker not found")
+    })
+    @PostMapping("/{workerId}/rate")
+    public ResponseEntity<?> rateWorker(
+            @PathVariable Long workerId,
+            @RequestBody RatingRequest ratingRequest,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+            User user = userService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("User not found"));
+            Worker updatedWorker = workerService.updateRating(
+                workerId,
+                ratingRequest.getBookingId(),
+                ratingRequest.getRating(),
+                user.getId()
+            );
+            return ResponseEntity.ok(updatedWorker);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Post urgent job", description = "Posts an urgent job and finds nearby workers in the specified category")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Job posted and workers found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated or not verified"),
+        @ApiResponse(responseCode = "404", description = "No workers found")
+    })
+    @PostMapping("/urgent-job")
+    public ResponseEntity<?> postUrgentJob(
+            @RequestBody UrgentJobRequest urgentJobRequest,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+
+            String username = authentication.getName();
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+            }
+            User user = userOpt.get();
+            if (!user.getIsVerified()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not verified.");
+            }
+
+            if (urgentJobRequest.getCategoryName() == null || urgentJobRequest.getCategoryName().isEmpty()) {
+                return ResponseEntity.badRequest().body("⚠️ Category name is required.");
+            }
+            if (urgentJobRequest.getLatitude() == null || urgentJobRequest.getLongitude() == null) {
+                return ResponseEntity.badRequest().body("⚠️ Location (latitude and longitude) is required.");
+            }
+            if (urgentJobRequest.getRadius() == null || urgentJobRequest.getRadius() <= 0) {
+                return ResponseEntity.badRequest().body("⚠️ Radius must be greater than 0.");
+            }
+
+            List<Worker> nearbyWorkers = workerService.findNearbyWorkersForUrgentJob(
+                urgentJobRequest.getCategoryName(),
+                urgentJobRequest.getLatitude(),
+                urgentJobRequest.getLongitude(),
+                urgentJobRequest.getRadius()
+            );
+
+            if (nearbyWorkers.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No available workers found nearby.");
+            }
+
+            // TODO: Implement notification logic later
+            System.out.println("Found " + nearbyWorkers.size() + " workers for urgent job in category: " + urgentJobRequest.getCategoryName());
+            return ResponseEntity.ok(new UrgentJobResponse(nearbyWorkers.size()));
+        } catch (Exception e) {
+            System.out.println("WorkerController: Urgent job posting failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to post urgent job: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "Update worker profile", description = "Updates profile details for the authenticated worker")
@@ -331,62 +501,118 @@ public class WorkerController {
         @ApiResponse(responseCode = "404", description = "Worker not found")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateWorker(
-            @PathVariable Long id,
-            @RequestBody Worker updatedWorker,
+    public ResponseEntity<?> updateWorker(@PathVariable Long id, @RequestBody WorkerUpdateDTO workerDTO, Authentication authentication) {
+        System.out.println("WorkerController: Received update request for worker ID: " + id);
+
+        try {
+            // Fetch the existing worker
+            Worker existingWorker = workerService.findById(id);
+                
+
+            // Verify the authenticated user is the worker being updated
+            String authenticatedUsername = authentication.getName();
+            if (!existingWorker.getUsername().equals(authenticatedUsername)) {
+                return ResponseEntity.status(403).body("⚠️ You are not authorized to update this profile.");
+            }
+
+            // Check for duplicate email (if changed)
+            if (workerDTO.getEmail() != null && !workerDTO.getEmail().equals(existingWorker.getEmail())) {
+                if (workerService.findByEmail(workerDTO.getEmail()).isPresent()) {
+                    return ResponseEntity.badRequest().body("⚠️ Email already exists.");
+                }
+                existingWorker.setEmail(workerDTO.getEmail());
+            }
+
+            // Check for duplicate phone number (if changed)
+            if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().equals(existingWorker.getPhoneNumber())) {
+                if (!workerDTO.getPhoneNumber().isEmpty() && workerService.findByPhoneNumber(workerDTO.getPhoneNumber()).isPresent()) {
+                    return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
+                }
+                existingWorker.setPhoneNumber(workerDTO.getPhoneNumber());
+            }
+
+            // Update other fields if provided
+            if (workerDTO.getAddress() != null) {
+                existingWorker.setAddress(workerDTO.getAddress());
+            }
+            if (workerDTO.getBiography() != null) {
+                existingWorker.setBiography(workerDTO.getBiography());
+            }
+            if (workerDTO.getFirstName() != null) {
+                existingWorker.setFirstName(workerDTO.getFirstName());
+            }
+            if (workerDTO.getLastName() != null) {
+                existingWorker.setLastName(workerDTO.getLastName());
+            }
+            if (workerDTO.getHourly() != null) {
+                if (workerDTO.getHourly() <= 0) {
+                    return ResponseEntity.badRequest().body("⚠️ Hourly rate must be greater than 0.");
+                }
+                existingWorker.setHourly(workerDTO.getHourly());
+            }
+            if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
+                existingWorker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+            }
+            if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
+                existingWorker.setPassword(workerDTO.getPassword()); // Hashing should be handled in WorkerService
+            }
+
+            // Update worker via service
+            Worker updatedWorker = workerService.updateWorker(existingWorker);
+            System.out.println("WorkerController: Worker updated successfully, ID: " + updatedWorker.getId());
+            return ResponseEntity.ok(updatedWorker);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("⚠️ Failed to update profile: " + e.getMessage());
+        }
+    }
+
+    // Added endpoints for booking system compatibility
+    @Operation(summary = "Get available workers by category", description = "Retrieve a list of available workers for a specific category")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of available workers returned successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid category name")
+    })
+    @GetMapping("/category/{categoryName}/available")
+    public ResponseEntity<List<Worker>> getAvailableWorkersByCategory(@PathVariable String categoryName) {
+        List<Worker> workers = workerService.getAvailableWorkersByCategory(categoryName);
+        return ResponseEntity.ok(workers);
+    }
+
+    @Operation(summary = "Get nearby available workers by category", description = "Retrieve a list of available workers for a specific category within a radius")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of nearby available workers returned successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated or not verified")
+    })
+    @GetMapping("/category/{categoryName}/nearby/available")
+    public ResponseEntity<?> getNearbyAvailableWorkersByCategory(
+            @PathVariable String categoryName,
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam Double radius,
             Authentication authentication
     ) {
         try {
             if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
             }
 
             String username = authentication.getName();
-            Worker existingWorker = workerService.findByUsername(username)
-                    .orElseThrow(() -> new Exception("Worker not found for username: " + username));
-
-            if (!existingWorker.getId().equals(id)) {
-                throw new Exception("Unauthorized: Cannot update another worker's profile");
+            Optional<User> userOpt = userService.findByUsername(username);
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+            }
+            User user = userOpt.get();
+            if (!user.getIsVerified()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not verified.");
             }
 
-            if (updatedWorker.getEmail() != null && !updatedWorker.getEmail().isEmpty()) {
-                if (workerService.findByEmail(updatedWorker.getEmail()).isPresent() &&
-                    !updatedWorker.getEmail().equals(existingWorker.getEmail())) {
-                    return ResponseEntity.badRequest().body("⚠️ Email already exists.");
-                }
-                existingWorker.setEmail(updatedWorker.getEmail());
-            }
-            if (updatedWorker.getAddress() != null) {
-                existingWorker.setAddress(updatedWorker.getAddress());
-            }
-            if (updatedWorker.getBiography() != null) {
-                existingWorker.setBiography(updatedWorker.getBiography());
-            }
-            if (updatedWorker.getBirthday() != null) {
-                existingWorker.setBirthday(updatedWorker.getBirthday());
-            }
-            if (updatedWorker.getPassword() != null && !updatedWorker.getPassword().isEmpty()) {
-                existingWorker.setPassword(updatedWorker.getPassword());
-            }
-            if (updatedWorker.getPhoneNumber() != null) {
-                if (workerService.findByPhoneNumber(updatedWorker.getPhoneNumber()).isPresent() &&
-                    !updatedWorker.getPhoneNumber().equals(existingWorker.getPhoneNumber())) {
-                    return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
-                }
-                existingWorker.setPhoneNumber(updatedWorker.getPhoneNumber());
-            }
-            if (updatedWorker.getFirstName() != null) {
-                existingWorker.setFirstName(updatedWorker.getFirstName());
-            }
-            if (updatedWorker.getLastName() != null) {
-                existingWorker.setLastName(updatedWorker.getLastName());
-            }
-
-            Worker updated = workerService.editWorker(id, existingWorker);
-            return ResponseEntity.ok(updated);
+            List<Worker> workers = workerService.getNearbyAvailableWorkersByCategory(categoryName, latitude, longitude, radius);
+            return ResponseEntity.ok(workers);
         } catch (Exception e) {
-            System.out.println("WorkerController: Update failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to update profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
         }
     }
 
@@ -417,5 +643,41 @@ public class WorkerController {
         public void setToken(String token) { this.token = token; }
         public String getError() { return error; }
         public void setError(String error) { this.error = error; }
+    }
+
+    static class RatingRequest {
+        private Long bookingId;
+        private Double rating;
+        public Long getBookingId() { return bookingId; }
+        public void setBookingId(Long bookingId) { this.bookingId = bookingId; }
+        public Double getRating() { return rating; }
+        public void setRating(Double rating) { this.rating = rating; }
+    }
+
+    static class UrgentJobRequest {
+        private String categoryName;
+        private Double latitude;
+        private Double longitude;
+        private Double radius;
+
+        public String getCategoryName() { return categoryName; }
+        public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+        public Double getLatitude() { return latitude; }
+        public void setLatitude(Double latitude) { this.latitude = latitude; }
+        public Double getLongitude() { return longitude; }
+        public void setLongitude(Double longitude) { this.longitude = longitude; }
+        public Double getRadius() { return radius; }
+        public void setRadius(Double radius) { this.radius = radius; }
+    }
+
+    static class UrgentJobResponse {
+        private int workersNotified;
+
+        public UrgentJobResponse(int workersNotified) {
+            this.workersNotified = workersNotified;
+        }
+
+        public int getWorkersNotified() { return workersNotified; }
+        public void setWorkersNotified(int workersNotified) { this.workersNotified = workersNotified; }
     }
 }
