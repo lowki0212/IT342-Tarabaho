@@ -100,7 +100,7 @@ const WorkerProfile = () => {
                 <h3>Certificates</h3>
                 <ul>
                   {worker.certificates.map((cert, index) => (
-                    <li key={index}>{cert.name || "Unnamed certificate"}</li>
+                    <li key={index}>{cert.courseName || "Unnamed certificate"}</li>
                   ))}
                 </ul>
               </div>

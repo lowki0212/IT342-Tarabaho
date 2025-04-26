@@ -13,7 +13,7 @@ const BookingRequest = () => {
   const [error, setError] = useState("");
   const BACKEND_URL = "http://localhost:8080";
   const token = localStorage.getItem("jwtToken");
-  const hasRun = useRef(false); // Prevent duplicate requests
+  const hasRun = useRef(false);
 
   useEffect(() => {
     console.log("BookingRequest component mounted");
@@ -30,23 +30,21 @@ const BookingRequest = () => {
 
     const createBooking = async () => {
       const requestBody = {
-        workerId: parseInt(workerId), // Ensure workerId is a number
-        categoryName: "Cleaning", // Valid category
-        paymentMethod: "CASH", // Valid PaymentMethod enum value
-        jobDetails: "AAAA", // Valid job details
+        workerId: parseInt(workerId),
+        categoryName: "Cleaning",
+        paymentMethod: "CASH",
+        jobDetails: "AAAA",
       };
       console.log("Sending request to /api/booking/category:", requestBody);
 
       try {
-        // REPLACE WITH DYNAMIC USER ID FROM AUTH (e.g., decoded from JWT)
-        const userId = 1; // Placeholder; obtain from authenticated user context
         const response = await axios.post(
           `${BACKEND_URL}/api/booking/category`,
           requestBody,
           {
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
-            timeout: 5000, // Prevent retries with a timeout
+            timeout: 5000,
           }
         );
         if (!hasRun.current) {
@@ -78,7 +76,7 @@ const BookingRequest = () => {
 
     return () => {
       console.log("Cleaning up useEffect for createBooking, resetting hasRun");
-      hasRun.current = false; // Reset on unmount
+      hasRun.current = false;
     };
   }, [workerId, token]);
 
@@ -98,9 +96,13 @@ const BookingRequest = () => {
           if (status === "ACCEPTED") {
             clearInterval(interval);
             navigate(`/chat/${bookingId}`);
-          } else if (status === "REJECTED") {
+          } else if (status === "REJECTED" || status === "CANCELLED") {
             clearInterval(interval);
-            setError("Booking was rejected by the worker.");
+            setError(
+              status === "REJECTED"
+                ? "Booking was rejected by the worker."
+                : "Booking was cancelled."
+            );
           }
         } catch (err) {
           console.error("Failed to check booking status:", err.response?.data, err.message);
@@ -110,6 +112,27 @@ const BookingRequest = () => {
       return () => clearInterval(interval);
     }
   }, [bookingId, navigate, token]);
+
+  const handleCancelBooking = async () => {
+    try {
+      await axios.post(
+        `${BACKEND_URL}/api/booking/${bookingId}/cancel`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+      setBookingStatus("CANCELLED");
+      setError("Booking was cancelled.");
+    } catch (err) {
+      const errorMessage =
+        err.response?.data.replace("⚠️ ", "") ||
+        "Failed to cancel booking. Please try again.";
+      console.error("Failed to cancel booking:", err.response?.data, err.message);
+      setError(errorMessage);
+    }
+  };
 
   console.log("BookingRequest component rendered");
 
@@ -125,7 +148,15 @@ const BookingRequest = () => {
               <p>Booking request created (ID: {bookingId}).</p>
               <p>Status: {bookingStatus}</p>
               {bookingStatus === "PENDING" && (
-                <p>Waiting for worker to accept the booking...</p>
+                <>
+                  <p>Waiting for worker to accept the booking...</p>
+                  <button
+                    className="cancel-button"
+                    onClick={handleCancelBooking}
+                  >
+                    Cancel Booking
+                  </button>
+                </>
               )}
             </div>
           ) : (

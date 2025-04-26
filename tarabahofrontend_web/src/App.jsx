@@ -16,7 +16,7 @@ import ContactUs from "./pages/ContactUs"
 import UserBrowse from "./pages/UserBrowse"
 import UserContactUs from "./pages/UserContactUs"
 import UserHomepage from "./pages/UserHomepage"
-import UserBrowseCategory from "./pages/UserBrowseCategory" // Fix import name
+import UserBrowseCategory from "./pages/UserBrowseCategory"
 import UserProfile from "./pages/UserProfile"
 import TrabahadorHomepage from "./pages/TrabahadorHomepage"
 import TrabahadorProfile from "./pages/TrabahadorProfile"
@@ -25,10 +25,11 @@ import AdminAboutUs from "./pages/AdminAboutUs"
 import UserAboutUs from "./pages/UserAboutUs"
 import TrabahadorAboutUs from "./pages/TrabahadorAboutUs"
 import TrabahadorContactUs from "./pages/TrabahadorContactUs"
-
 import WorkerProfile from "./pages/WorkerProfile"
 import PaymentPage from "./pages/PaymentPage"
 import BookingRequest from "./pages/BookingRequest"
+import BookingHistory from "./pages/BookingHistory"
+import TrabahadorHistory from "./pages/TrabahadorHistory" // Add import
 import ChatPage from "./pages/ChatPage"
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
         <Route path="/user-contact" element={<UserContactUs />} />
         <Route path="/user-profile" element={<UserProfile />} />
         <Route path="/user-about" element={<UserAboutUs />} />
+        <Route path="/booking-history" element={<BookingHistory />} />
 
         {/* Dynamic category browse route */}
         <Route path="/user-browse/:categoryName" element={<UserBrowseCategory />} />
@@ -66,7 +68,7 @@ function App() {
         {/* Trabahador-specific routes */}
         <Route path="/trabahador-homepage" element={<TrabahadorHomepage />} />
         <Route path="/trabahador-contact" element={<TrabahadorContactUs />} />
-        <Route path="/trabahador-history" element={<div>Trabahador History Page</div>} />
+        <Route path="/trabahador-history" element={<TrabahadorHistory />} /> {/* Update route */}
         <Route path="/trabahador-profile" element={<TrabahadorProfile />} />
         <Route path="/trabahador-about" element={<TrabahadorAboutUs />} />
 

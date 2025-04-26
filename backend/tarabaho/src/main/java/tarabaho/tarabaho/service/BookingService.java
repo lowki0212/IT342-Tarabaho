@@ -147,6 +147,24 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    public Booking cancelBooking(Long bookingId, Long userId) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new Exception("User not found"));
+
+        if (!booking.getUser().equals(user)) {
+            throw new Exception("User not authorized to cancel this booking");
+        }
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new Exception("Only pending bookings can be cancelled");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
     public List<Booking> getUserBookings(Long userId) throws Exception {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new Exception("User not found"));

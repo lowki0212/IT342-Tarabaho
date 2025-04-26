@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom" // Add useLocation
 import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
@@ -24,6 +24,7 @@ import {
 
 const UserProfile = () => {
   const navigate = useNavigate()
+  const location = useLocation() // Add location hook
   const [user, setUser] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -41,7 +42,7 @@ const UserProfile = () => {
     tiktok: false,
   })
   const [error, setError] = useState("")
-  const fileInputRef = useRef(null) // Ref for the hidden file input
+  const fileInputRef = useRef(null)
 
   const BACKEND_URL = "http://localhost:8080"
 
@@ -85,7 +86,6 @@ const UserProfile = () => {
     setSelectedFile(file)
     console.log("Selected file:", file.name)
 
-    // Automatically upload the file
     const formData = new FormData()
     formData.append("file", file)
 
@@ -107,7 +107,6 @@ const UserProfile = () => {
   }
 
   const handleImageClick = () => {
-    // Trigger the hidden file input when the image is clicked
     fileInputRef.current.click()
   }
 
@@ -154,6 +153,10 @@ const UserProfile = () => {
     setShowLogoutModal(false)
   }
 
+  const handleHistoryClick = () => {
+    navigate("/booking-history")
+  }
+
   return (
     <div className="profile-page">
       <UserNavbar activePage="user-profile" />
@@ -165,7 +168,7 @@ const UserProfile = () => {
 
         <div className="profile-container">
           <div className="profile-sidebar">
-            <div className="sidebar-item active">
+            <div className={`sidebar-item ${location.pathname === "/user-profile" ? "active" : ""}`}>
               <FaUser className="sidebar-icon" />
               <span>PROFILE</span>
             </div>
@@ -173,7 +176,10 @@ const UserProfile = () => {
               <FaBookmark className="sidebar-icon" />
               <span>BOOKMARKS</span>
             </div>
-            <div className="sidebar-item">
+            <div
+              className={`sidebar-item ${location.pathname === "/booking-history" ? "active" : ""}`}
+              onClick={handleHistoryClick}
+            >
               <FaHistory className="sidebar-icon" />
               <span>HISTORY</span>
             </div>
@@ -198,7 +204,7 @@ const UserProfile = () => {
                   onChange={handleFileChange}
                   className="file-input"
                   ref={fileInputRef}
-                  style={{ display: "none" }} // Hidden input
+                  style={{ display: "none" }}
                 />
               </div>
 
