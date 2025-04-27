@@ -93,7 +93,7 @@ const UserBrowseCategory = () => {
     if (searchQuery) {
       updatedWorkers = updatedWorkers.filter(worker => {
         const fullName = `${worker.firstName || ""} ${worker.lastName || ""}`.toLowerCase()
-        return fullName.startsWith(searchQuery.toLowerCase())
+        return fullName.includes(searchQuery.toLowerCase())
       })
     }
 
@@ -103,6 +103,9 @@ const UserBrowseCategory = () => {
         return (b.stars || 0) - (a.stars || 0) // Highest rating first
       } else if (sortBy === "price") {
         return (a.hourly || 0) - (b.hourly || 0) // Lowest price first
+      } else if (sortBy === "experience") {
+        // Assuming experience is not available in worker data; fallback to no sorting
+        return 0
       }
       return 0
     })
@@ -133,7 +136,7 @@ const UserBrowseCategory = () => {
   }
 
   const handleViewWorker = (workerId) => {
-    navigate(`/worker-profile/${workerId}`)
+    navigate(`/worker-profile-detail/${workerId}`)
   }
 
   const displayCategoryName = categoryName
@@ -154,6 +157,7 @@ const UserBrowseCategory = () => {
             >
               <option value="rating">Rating</option>
               <option value="price">Price</option>
+              <option value="experience">Experience</option>
             </select>
           </div>
           <div className="search-container">
