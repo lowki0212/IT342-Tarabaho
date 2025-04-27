@@ -122,8 +122,21 @@ const WorkerProfileDetail = () => {
         setSimilarWorkers([]); // Fallback to empty list
       }
 
-      // Skip bookmark fetch until endpoint is implemented
-      setIsBookmarked(false);
+      // Fetch bookmark status
+      try {
+        console.log(`Fetching bookmark status for worker ID: ${workerId}`);
+        const bookmarkResponse = await axios.get(`${BACKEND_URL}/api/bookmarks/worker/${workerId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+        console.log("Bookmark status:", bookmarkResponse.data);
+        setIsBookmarked(bookmarkResponse.data);
+      } catch (bookmarkErr) {
+        console.error("Failed to fetch bookmark status:", bookmarkErr);
+        console.error("Bookmark error response:", bookmarkErr.response?.data);
+        console.error("Bookmark error status:", bookmarkErr.response?.status);
+        setIsBookmarked(false); // Fallback to not bookmarked
+      }
     };
 
     fetchWorkerData();
@@ -159,8 +172,26 @@ const WorkerProfileDetail = () => {
   };
 
   const toggleBookmark = async () => {
-    // Placeholder until bookmark endpoint is implemented
-    setIsBookmarked(!isBookmarked);
+    try {
+      console.log(`Toggling bookmark for worker ID: ${workerId}`);
+      const response = await axios.post(
+        `${BACKEND_URL}/api/bookmarks/worker/${workerId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+      console.log("Bookmark toggle response:", response.data);
+      setIsBookmarked(response.data);
+    } catch (err) {
+      console.error("Failed to toggle bookmark:", err);
+      console.error("Bookmark error response:", err.response?.data);
+      console.error("Bookmark error status:", err.response?.status);
+      if (err.response?.status === 401) {
+        navigate("/login");
+      }
+    }
   };
 
   const handleSelectWorker = (workerId) => {

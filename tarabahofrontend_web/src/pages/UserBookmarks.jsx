@@ -1,24 +1,54 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
 import "../styles/UserBookmarks.css"
 import { FaUser, FaBookmark, FaHistory, FaSignOutAlt } from "react-icons/fa"
 import LogoutConfirmation from "../components/User-LogoutConfirmation"
 
-// Import worker images
-import paulBImg from "../assets/images/polbin1.png"
-import edreyVImg from "../assets/images/edreyval.png"
-import martinJohnTImg from "../assets/images/martin.png"
-import dogCImg from "../assets/images/dogcat.png"
-import kentMImg from "../assets/images/kent m.png"
-import blakeMImg from "../assets/images/blake.png"
-
 const UserBookmarks = () => {
   const navigate = useNavigate()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [bookmarkedWorkers, setBookmarkedWorkers] = useState([])
+  const [error, setError] = useState("")
+  const BACKEND_URL = "http://localhost:8080"
+  const token = localStorage.getItem("jwtToken")
+
+  useEffect(() => {
+    const fetchBookmarkedWorkers = async () => {
+      try {
+        console.log("Fetching bookmarked workers");
+        const response = await axios.get(`${BACKEND_URL}/api/bookmarks`, {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        });
+        console.log("Bookmarked workers response:", response.data);
+        const workersData = response.data.map(worker => ({
+          id: worker.id ?? 0,
+          name: `${worker.firstName ?? "Unknown"} ${worker.lastName ?? "Worker"}`,
+          image: worker.profilePicture ?? "/placeholder.svg",
+        }));
+        setBookmarkedWorkers(workersData);
+      } catch (err) {
+        console.error("Failed to fetch bookmarked workers:", err);
+        console.error("Error response:", err.response?.data);
+        console.error("Error status:", err.response?.status);
+        setError(
+          err.response?.status === 401
+            ? "Please log in to view bookmarks."
+            : err.response?.data?.replace("⚠️ ", "") || "Failed to load bookmarked workers. Please try again."
+        );
+        if (err.response?.status === 401) {
+          navigate("/signin");
+        }
+      }
+    };
+
+    fetchBookmarkedWorkers();
+  }, [navigate, token]);
 
   const handleProfileClick = () => {
     navigate("/user-profile")
@@ -34,6 +64,7 @@ const UserBookmarks = () => {
 
   const confirmLogout = () => {
     console.log("User logged out")
+    localStorage.removeItem("jwtToken")
     setShowLogoutModal(false)
     navigate("/signin")
   }
@@ -43,42 +74,8 @@ const UserBookmarks = () => {
   }
 
   const handleViewProfile = (workerId) => {
-    navigate(`/worker-profile/${workerId}`)
+    navigate(`/worker-profile-detail/${workerId}`)
   }
-
-  // Bookmarked workers data
-  const bookmarkedWorkers = [
-    {
-      id: 1,
-      name: "Paul B.",
-      image: paulBImg,
-    },
-    {
-      id: 2,
-      name: "Edrey V.",
-      image: edreyVImg,
-    },
-    {
-      id: 3,
-      name: "Martin John T.",
-      image: martinJohnTImg,
-    },
-    {
-      id: 4,
-      name: "Dog C.",
-      image: dogCImg,
-    },
-    {
-      id: 5,
-      name: "Kent M.",
-      image: kentMImg,
-    },
-    {
-      id: 6,
-      name: "Blake M.",
-      image: blakeMImg,
-    },
-  ]
 
   return (
     <div className="bookmarks-page">
@@ -110,24 +107,29 @@ const UserBookmarks = () => {
 
           {/* Main Content - Bookmarked Workers Grid */}
           <div className="bookmarks-main">
-            <div className="bookmarked-workers-grid">
-              {bookmarkedWorkers.map((worker) => (
-                <div key={worker.id} className="worker-card">
-                  <div className="worker-image-container">
-                    <img src={worker.image || "/placeholder.svg"} alt={worker.name} className="worker-image" />
-                  </div>
-                  <div className="worker-info">
-                    <div className="worker-name-container">
-                      <h3 className="worker-name">{worker.name}</h3>
-                      <FaBookmark className="bookmark-icon" />
+            {error && <div className="error-message">{error}</div>}
+            {bookmarkedWorkers.length > 0 ? (
+              <div className="bookmarked-workers-grid">
+                {bookmarkedWorkers.map((worker) => (
+                  <div key={worker.id} className="worker-card">
+                    <div className="worker-image-container">
+                      <img src={worker.image || "/placeholder.svg"} alt={worker.name} className="worker-image" />
                     </div>
-                    <button className="view-profile-btn" onClick={() => handleViewProfile(worker.id)}>
-                      View Profile
-                    </button>
+                    <div className="worker-info">
+                      <div className="worker-name-container">
+                        <h3 className="worker-name">{worker.name}</h3>
+                        <FaBookmark className="bookmark-icon" />
+                      </div>
+                      <button className="view-profile-btn" onClick={() => handleViewProfile(worker.id)}>
+                        View Profile
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p>No bookmarked workers found.</p>
+            )}
           </div>
         </div>
 

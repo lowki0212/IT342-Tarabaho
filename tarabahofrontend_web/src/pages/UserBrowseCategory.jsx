@@ -32,8 +32,11 @@ const UserBrowseCategory = () => {
   const { categoryName } = useParams()
   const navigate = useNavigate()
   const [workers, setWorkers] = useState([])
+  const [filteredWorkers, setFilteredWorkers] = useState([])
   const [category, setCategory] = useState(null)
   const [error, setError] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("rating")
   const BACKEND_URL = "http://localhost:8080"
   const token = localStorage.getItem("jwtToken")
 
@@ -64,6 +67,7 @@ const UserBrowseCategory = () => {
           }
         )
         setWorkers(workersResponse.data)
+        setFilteredWorkers(workersResponse.data) // Initialize filtered workers
       } catch (err) {
         console.error(`Failed to fetch data for ${categoryName}:`, err)
         console.error("Error response:", err.response?.data)
@@ -81,6 +85,39 @@ const UserBrowseCategory = () => {
     fetchCategoryAndWorkers()
   }, [categoryName, navigate, token])
 
+  // Handle search and sort
+  useEffect(() => {
+    let updatedWorkers = [...workers]
+
+    // Filter by search query
+    if (searchQuery) {
+      updatedWorkers = updatedWorkers.filter(worker => {
+        const fullName = `${worker.firstName || ""} ${worker.lastName || ""}`.toLowerCase()
+        return fullName.startsWith(searchQuery.toLowerCase())
+      })
+    }
+
+    // Sort by selected criterion
+    updatedWorkers.sort((a, b) => {
+      if (sortBy === "rating") {
+        return (b.stars || 0) - (a.stars || 0) // Highest rating first
+      } else if (sortBy === "price") {
+        return (a.hourly || 0) - (b.hourly || 0) // Lowest price first
+      }
+      return 0
+    })
+
+    setFilteredWorkers(updatedWorkers)
+  }, [searchQuery, sortBy, workers])
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+  }
+
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value)
+  }
+
   const renderStars = (rating = 0) => {
     const stars = []
     for (let i = 1; i <= 5; i++) {
@@ -96,7 +133,7 @@ const UserBrowseCategory = () => {
   }
 
   const handleViewWorker = (workerId) => {
-    navigate(`/worker-profile-detail/${workerId}`)
+    navigate(`/worker-profile/${workerId}`)
   }
 
   const displayCategoryName = categoryName
@@ -110,21 +147,30 @@ const UserBrowseCategory = () => {
         <div className="filter-section">
           <div className="sort-container">
             <span className="sort-label">Sort by</span>
-            <select className="sort-dropdown">
+            <select
+              className="sort-dropdown"
+              value={sortBy}
+              onChange={handleSortChange}
+            >
               <option value="rating">Rating</option>
               <option value="price">Price</option>
-              <option value="experience">Experience</option>
             </select>
           </div>
           <div className="search-container">
-            <input type="text" className="search-input" placeholder="Search" />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search by name"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </div>
         </div>
         <div className="service-providers-grid">
           <h2>{displayCategoryName} Workers</h2>
           {error && <div className="error-message">{error}</div>}
-          {workers.length > 0 ? (
-            workers.map((worker) => {
+          {filteredWorkers.length > 0 ? (
+            filteredWorkers.map((worker) => {
               const displayName = worker.firstName && worker.lastName
                 ? `${worker.firstName} ${worker.lastName}`
                 : worker.username || "Unknown Worker"
