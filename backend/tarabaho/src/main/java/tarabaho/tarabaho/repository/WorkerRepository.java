@@ -59,4 +59,9 @@ public interface WorkerRepository extends JpaRepository<Worker, Long> {
         @Param("longitude") Double longitude,
         @Param("radius") Double radius
     );
+
+    @Query("SELECT DISTINCT w FROM Worker w JOIN w.categories c WHERE c.name IN :categoryNames AND w.id != :workerId")
+    List<Worker> findByCategoryNames(@Param("categoryNames") List<String> categoryNames, @Param("workerId") Long workerId);
+
+    
 }

@@ -1,7 +1,9 @@
 package tarabaho.tarabaho.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -195,6 +197,38 @@ public class WorkerService {
     
         // Reuse the existing repository method
         return workerRepository.findNearbyAvailableWorkersByCategory(categoryName, latitude, longitude, radius);
+    }
+    public List<Worker> getSimilarWorkers(Long workerId) {
+    System.out.println("WorkerService: Fetching similar workers for worker ID: " + workerId);
+    
+    // Find the worker by ID
+    Worker worker = workerRepository.findById(workerId)
+        .orElseThrow(() -> new IllegalArgumentException("Worker not found with ID: " + workerId));
+    
+    // Get the worker's categories
+    List<String> categoryNames = worker.getCategories().stream()
+        .map(category -> category.getName())
+        .collect(Collectors.toList());
+    
+    if (categoryNames.isEmpty()) {
+        System.out.println("WorkerService: No categories found for worker ID: " + workerId);
+        return Collections.emptyList();
+    }
+    
+    // Fetch workers in the same categories, excluding the current worker
+    List<Worker> similarWorkers = workerRepository.findByCategoryNames(categoryNames, workerId);
+    
+    // Optionally, sort or filter by additional criteria (e.g., rating, proximity)
+    similarWorkers.sort((w1, w2) -> Double.compare(w2.getStars(), w1.getStars())); // Sort by rating descending
+    
+    // Limit the number of results (e.g., top 5)
+    int maxResults = 5;
+    if (similarWorkers.size() > maxResults) {
+        similarWorkers = similarWorkers.subList(0, maxResults);
+    }
+    
+    System.out.println("WorkerService: Found " + similarWorkers.size() + " similar workers for worker ID: " + workerId);    
+    return similarWorkers;
     }
     
 }

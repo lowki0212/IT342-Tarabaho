@@ -42,7 +42,7 @@ public class BookingService {
         }
 
         // Check for existing bookings
-        List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS));
+        List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS, BookingStatus.WORKER_COMPLETED));
         if (!existingBookings.isEmpty()) {
             throw new Exception("User already has an active or pending booking");
         }
@@ -75,7 +75,7 @@ public class BookingService {
         }
 
         // Check for existing bookings
-        List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS));
+        List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS, BookingStatus.WORKER_COMPLETED));
         if (!existingBookings.isEmpty()) {
             throw new Exception("User already has an active or pending booking");
         }
@@ -161,6 +161,60 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public Booking startBooking(Long bookingId, Long userId) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new Exception("User not found"));
+
+        if (!booking.getUser().equals(user)) {
+            throw new Exception("User not authorized to start this booking");
+        }
+        if (booking.getStatus() != BookingStatus.ACCEPTED) {
+            throw new Exception("Booking must be accepted to start");
+        }
+
+        booking.setStatus(BookingStatus.IN_PROGRESS);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public Booking completeBooking(Long bookingId, Long workerId) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        Worker worker = workerRepository.findById(workerId)
+            .orElseThrow(() -> new Exception("Worker not found"));
+
+        if (!booking.getWorker().equals(worker)) {
+            throw new Exception("Worker not assigned to this booking");
+        }
+        if (booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new Exception("Booking must be in progress to mark as completed");
+        }
+
+        booking.setStatus(BookingStatus.WORKER_COMPLETED);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public Booking acceptCompletion(Long bookingId, Long userId) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new Exception("User not found"));
+
+        if (!booking.getUser().equals(user)) {
+            throw new Exception("User not authorized to accept completion");
+        }
+        if (booking.getStatus() != BookingStatus.WORKER_COMPLETED) {
+            throw new Exception("Booking must be marked as completed by worker");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
         booking.setUpdatedAt(LocalDateTime.now());
         return bookingRepository.save(booking);
     }

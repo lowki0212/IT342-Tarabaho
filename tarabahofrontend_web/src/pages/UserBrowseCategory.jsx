@@ -35,12 +35,14 @@ const UserBrowseCategory = () => {
   const [category, setCategory] = useState(null)
   const [error, setError] = useState("")
   const BACKEND_URL = "http://localhost:8080"
+  const token = localStorage.getItem("jwtToken")
 
   useEffect(() => {
     const fetchCategoryAndWorkers = async () => {
       try {
         const categoryResponse = await axios.get(`${BACKEND_URL}/api/categories`, {
-          withCredentials: true, // Send cookies
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
         })
         const data = Array.isArray(categoryResponse.data) ? categoryResponse.data : []
         const foundCategory = data.find(
@@ -57,21 +59,27 @@ const UserBrowseCategory = () => {
         const workersResponse = await axios.get(
           `${BACKEND_URL}/api/worker/category/${formattedCategoryName}/available`,
           {
-            withCredentials: true, // Send cookies
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
           }
         )
         setWorkers(workersResponse.data)
       } catch (err) {
         console.error(`Failed to fetch data for ${categoryName}:`, err)
+        console.error("Error response:", err.response?.data)
+        console.error("Error status:", err.response?.status)
         setError(
           err.response?.status === 401
             ? "Please log in to view workers."
-            : "Failed to load workers. Please try again."
+            : err.response?.data?.replace("⚠️ ", "") || "Failed to load workers. Please try again."
         )
+        if (err.response?.status === 401) {
+          navigate("/login")
+        }
       }
     }
     fetchCategoryAndWorkers()
-  }, [categoryName])
+  }, [categoryName, navigate, token])
 
   const renderStars = (rating = 0) => {
     const stars = []
@@ -88,7 +96,7 @@ const UserBrowseCategory = () => {
   }
 
   const handleViewWorker = (workerId) => {
-    navigate(`/worker/${workerId}`)
+    navigate(`/worker-profile-detail/${workerId}`)
   }
 
   const displayCategoryName = categoryName

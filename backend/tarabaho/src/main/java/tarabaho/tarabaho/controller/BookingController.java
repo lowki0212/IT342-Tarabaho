@@ -22,6 +22,7 @@ import tarabaho.tarabaho.entity.Booking;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.service.BookingService;
+import tarabaho.tarabaho.service.RatingService;
 import tarabaho.tarabaho.service.UserService;
 import tarabaho.tarabaho.service.WorkerService;
 
@@ -39,6 +40,9 @@ public class BookingController {
 
     @Autowired
     private WorkerService workerService;
+
+    @Autowired
+    private RatingService ratingService;
 
     @Operation(summary = "Create urgent booking", description = "Creates an urgent booking for a user")
     @ApiResponses({
@@ -173,7 +177,112 @@ public class BookingController {
             User user = userService.findByUsername(authentication.getName())
                 .orElseThrow(() -> new Exception("User not found"));
             Booking booking = bookingService.cancelBooking(bookingId, user.getId());
-            return ResponseEntity.ok(booking);
+            return ResponseEntity.ok("Booking cancelled successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Start booking", description = "User starts a job that has been accepted")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Job started successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or booking not in accepted state"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Booking or user not found")
+    })
+    @PostMapping("/{bookingId}/start")
+    public ResponseEntity<?> startBooking(
+            @PathVariable Long bookingId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+            User user = userService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("User not found"));
+            Booking booking = bookingService.startBooking(bookingId, user.getId());
+            return ResponseEntity.ok("Job started successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Complete booking", description = "Worker marks a booking as completed")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Booking marked as completed"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or booking not in progress"),
+        @ApiResponse(responseCode = "401", description = "Worker not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Booking or worker not found")
+    })
+    @PostMapping("/{bookingId}/complete")
+    public ResponseEntity<?> completeBooking(
+            @PathVariable Long bookingId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
+            }
+            Worker worker = workerService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("Worker not found"));
+            Booking booking = bookingService.completeBooking(bookingId, worker.getId());
+            return ResponseEntity.ok("Booking marked as completed successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Accept completion", description = "User accepts the completion of a booking")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Completion accepted"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or booking not marked as completed by worker"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Booking or user not found")
+    })
+    @PostMapping("/{bookingId}/complete/accept")
+    public ResponseEntity<?> acceptCompletion(
+            @PathVariable Long bookingId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+            User user = userService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("User not found"));
+            Booking booking = bookingService.acceptCompletion(bookingId, user.getId());
+            return ResponseEntity.ok("Completion accepted successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Submit rating", description = "User submits a rating for a completed booking")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Rating submitted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or booking not completed"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Booking or user not found")
+    })
+    @PostMapping("/rating")
+    public ResponseEntity<?> submitRating(
+            @RequestBody RatingRequest ratingRequest,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+            User user = userService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("User not found"));
+            ratingService.submitRating(
+                user.getId(),
+                ratingRequest.getBookingId(),
+                ratingRequest.getRating(),
+                ratingRequest.getComment()
+            );
+            return ResponseEntity.ok("Rating submitted successfully.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
         }
@@ -289,5 +398,18 @@ public class BookingController {
         public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
         public String getJobDetails() { return jobDetails; }
         public void setJobDetails(String jobDetails) { this.jobDetails = jobDetails; }
+    }
+
+    static class RatingRequest {
+        private Long bookingId;
+        private Integer rating;
+        private String comment;
+
+        public Long getBookingId() { return bookingId; }
+        public void setBookingId(Long bookingId) { this.bookingId = bookingId; }
+        public Integer getRating() { return rating; }
+        public void setRating(Integer rating) { this.rating = rating; }
+        public String getComment() { return comment; }
+        public void setComment(String comment) { this.comment = comment; }
     }
 }

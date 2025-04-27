@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -600,6 +601,33 @@ public class WorkerController {
             return ResponseEntity.badRequest().body("⚠️ Failed to update profile: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "Get similar workers", description = "Retrieve a list of workers similar to the specified worker based on categories or other criteria")
+@ApiResponses({
+    @ApiResponse(responseCode = "200", description = "List of similar workers retrieved successfully"),
+    @ApiResponse(responseCode = "404", description = "Worker not found"),
+    @ApiResponse(responseCode = "500", description = "Internal server error")
+})
+@GetMapping("/{id}/similar")
+public ResponseEntity<?> getSimilarWorkers(@PathVariable Long id) {
+    try {
+        System.out.println("WorkerController: Handling GET /api/worker/" + id + "/similar");
+        List<Worker> similarWorkers = workerService.getSimilarWorkers(id);
+        if (similarWorkers.isEmpty()) {
+            System.out.println("WorkerController: No similar workers found for ID: " + id);
+            return ResponseEntity.status(HttpStatus.OK).body(Collections.emptyList());
+        }
+        System.out.println("WorkerController: Found " + similarWorkers.size() + " similar workers for ID: " + id);
+        return ResponseEntity.ok(similarWorkers);
+    } catch (IllegalArgumentException e) {
+        System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found: " + e.getMessage());
+    } catch (Exception e) {
+        System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Failed to retrieve similar workers: " + e.getMessage());
+    }
+}
 
     @GetMapping("/category/{categoryName}/available")
     public ResponseEntity<List<Worker>> getAvailableWorkersByCategory(@PathVariable String categoryName) {
