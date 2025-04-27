@@ -8,14 +8,49 @@ import androidx.navigation.compose.composable
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "signup") {
-        composable("signup") {
-            SignUpScreen()
+        composable(route = "signup") {
+            SignUpScreen(
+                onSignUpSuccess = {
+                    navController.popBackStack()
+                    navController.navigate("login") // or "home" if that's your next screen
+                }
+            )
+        }
+        composable("worker_details/{workerId}") { backStackEntry ->
+            val workerId = backStackEntry.arguments?.getString("workerId")
+            WorkerDetailsScreen(navController)
+        }
+        composable("login") {
+            LoginScreen(navController)
+        }
+        composable("home") {
+            HomeScreen(navController)
         }
 
-        composable("home") {
-            HomeScreen()
+        composable("settings") {
+            SettingsScreen(navController)
         }
-        // Add more screens here later, like:
+
+        composable("edit_profile") {
+            EditProfileScreen(navController)
+        }
+
+        composable("profilesettings"){
+            EditProfileScreen(navController)
+        }
+
+        composable("search_results") {
+            SearchResultsScreen(navController)
+        }
+
+        composable("book_appointment/{workerId}") { backStackEntry ->
+            val workerId = backStackEntry.arguments?.getString("workerId")
+            BookAppointmentScreen(navController)
+        }
+
+        composable("change_payment_method") {
+            ChangePaymentMethodScreen(navController)
+        }        // Add more screens here later, like:
         // composable("home") { HomeScreen() }
     }
 

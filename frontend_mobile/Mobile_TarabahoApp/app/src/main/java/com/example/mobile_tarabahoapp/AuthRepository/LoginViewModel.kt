@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.LoginRequest
+import com.example.mobile_tarabahoapp.utils.TokenManager
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
@@ -13,24 +14,24 @@ class LoginViewModel : ViewModel() {
     val loginResult = MutableLiveData<AuthResponse>()
     val loginError = MutableLiveData<String>()
 
+    val logoutResult = MutableLiveData<String>()
+    val logoutError = MutableLiveData<String>()
+
     fun login(username: String, password: String) {
         viewModelScope.launch {
             try {
-                // Create a login request using your data class
                 val loginRequest = LoginRequest(username, password)
                 val response = RetrofitClient.apiService.login(loginRequest)
 
                 if (response.isSuccessful) {
-                    // If we get a successful JSON response, handle it
                     response.body()?.let { authResponse ->
+                        TokenManager.saveToken(authResponse.token) // ✅ Save JWT to SharedPreferences
                         loginResult.value = authResponse
                     } ?: run {
                         loginError.value = "Empty response from server."
                     }
                 } else {
-                    // For error responses, try to read the error body as plain text
                     val errorString = response.errorBody()?.string()
-                    // Provide a more descriptive message based on the HTTP status code if desired
                     val errorMessage = when (response.code()) {
                         404 -> "User not found. Please register before logging in."
                         401 -> "Invalid username or password."
@@ -41,6 +42,23 @@ class LoginViewModel : ViewModel() {
             } catch (ex: Exception) {
                 ex.printStackTrace()
                 loginError.value = "An error occurred: ${ex.localizedMessage}"
+            }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.logout()
+                if (response.isSuccessful) {
+                    TokenManager.clearToken() // ✅ Clear token on logout
+                    logoutResult.value = response.body() ?: "Logged out successfully"
+                } else {
+                    logoutError.value = response.errorBody()?.string() ?: "Logout failed"
+                }
+            } catch (ex: Exception) {
+                ex.printStackTrace()
+                logoutError.value = "An error occurred: ${ex.localizedMessage}"
             }
         }
     }

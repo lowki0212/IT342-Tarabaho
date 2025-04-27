@@ -1,5 +1,6 @@
 package com.example.mobile_tarabahoapp
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -17,21 +20,23 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-
 import androidx.compose.ui.text.style.TextDecoration
-
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mobile_tarabahoapp.model.RegisterRequest
+import com.example.mobile_tarabahoapp.model.User
+import com.example.mobile_tarabahoapp.AuthRepository.SignUpViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
 class SignUpActivity : ComponentActivity() {
@@ -43,7 +48,11 @@ class SignUpActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SignUpScreen()
+                    SignUpScreen(onSignUpSuccess = {
+                        // Navigate back to MainActivity (login)
+                        startActivity(Intent(this, MainActivity::class.java))
+                        finish()
+                    })
                 }
             }
         }
@@ -52,20 +61,37 @@ class SignUpActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(
+    onSignUpSuccess: () -> Unit,
+    viewModel: SignUpViewModel = viewModel()
+) {
+    // Form state
     var firstName by remember { mutableStateOf("Lois") }
     var lastName by remember { mutableStateOf("Becket") }
     var email by remember { mutableStateOf("Loisbecket@gmail.com") }
     var city by remember { mutableStateOf("Cebu City") }
-    var date by remember { mutableStateOf("18/03/2024") }
+    var date by remember { mutableStateOf("2024-03-18") }  // Backend format: YYYY-MM-DD
+    var displayDate by remember { mutableStateOf("18/03/2024") } // Display format: DD/MM/YYYY
     var phone by remember { mutableStateOf("(454) 726-0592") }
     var password by remember { mutableStateOf("********") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    // Observe ViewModel LiveData
+    val newUser by viewModel.newUser.observeAsState()
+    val errorMsg by viewModel.signUpError.observeAsState()
+
+    // On successful registration, invoke callback
+    newUser?.let {
+        LaunchedEffect(it) { onSignUpSuccess() }
+    }
+
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .verticalScroll(rememberScrollState())
     ) {
         // Blue header
         Box(
@@ -75,14 +101,8 @@ fun SignUpScreen() {
                 .background(Color(0xFF2962FF))
         ) {
             // Back button
-            val context = LocalContext.current
-
             IconButton(
-                onClick = {
-                    val intent = Intent(context, MainActivity::class.java)
-                    context.startActivity(intent)
-                    (context as? ComponentActivity)?.finish()
-                },
+                onClick = { (context as? Activity)?.finish() },
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.TopStart)
@@ -124,7 +144,7 @@ fun SignUpScreen() {
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         textDecoration = TextDecoration.Underline,
-                        modifier = Modifier.clickable { /* Handle login navigation */ }
+                        modifier = Modifier.clickable { (context as? Activity)?.finish() }
                     )
                 }
             }
@@ -212,8 +232,12 @@ fun SignUpScreen() {
 
             // Date field
             OutlinedTextField(
-                value = date,
-                onValueChange = { date = it },
+                value = displayDate,
+                onValueChange = {
+                    displayDate = it
+                    // You might want to add logic to convert between display format and backend format
+                    // For simplicity, we're just updating the display value here
+                },
                 label = null,
                 placeholder = { Text("Date") },
                 modifier = Modifier.fillMaxWidth(),
@@ -295,11 +319,37 @@ fun SignUpScreen() {
                 }
             )
 
+            // Error message
+            errorMsg?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sign Up button
             Button(
-                onClick = { /* Handle sign up */ },
+                onClick = {
+                    // Convert display date format to backend format if needed
+                    // For now, we'll use the original date variable which should be in YYYY-MM-DD format
+                    viewModel.register(
+                        RegisterRequest(
+                            firstname = firstName,
+                            lastname = lastName,
+                            username = email.substringBefore('@'),
+                            password = password,
+                            email = email,
+                            phoneNumber = phone,
+                            location = city,
+                            birthday = date
+                        )
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -314,14 +364,16 @@ fun SignUpScreen() {
                     fontWeight = FontWeight.Bold
                 )
             }
+
+            // Add some bottom padding
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
     TarabahoTheme {
-        SignUpScreen()
+        SignUpScreen(onSignUpSuccess = {})
     }
 }

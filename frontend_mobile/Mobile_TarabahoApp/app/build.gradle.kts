@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.firebase.firestore.ktx)
 
     testImplementation(libs.junit)
 
@@ -68,4 +69,5 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:<latest-version>")
     implementation ("androidx.compose.runtime:runtime-livedata:<version>")
     implementation ("androidx.navigation:navigation-compose:<version>")
+    implementation ("io.coil-kt:coil-compose:2.4.0")
 }

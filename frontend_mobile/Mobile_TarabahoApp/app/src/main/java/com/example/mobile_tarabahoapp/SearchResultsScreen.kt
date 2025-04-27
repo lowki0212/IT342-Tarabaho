@@ -2,13 +2,10 @@ package com.example.mobile_tarabahoapp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-
-
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -22,52 +19,61 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.mobile_tarabahoapp.AppNavigation
-
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
-data class ServiceProvider(
-    val id: Int,
+data class SearchResult(
+    val id: String,
     val name: String,
     val profession: String,
+    val workplace: String,
     val location: String,
     val rating: Float,
     val reviews: Int,
-    val imageRes: Int,
-    var isFavorite: Boolean = false
+    val imageRes: Int
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun SearchResultsScreen(navController: NavController) {
     var searchQuery by remember { mutableStateOf("Gardener") }
-    var selectedCategoryIndex by remember { mutableStateOf(1) } // Gardener selected by default
 
-    val categories = listOf(
-        "Work" to R.drawable.ic_work,
-        "Gardener" to R.drawable.ic_gardener,
-        "Errands" to R.drawable.ic_errands,
-        "Caretaker" to R.drawable.ic_caretaker
-    )
-
-    // Sample data for service providers
-    val serviceProviders = remember {
-        mutableStateListOf(
-            ServiceProvider(
-                id = 1,
-                name = "Angelo Quieta",
-                profession = "Caretaker",
-                location = "Siomai Sa Tisa",
-                rating = 4f,
+    // Sample search results
+    val searchResults = remember {
+        listOf(
+            SearchResult(
+                id = "1",
+                name = "Dr. David Patel",
+                profession = "Gardener",
+                workplace = "Cardiology Center",
+                location = "USA",
+                rating = 5.0f,
                 reviews = 1872,
-                imageRes = R.drawable.profile_angelo,
-                isFavorite = false
+                imageRes = R.drawable.profile_david
+            ),
+            SearchResult(
+                id = "2",
+                name = "Dr. Jessica Turner",
+                profession = "Gardener",
+                workplace = "Women's Clinic",
+                location = "Seattle, USA",
+                rating = 4.9f,
+                reviews = 127,
+                imageRes = R.drawable.profile_jessica
+            ),
+            SearchResult(
+                id = "3",
+                name = "Dr. Michael Johnson",
+                profession = "Gardener",
+                workplace = "Maple Associates",
+                location = "NY, USA",
+                rating = 4.7f,
+                reviews = 5223,
+                imageRes = R.drawable.profile_michael
             )
         )
     }
@@ -89,20 +95,15 @@ fun HomeScreen(navController: NavController) {
                     )
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Person, contentDescription = "Settings") },
-                    selected = false, // You can update this based on currentDestination if needed
-                    onClick = {
-                        navController.navigate("settings") {
-
-                        }
-                    },
+                    icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
+                    selected = false,
+                    onClick = { /* Handle navigation */ },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
@@ -142,17 +143,15 @@ fun HomeScreen(navController: NavController) {
                 .padding(paddingValues)
                 .background(Color(0xFFF5F5F5))
         ) {
-            // Header with app name
+            // Header with search bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF2962FF))
-                    .padding(top = 16.dp, bottom = 24.dp)
+                    .padding(16.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "TARABAHO !",
@@ -201,118 +200,17 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            // Categories section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF29B6F6)
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Categories",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        categories.forEachIndexed { index, (name, iconRes) ->
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable { selectedCategoryIndex = index }
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.White)
-                                        .border(
-                                            width = if (selectedCategoryIndex == index) 2.dp else 0.dp,
-                                            color = if (selectedCategoryIndex == index) Color(0xFF2962FF) else Color.Transparent,
-                                            shape = RoundedCornerShape(8.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = iconRes),
-                                        contentDescription = name,
-                                        tint = if (selectedCategoryIndex == index) Color(0xFF2962FF) else Color.Gray,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(4.dp))
-
-                                Text(
-                                    text = name,
-                                    color = Color.White,
-                                    fontSize = 12.sp,
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Results count and filter
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "532 founds",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Default",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Sort",
-                        tint = Color.Gray
-                    )
-                }
-            }
-
-            // Service providers list
+            // Search results
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(serviceProviders) { provider ->
-                    ServiceProviderCard(
-                        serviceProvider = provider,
-                        onFavoriteClick = {
-                            val index = serviceProviders.indexOfFirst { it.id == provider.id }
-                            if (index != -1) {
-                                serviceProviders[index] = serviceProviders[index].copy(
-                                    isFavorite = !serviceProviders[index].isFavorite
-                                )
-                            }
-                        }
+                items(searchResults) { result ->
+                    SearchResultCard(
+                        searchResult = result,
+                        onClick = { navController.navigate("worker_details/${result.id}") }
                     )
                 }
 
@@ -326,12 +224,14 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun ServiceProviderCard(
-    serviceProvider: ServiceProvider,
-    onFavoriteClick: () -> Unit
+fun SearchResultCard(
+    searchResult: SearchResult,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -344,52 +244,38 @@ fun ServiceProviderCard(
         ) {
             // Profile image
             Image(
-                painter = painterResource(id = serviceProvider.imageRes),
-                contentDescription = "Profile picture of ${serviceProvider.name}",
+                painter = painterResource(id = searchResult.imageRes),
+                contentDescription = "Profile picture of ${searchResult.name}",
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            // Provider details
+            // Worker details
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 12.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = serviceProvider.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Text(
+                    text = searchResult.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
 
-                    IconButton(
-                        onClick = onFavoriteClick,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (serviceProvider.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (serviceProvider.isFavorite) Color.Red else Color.Gray
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = serviceProvider.profession,
+                    text = searchResult.profession,
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
 
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
@@ -398,16 +284,17 @@ fun ServiceProviderCard(
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = serviceProvider.location,
+                        text = "${searchResult.workplace}, ${searchResult.location}",
                         fontSize = 12.sp,
                         color = Color.Gray,
-                        modifier = Modifier.padding(start = 2.dp)
+                        modifier = Modifier.padding(start = 4.dp)
                     )
                 }
 
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Star,
@@ -416,13 +303,13 @@ fun ServiceProviderCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "${serviceProvider.rating}",
+                        text = "${searchResult.rating}",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                     Text(
-                        text = "${serviceProvider.reviews} Reviews",
+                        text = "${searchResult.reviews} Reviews",
                         fontSize = 12.sp,
                         color = Color.Gray,
                         modifier = Modifier.padding(start = 8.dp)
@@ -435,9 +322,8 @@ fun ServiceProviderCard(
 
 @Preview(showBackground = true)
 @Composable
-fun HomeScreenPreview() {
+fun SearchResultsScreenPreview() {
     TarabahoTheme {
-        val navController = rememberNavController()
-        HomeScreen(navController = navController)
+        SearchResultsScreen(rememberNavController())
     }
 }
