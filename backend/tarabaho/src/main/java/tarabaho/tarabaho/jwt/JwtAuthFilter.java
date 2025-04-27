@@ -40,81 +40,97 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private WorkerService workerService;
 
     private static final List<String> SKIP_FILTER_PATHS = Arrays.asList(
-        "/api/admin/login",
-        "/api/admin/register",
-        "/api/admin/logout",
-        "/api/user/login",
-        "/api/user/register",
-        "/api/user/token",
-        "/api/worker/register",
-        "/api/worker/check-duplicates",
-        "/api/worker/token",
-        "/api/worker/login",
-        "/api/worker/*/upload-initial-picture",
-        "/api/certificate/worker/**",
-        "/oauth2/**",
-        "/login/**",
-        "/oauth2-success",
-        "/profiles/**"
+            "/api/admin/login",
+            "/api/admin/register",
+            "/api/admin/logout",
+            "/api/user/login",
+            "/api/user/register",
+            "/api/user/token",
+            "/api/worker/register",
+            "/api/worker/check-duplicates",
+            "/api/worker/token",
+            "/api/worker/login",
+            "/api/worker/*/upload-initial-picture",
+            "/api/certificate/worker/**",
+            "/oauth2/**",
+            "/login/**",
+            "/oauth2-success",
+            "/profiles/**"
     );
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
-protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-    String path = request.getRequestURI();
-    String method = request.getMethod();
-    System.out.println("JwtAuthFilter: Checking URI: " + path + ", Method: " + method);
-    boolean shouldNotFilter = SKIP_FILTER_PATHS.stream()
-            .peek(pattern -> System.out.println("JwtAuthFilter: Comparing with pattern: " + pattern))
-            .anyMatch(pattern -> {
-                boolean match = pathMatcher.match(pattern, path);
-                System.out.println("JwtAuthFilter: Pattern " + pattern + " matches: " + match);
-                return match;
-            });
-    System.out.println("JwtAuthFilter: shouldNotFilter = " + shouldNotFilter + " for URI: " + path);
-    return shouldNotFilter;
-}
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+        System.out.println("JwtAuthFilter: Checking URI: " + path + ", Method: " + method);
+        boolean shouldNotFilter = SKIP_FILTER_PATHS.stream()
+                .peek(pattern -> System.out.println("JwtAuthFilter: Comparing with pattern: " + pattern))
+                .anyMatch(pattern -> {
+                    boolean match = pathMatcher.match(pattern, path);
+                    System.out.println("JwtAuthFilter: Pattern " + pattern + " matches: " + match);
+                    return match;
+                });
+        System.out.println("JwtAuthFilter: shouldNotFilter = " + shouldNotFilter + " for URI: " + path);
+        return shouldNotFilter;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
         String path = request.getRequestURI();
         System.out.println("JwtAuthFilter: Processing request for URI: " + path);
 
         String jwtToken = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("jwtToken".equals(cookie.getName())) {
-                    jwtToken = cookie.getValue();
-                    System.out.println("JwtAuthFilter: Found jwtToken in cookie (truncated): " + jwtToken.substring(0, Math.min(jwtToken.length(), 10)) + "...");
-                    break;
+
+        // ✅ Check Authorization header first (for Android app)
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwtToken = authHeader.substring(7);
+            System.out.println("JwtAuthFilter: Found jwtToken in Authorization header (truncated): " +
+                    jwtToken.substring(0, Math.min(jwtToken.length(), 10)) + "...");
+        }
+
+        // ✅ Fallback to cookie (for web clients)
+        if (jwtToken == null) {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("jwtToken".equals(cookie.getName())) {
+                        jwtToken = cookie.getValue();
+                        System.out.println("JwtAuthFilter: Found jwtToken in cookie (truncated): " +
+                                jwtToken.substring(0, Math.min(jwtToken.length(), 10)) + "...");
+                        break;
+                    }
                 }
             }
         }
 
-        if (jwtToken != null && !shouldNotFilter(request)) {
+        if (jwtToken != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 System.out.println("JwtAuthFilter: Validating token...");
                 String username = jwtUtil.getUsernameFromToken(jwtToken);
+
                 if (username != null && jwtUtil.validateToken(jwtToken)) {
                     System.out.println("JwtAuthFilter: Token valid, username: " + username);
-                    // Try Admin first
+
+                    // Check Admin first
                     tarabaho.tarabaho.entity.Admin admin = adminService.findByUsername(username);
                     if (admin != null) {
                         System.out.println("JwtAuthFilter: Authenticated as Admin: " + username);
                         UserDetails userDetails = new User(admin.getUsername(), admin.getPassword(), Collections.emptyList());
                         setAuthentication(request, userDetails);
                     } else {
-                        // Try User
+                        // Check User
                         tarabaho.tarabaho.entity.User user = userService.findByUsername(username).orElse(null);
                         if (user != null) {
                             System.out.println("JwtAuthFilter: Authenticated as User: " + username);
                             UserDetails userDetails = new User(user.getUsername(), user.getPassword(), Collections.emptyList());
                             setAuthentication(request, userDetails);
                         } else {
-                            // Try Worker
+                            // Check Worker
                             tarabaho.tarabaho.entity.Worker worker = workerService.findByUsername(username).orElse(null);
                             if (worker != null) {
                                 System.out.println("JwtAuthFilter: Authenticated as Worker: " + username);
