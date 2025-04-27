@@ -33,6 +33,8 @@ import TrabahadorHistory from "./pages/TrabahadorHistory" // Add import
 import UserBookmarks from "./pages/UserBookmarks" // Add the new import
 import ChatPage from "./pages/ChatPage"
 import WorkerProfileDetail from "./pages/WorkerProfileDetail" // Add the new import
+import Terms from "./pages/Terms"
+import Privacy from "./pages/Privacy"
 
 function App() {
   return (
@@ -46,6 +48,8 @@ function App() {
         <Route path="/register-admin" element={<RegisterAdmin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/about" element={<AboutUs />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
 
         {/* Admin routes */}
         <Route path="/admin/homepage" element={<AdminHomepage />} />

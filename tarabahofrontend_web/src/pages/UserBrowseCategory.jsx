@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
-import "../styles/User-browse-category.css"
-import { FaStar, FaRegStar } from "react-icons/fa"
 import Footer from "../components/Footer"
+import "../styles/User-browse-category.css"
+import { FaStar, FaRegStar, FaSearch, FaFilter, FaMapMarkerAlt, FaHeart, FaRegHeart } from "react-icons/fa"
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null }
@@ -18,9 +18,12 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="error-message">
-          <h2>Something went wrong.</h2>
+        <div className="error-container">
+          <h2>Something went wrong</h2>
           <p>{this.state.error?.message || "An unexpected error occurred."}</p>
+          <button onClick={() => window.location.reload()} className="retry-button">
+            Try Again
+          </button>
         </div>
       )
     }
@@ -37,81 +40,112 @@ const UserBrowseCategory = () => {
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("rating")
+  const [isLoading, setIsLoading] = useState(true)
+  const [showFilters, setShowFilters] = useState(false)
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 })
+  const [ratingFilter, setRatingFilter] = useState(0)
+  const [favorites, setFavorites] = useState([])
   const BACKEND_URL = "http://localhost:8080"
   const token = localStorage.getItem("jwtToken")
 
   useEffect(() => {
     const fetchCategoryAndWorkers = async () => {
+      setIsLoading(true)
       try {
+        // Fetch categories
         const categoryResponse = await axios.get(`${BACKEND_URL}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         })
         const data = Array.isArray(categoryResponse.data) ? categoryResponse.data : []
         const foundCategory = data.find(
-          (cat) => cat && cat.name && cat.name.toLowerCase() === categoryName.toLowerCase()
+          (cat) => cat && cat.name && cat.name.toLowerCase() === categoryName.toLowerCase(),
         )
         if (!foundCategory) {
           setError("Category not found.")
+          setIsLoading(false)
           return
         }
         setCategory(foundCategory)
 
-        const formattedCategoryName =
-          categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
+        // Fetch workers for this category
+        const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
         const workersResponse = await axios.get(
           `${BACKEND_URL}/api/worker/category/${formattedCategoryName}/available`,
           {
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
-          }
+          },
         )
         setWorkers(workersResponse.data)
-        setFilteredWorkers(workersResponse.data) // Initialize filtered workers
+        setFilteredWorkers(workersResponse.data)
+        setError("")
       } catch (err) {
         console.error(`Failed to fetch data for ${categoryName}:`, err)
-        console.error("Error response:", err.response?.data)
-        console.error("Error status:", err.response?.status)
         setError(
           err.response?.status === 401
             ? "Please log in to view workers."
-            : err.response?.data?.replace("⚠️ ", "") || "Failed to load workers. Please try again."
+            : err.response?.data?.replace("⚠️ ", "") || "Failed to load workers. Please try again.",
         )
         if (err.response?.status === 401) {
           navigate("/login")
         }
+      } finally {
+        setIsLoading(false)
       }
     }
+
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem("favoriteWorkers")
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites))
+    }
+
     fetchCategoryAndWorkers()
   }, [categoryName, navigate, token])
 
-  // Handle search and sort
+  // Handle search, sort, and filters
   useEffect(() => {
     let updatedWorkers = [...workers]
 
     // Filter by search query
     if (searchQuery) {
-      updatedWorkers = updatedWorkers.filter(worker => {
+      const query = searchQuery.toLowerCase()
+      updatedWorkers = updatedWorkers.filter((worker) => {
         const fullName = `${worker.firstName || ""} ${worker.lastName || ""}`.toLowerCase()
-        return fullName.includes(searchQuery.toLowerCase())
+        const bio = (worker.biography || "").toLowerCase()
+        return fullName.includes(query) || bio.includes(query)
       })
+    }
+
+    // Apply price filter
+    updatedWorkers = updatedWorkers.filter(
+      (worker) => worker.hourly >= priceRange.min && worker.hourly <= priceRange.max,
+    )
+
+    // Apply rating filter
+    if (ratingFilter > 0) {
+      updatedWorkers = updatedWorkers.filter((worker) => (worker.stars || 0) >= ratingFilter)
     }
 
     // Sort by selected criterion
     updatedWorkers.sort((a, b) => {
       if (sortBy === "rating") {
         return (b.stars || 0) - (a.stars || 0) // Highest rating first
-      } else if (sortBy === "price") {
+      } else if (sortBy === "price_low") {
         return (a.hourly || 0) - (b.hourly || 0) // Lowest price first
-      } else if (sortBy === "experience") {
-        // Assuming experience is not available in worker data; fallback to no sorting
-        return 0
+      } else if (sortBy === "price_high") {
+        return (b.hourly || 0) - (a.hourly || 0) // Highest price first
+      } else if (sortBy === "name") {
+        const nameA = `${a.firstName || ""} ${a.lastName || ""}`.toLowerCase()
+        const nameB = `${b.firstName || ""} ${b.lastName || ""}`.toLowerCase()
+        return nameA.localeCompare(nameB)
       }
       return 0
     })
 
     setFilteredWorkers(updatedWorkers)
-  }, [searchQuery, sortBy, workers])
+  }, [searchQuery, sortBy, workers, priceRange, ratingFilter])
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value)
@@ -121,15 +155,41 @@ const UserBrowseCategory = () => {
     setSortBy(e.target.value)
   }
 
+  const toggleFilters = () => {
+    setShowFilters(!showFilters)
+  }
+
+  const handlePriceChange = (e, type) => {
+    const value = Number.parseInt(e.target.value)
+    setPriceRange((prev) => ({ ...prev, [type]: value }))
+  }
+
+  const handleRatingFilterChange = (rating) => {
+    setRatingFilter(rating === ratingFilter ? 0 : rating)
+  }
+
+  const clearFilters = () => {
+    setPriceRange({ min: 0, max: 1000 })
+    setRatingFilter(0)
+    setSearchQuery("")
+  }
+
+  const toggleFavorite = (workerId) => {
+    let newFavorites
+    if (favorites.includes(workerId)) {
+      newFavorites = favorites.filter((id) => id !== workerId)
+    } else {
+      newFavorites = [...favorites, workerId]
+    }
+    setFavorites(newFavorites)
+    localStorage.setItem("favoriteWorkers", JSON.stringify(newFavorites))
+  }
+
   const renderStars = (rating = 0) => {
     const stars = []
     for (let i = 1; i <= 5; i++) {
       stars.push(
-        i <= rating ? (
-          <FaStar key={i} className="star-filled" />
-        ) : (
-          <FaRegStar key={i} className="star-empty" />
-        )
+        i <= rating ? <FaStar key={i} className="star-filled" /> : <FaRegStar key={i} className="star-empty" />,
       )
     }
     return stars
@@ -139,85 +199,180 @@ const UserBrowseCategory = () => {
     navigate(`/worker-profile-detail/${workerId}`)
   }
 
-  const displayCategoryName = categoryName
-    ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
-    : "Category"
+  const displayCategoryName = categoryName ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1) : "Category"
 
   return (
     <ErrorBoundary>
-      <div className={`browse-category-page ${categoryName?.toLowerCase() || ''} page-container`}>
+      <div className={`browse-category-page ${categoryName?.toLowerCase() || ""}`}>
         <UserNavbar activePage="user-browse" />
-        <div className="filter-section">
-          <div className="sort-container">
-            <span className="sort-label">Sort by</span>
-            <select
-              className="sort-dropdown"
-              value={sortBy}
-              onChange={handleSortChange}
-            >
-              <option value="rating">Rating</option>
-              <option value="price">Price</option>
-              <option value="experience">Experience</option>
-            </select>
-          </div>
-          <div className="search-container">
-            <input
-              type="text"
-              className="search-input"
-              placeholder="Search by name"
-              value={searchQuery}
-              onChange={handleSearchChange}
-            />
+
+        <div className="category-header">
+          <div className="category-header-content">
+            <h1>{displayCategoryName} Workers</h1>
+            <p>Find skilled {displayCategoryName.toLowerCase()} professionals for your needs</p>
           </div>
         </div>
-        <div className="service-providers-grid">
-          <h2>{displayCategoryName} Workers</h2>
-          {error && <div className="error-message">{error}</div>}
-          {filteredWorkers.length > 0 ? (
-            filteredWorkers.map((worker) => {
-              const displayName = worker.firstName && worker.lastName
-                ? `${worker.firstName} ${worker.lastName}`
-                : worker.username || "Unknown Worker"
-              return (
-                <div key={worker.id} className="provider-card">
-                  <div className="provider-image">
-                    <img
-                      src={
-                        worker.profilePicture
-                          ? `${BACKEND_URL}${worker.profilePicture}`
-                          : "/placeholder.svg"
-                      }
-                      alt={displayName}
-                    />
-                  </div>
-                  <div className="provider-details">
-                    <h3
-                      className="provider-name"
-                      style={{ color: "black", fontSize: "1.2rem", margin: "0.5rem 0" }}
-                    >
-                      {displayName}
-                    </h3>
-                    <div className="provider-rating">{renderStars(worker.stars)}</div>
-                    <p className="provider-description">
-                      {worker.biography || "No biography available"}
-                    </p>
-                    <p className="provider-rate">₱{worker.hourly.toFixed(2)}/hour</p>
-                    <button
-                      className="view-button"
-                      onClick={() => handleViewWorker(worker.id)}
-                    >
-                      View
-                    </button>
-                  </div>
+
+        <div className="browse-controls">
+          <div className="search-filter-container">
+            <div className="search-container">
+              <FaSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search by name or description..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="search-input"
+              />
+            </div>
+
+            <div className="filter-sort-container">
+              <div className="sort-container">
+                <label htmlFor="sort-select">Sort by:</label>
+                <select id="sort-select" value={sortBy} onChange={handleSortChange} className="sort-select">
+                  <option value="rating">Highest Rating</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
+
+              <button className="filter-button" onClick={toggleFilters}>
+                <FaFilter /> Filters
+              </button>
+            </div>
+          </div>
+
+          {showFilters && (
+            <div className="filters-panel">
+              <div className="filter-section">
+                <h3>Price Range (₱)</h3>
+                <div className="price-inputs">
+                  <input
+                    type="number"
+                    min="0"
+                    max={priceRange.max}
+                    value={priceRange.min}
+                    onChange={(e) => handlePriceChange(e, "min")}
+                    className="price-input"
+                  />
+                  <span>to</span>
+                  <input
+                    type="number"
+                    min={priceRange.min}
+                    value={priceRange.max}
+                    onChange={(e) => handlePriceChange(e, "max")}
+                    className="price-input"
+                  />
                 </div>
-              )
-            })
-          ) : (
-            <p>No workers found for {displayCategoryName}.</p>
+              </div>
+
+              <div className="filter-section">
+                <h3>Minimum Rating</h3>
+                <div className="rating-filter">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      onClick={() => handleRatingFilterChange(star)}
+                      className={`filter-star ${ratingFilter >= star ? "active" : ""}`}
+                    >
+                      <FaStar />
+                    </span>
+                  ))}
+                  {ratingFilter > 0 && (
+                    <button className="clear-rating" onClick={() => handleRatingFilterChange(0)}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <button className="clear-filters-button" onClick={clearFilters}>
+                Clear All Filters
+              </button>
+            </div>
           )}
         </div>
+
+        <div className="workers-container">
+          {isLoading ? (
+            <div className="loading-spinner">
+              <div className="spinner"></div>
+              <p>Loading workers...</p>
+            </div>
+          ) : error ? (
+            <div className="error-message">{error}</div>
+          ) : filteredWorkers.length === 0 ? (
+            <div className="no-results">
+              <h3>No workers found</h3>
+              <p>Try adjusting your filters or search query</p>
+            </div>
+          ) : (
+            <div className="workers-grid">
+              {filteredWorkers.map((worker) => {
+                const displayName =
+                  worker.firstName && worker.lastName
+                    ? `${worker.firstName} ${worker.lastName}`
+                    : worker.username || "Unknown Worker"
+                return (
+                  <div key={worker.id} className="worker-card">
+                    <div className="worker-card-header">
+                      <div
+                        className="favorite-button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleFavorite(worker.id)
+                        }}
+                      >
+                        {favorites.includes(worker.id) ? (
+                          <FaHeart className="favorite-icon active" />
+                        ) : (
+                          <FaRegHeart className="favorite-icon" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="worker-card-content" onClick={() => handleViewWorker(worker.id)}>
+                      <div className="worker-image-container">
+                        <img
+                          src={
+                            worker.profilePicture
+                              ? `${BACKEND_URL}${worker.profilePicture}`
+                              : "/placeholder.svg?height=200&width=200"
+                          }
+                          alt={displayName}
+                          className="worker-image"
+                        />
+                      </div>
+                      <div className="worker-details">
+                        <h3 className="worker-name">{displayName}</h3>
+                        <div className="worker-rating">{renderStars(worker.stars || 0)}</div>
+                        <p className="worker-bio">
+                          {worker.biography
+                            ? worker.biography.length > 100
+                              ? `${worker.biography.substring(0, 100)}...`
+                              : worker.biography
+                            : "No description available"}
+                        </p>
+                        {worker.address && (
+                          <div className="worker-location">
+                            <FaMapMarkerAlt className="location-icon" />
+                            <span>{worker.address}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="worker-footer">
+                        <div className="worker-price">₱{worker.hourly?.toFixed(2) || "0.00"}/hour</div>
+                        <button className="view-profile-button">View Profile</button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+        <Footer />
       </div>
-      <Footer />
     </ErrorBoundary>
   )
 }
