@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,10 +48,10 @@ public class CertificateController {
     @PostMapping("/worker/{workerId}")
     public ResponseEntity<?> addCertificate(
             @PathVariable Long workerId,
-            @RequestParam("courseName") String courseName,
-            @RequestParam("certificateNumber") String certificateNumber,
-            @RequestParam("issueDate") String issueDate,
-            @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
+            @RequestPart("courseName") String courseName,
+            @RequestPart("certificateNumber") String certificateNumber,
+            @RequestPart("issueDate") String issueDate,
+            @RequestPart(value = "certificateFile", required = false) MultipartFile certificateFile,
             Authentication authentication
     ) {
         try {
@@ -59,6 +59,10 @@ public class CertificateController {
 
             // Validate worker existence
             Worker worker = workerService.findById(workerId);
+            if (worker == null) {
+                System.out.println("CertificateController: Worker not found for ID: " + workerId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found.");
+            }
 
             // Enforce authentication for logged-in users
             if (authentication != null && authentication.isAuthenticated()) {
@@ -67,7 +71,8 @@ public class CertificateController {
                         .orElseThrow(() -> new Exception("Worker not found for username: " + username));
                 if (!authenticatedWorker.getId().equals(workerId)) {
                     System.out.println("CertificateController: Unauthorized attempt to add certificate for another worker");
-                    throw new Exception("Unauthorized: Cannot add certificate for another worker");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body("Unauthorized: Cannot add certificate for another worker.");
                 }
             }
 
@@ -92,11 +97,11 @@ public class CertificateController {
     @PutMapping("/{certificateId}")
     public ResponseEntity<?> updateCertificate(
             @PathVariable Long certificateId,
-            @RequestParam("courseName") String courseName,
-            @RequestParam("certificateNumber") String certificateNumber,
-            @RequestParam("issueDate") String issueDate,
-            @RequestParam("workerId") Long workerId,
-            @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
+            @RequestPart("courseName") String courseName,
+            @RequestPart("certificateNumber") String certificateNumber,
+            @RequestPart("issueDate") String issueDate,
+            @RequestPart("workerId") String workerIdStr,
+            @RequestPart(value = "certificateFile", required = false) MultipartFile certificateFile,
             Authentication authentication
     ) {
         try {
@@ -107,12 +112,16 @@ public class CertificateController {
             }
 
             String username = authentication.getName();
-            Worker worker = workerService.findByUsername(username)
-                    .orElseThrow(() -> new Exception("Worker not found for username: " + username));
-
-            if (!worker.getId().equals(workerId)) {
+            Long workerId = Long.parseLong(workerIdStr);
+            Worker worker = workerService.findById(workerId);
+            if (worker == null) {
+                System.out.println("CertificateController: Worker not found for ID: " + workerId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found.");
+            }
+            if (!worker.getUsername().equals(username)) {
                 System.out.println("CertificateController: Unauthorized attempt to update certificate for another worker");
-                throw new Exception("Unauthorized: Cannot update certificate for another worker");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Unauthorized: Cannot update certificate for another worker.");
             }
 
             Certificate updatedCertificate = certificateService.updateCertificate(
@@ -154,7 +163,8 @@ public class CertificateController {
 
             if (!certificate.getWorker().getId().equals(worker.getId())) {
                 System.out.println("CertificateController: Unauthorized attempt to delete certificate for another worker");
-                throw new Exception("Unauthorized: Cannot delete certificate for another worker");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Unauthorized: Cannot delete certificate for another worker.");
             }
 
             certificateService.deleteCertificate(certificateId);
@@ -186,7 +196,8 @@ public class CertificateController {
 
             if (!worker.getId().equals(workerId)) {
                 System.out.println("CertificateController: Unauthorized attempt to fetch certificates for another worker");
-                throw new Exception("Unauthorized: Cannot fetch certificates for another worker");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(null);
             }
 
             List<Certificate> certificates = certificateService.getCertificatesByWorkerId(workerId);
@@ -225,7 +236,8 @@ public class CertificateController {
 
             if (!certificate.getWorker().getId().equals(worker.getId())) {
                 System.out.println("CertificateController: Unauthorized attempt to fetch certificate for another worker");
-                throw new Exception("Unauthorized: Cannot fetch certificate for another worker");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Unauthorized: Cannot fetch certificate for another worker.");
             }
 
             System.out.println("CertificateController: Certificate retrieved, ID: " + certificateId);

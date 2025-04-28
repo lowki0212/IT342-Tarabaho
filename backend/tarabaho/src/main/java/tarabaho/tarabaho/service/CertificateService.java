@@ -1,12 +1,7 @@
 package tarabaho.tarabaho.service;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +21,9 @@ public class CertificateService {
     @Autowired
     private WorkerRepository workerRepository;
 
+    @Autowired
+    private SupabaseRestStorageService storageService;
+
     public Certificate addCertificate(
             Long workerId,
             String courseName,
@@ -44,30 +42,8 @@ public class CertificateService {
         certificate.setWorker(worker);
 
         if (certificateFile != null && !certificateFile.isEmpty()) {
-            String contentType = certificateFile.getContentType();
-            if (!contentType.startsWith("image/") && !contentType.equals("application/pdf")) {
-                throw new Exception("Only image or PDF files are allowed.");
-            }
-
-            String uploadDir = "uploads/certificates/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    throw new Exception("Failed to create upload directory: " + uploadDir);
-                }
-            }
-
-            if (!directory.canWrite()) {
-                throw new Exception("Upload directory is not writable: " + uploadDir);
-            }
-
-            String fileName = UUID.randomUUID().toString() + "_" + certificateFile.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
-            System.out.println("CertificateService: Saving file to: " + filePath.toString());
-            Files.write(filePath, certificateFile.getBytes());
-
-            certificate.setCertificateFilePath("/certificates/" + fileName);
+            String publicUrl = storageService.uploadFile(certificateFile, "certificates");
+            certificate.setCertificateFilePath(publicUrl);
         }
 
         Certificate savedCertificate = certificateRepository.save(certificate);
@@ -96,36 +72,14 @@ public class CertificateService {
         certificate.setWorker(worker);
 
         if (certificateFile != null && !certificateFile.isEmpty()) {
-            String contentType = certificateFile.getContentType();
-            if (!contentType.startsWith("image/") && !contentType.equals("application/pdf")) {
-                throw new Exception("Only image or PDF files are allowed.");
-            }
-
-            String uploadDir = "uploads/certificates/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    throw new Exception("Failed to create upload directory: " + uploadDir);
-                }
-            }
-
-            if (!directory.canWrite()) {
-                throw new Exception("Upload directory is not writable: " + uploadDir);
-            }
-
-            // Delete old file if exists
+            // Delete old file from Supabase if exists
             if (certificate.getCertificateFilePath() != null) {
-                Path oldFilePath = Paths.get("uploads" + certificate.getCertificateFilePath()).toAbsolutePath().normalize();
-                Files.deleteIfExists(oldFilePath);
+                String oldFileName = certificate.getCertificateFilePath()
+                        .substring(certificate.getCertificateFilePath().lastIndexOf("/") + 1);
+                storageService.deleteFile("certificates", oldFileName);
             }
-
-            String fileName = UUID.randomUUID().toString() + "_" + certificateFile.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
-            System.out.println("CertificateService: Saving file to: " + filePath.toString());
-            Files.write(filePath, certificateFile.getBytes());
-
-            certificate.setCertificateFilePath("/certificates/" + fileName);
+            String publicUrl = storageService.uploadFile(certificateFile, "certificates");
+            certificate.setCertificateFilePath(publicUrl);
         }
 
         Certificate updatedCertificate = certificateRepository.save(certificate);
@@ -138,10 +92,11 @@ public class CertificateService {
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new Exception("Certificate not found with id: " + certificateId));
 
-        // Delete file from filesystem
+        // Delete file from Supabase
         if (certificate.getCertificateFilePath() != null) {
-            Path filePath = Paths.get("uploads" + certificate.getCertificateFilePath()).toAbsolutePath().normalize();
-            Files.deleteIfExists(filePath);
+            String fileName = certificate.getCertificateFilePath()
+                    .substring(certificate.getCertificateFilePath().lastIndexOf("/") + 1);
+            storageService.deleteFile("certificates", fileName);
         }
 
         certificateRepository.deleteById(certificateId);

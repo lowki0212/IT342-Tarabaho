@@ -1,14 +1,10 @@
 package tarabaho.tarabaho.controller;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +35,7 @@ import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.repository.WorkerRepository;
+import tarabaho.tarabaho.service.SupabaseRestStorageService;
 import tarabaho.tarabaho.service.UserService;
 import tarabaho.tarabaho.service.WorkerService;
 
@@ -58,6 +56,9 @@ public class WorkerController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SupabaseRestStorageService storageService;
 
     @Operation(summary = "Get worker by ID", description = "Retrieve a worker by their ID")
     @ApiResponses({
@@ -164,7 +165,7 @@ public class WorkerController {
     @PostMapping("/{workerId}/upload-initial-picture")
     public ResponseEntity<?> uploadInitialProfilePicture(
             @PathVariable Long workerId,
-            @RequestParam(value = "file", required = false) MultipartFile file
+            @RequestPart(value = "file", required = false) MultipartFile file
     ) {
         try {
             System.out.println("WorkerController: Starting upload-initial-picture for workerId: " + workerId);
@@ -185,57 +186,17 @@ public class WorkerController {
                 return ResponseEntity.badRequest().body("No file uploaded.");
             }
 
-            long maxFileSize = 5 * 1024 * 1024;
-            if (file.getSize() > maxFileSize) {
-                System.out.println("WorkerController: File size exceeds limit for workerId: " + workerId + ", size: " + file.getSize());
-                return ResponseEntity.badRequest().body("File size exceeds 5MB limit.");
-            }
-
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                System.out.println("WorkerController: Invalid file type for workerId: " + workerId + ", contentType: " + contentType);
-                return ResponseEntity.badRequest().body("Only image files are allowed.");
-            }
-
-            String uploadDir = "Uploads/profiles/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                System.out.println("WorkerController: Creating upload directory: " + uploadDir);
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    System.out.println("WorkerController: Failed to create upload directory: " + uploadDir);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Failed to create upload directory: " + uploadDir);
-                }
-            }
-
-            if (!directory.canWrite()) {
-                System.out.println("WorkerController: Upload directory is not writable: " + uploadDir);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Upload directory is not writable: " + uploadDir);
-            }
-
-            String originalFileName = file.getOriginalFilename();
-            if (originalFileName == null || originalFileName.isEmpty()) {
-                System.out.println("WorkerController: Invalid original filename for workerId: " + workerId);
-                return ResponseEntity.badRequest().body("Invalid file name.");
-            }
-            String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
-            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
-            System.out.println("WorkerController: Saving file to: " + filePath);
-
-            Files.write(filePath, file.getBytes());
-            System.out.println("WorkerController: File saved successfully: " + filePath);
-
-            String profilePicturePath = "/profiles/" + fileName;
-            worker.setProfilePicture(profilePicturePath);
+            // Upload to Supabase
+            String publicUrl = storageService.uploadFile(file, "profile-picture");
+            worker.setProfilePicture(publicUrl);
             workerService.editWorker(workerId, worker);
-            System.out.println("WorkerController: Worker updated with profile picture for workerId: " + workerId);
 
             System.out.println("WorkerController: Initial profile picture uploaded successfully for workerId: " + workerId);
             return ResponseEntity.ok(worker);
+        } catch (IllegalArgumentException e) {
+            System.out.println("WorkerController: Initial profile picture upload failed for workerId: " + workerId + ", error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
             System.out.println("WorkerController: Initial profile picture upload failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file: " + e.getMessage());
@@ -333,7 +294,7 @@ public class WorkerController {
     @PostMapping("/{workerId}/upload-picture")
     public ResponseEntity<?> uploadProfilePicture(
             @PathVariable Long workerId,
-            @RequestParam("file") MultipartFile file,
+            @RequestPart("file") MultipartFile file,
             Authentication authentication
     ) {
         try {
@@ -361,41 +322,31 @@ public class WorkerController {
                 return ResponseEntity.badRequest().body("No file uploaded.");
             }
 
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                System.out.println("WorkerController: Upload picture failed: Invalid file type for workerId: " + workerId);
-                return ResponseEntity.badRequest().body("Only image files are allowed.");
-            }
-
-            String uploadDir = "Uploads/profiles/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                System.out.println("WorkerController: Creating upload directory: " + uploadDir);
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    System.out.println("WorkerController: Failed to create upload directory: " + uploadDir);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Failed to create upload directory: " + uploadDir);
+            // Delete existing profile picture if it exists
+            if (worker.getProfilePicture() != null && !worker.getProfilePicture().isEmpty()) {
+                String existingFileName = worker.getProfilePicture().substring(worker.getProfilePicture().lastIndexOf("/") + 1);
+                try {
+                    storageService.deleteFile("profile-picture", existingFileName);
+                } catch (IOException e) {
+                    // Log the error but continue with the upload to avoid blocking the user
+                    System.err.println("Failed to delete old profile picture: " + e.getMessage());
                 }
             }
 
-            if (!directory.canWrite()) {
-                System.out.println("WorkerController: Upload directory is not writable: " + uploadDir);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Upload directory is not writable: " + uploadDir);
-            }
-
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
-            System.out.println("WorkerController: Saving file to: " + filePath);
-            Files.write(filePath, file.getBytes());
-
-            String profilePicturePath = "/profiles/" + fileName;
-            worker.setProfilePicture(profilePicturePath);
+            // Upload to Supabase
+            String publicUrl = storageService.uploadFile(file, "profile-picture");
+            worker.setProfilePicture(publicUrl);
             workerService.editWorker(workerId, worker);
 
             System.out.println("WorkerController: Profile picture uploaded successfully for workerId: " + workerId);
             return ResponseEntity.ok(worker);
+        } catch (IllegalArgumentException e) {
+            System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload file: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -603,31 +554,31 @@ public class WorkerController {
     }
 
     @Operation(summary = "Get similar workers", description = "Retrieve a list of workers similar to the specified worker based on categories or other criteria")
-@ApiResponses({
-    @ApiResponse(responseCode = "200", description = "List of similar workers retrieved successfully"),
-    @ApiResponse(responseCode = "404", description = "Worker not found"),
-    @ApiResponse(responseCode = "500", description = "Internal server error")
-})
-@GetMapping("/{id}/similar")
-public ResponseEntity<?> getSimilarWorkers(@PathVariable Long id) {
-    try {
-        System.out.println("WorkerController: Handling GET /api/worker/" + id + "/similar");
-        List<Worker> similarWorkers = workerService.getSimilarWorkers(id);
-        if (similarWorkers.isEmpty()) {
-            System.out.println("WorkerController: No similar workers found for ID: " + id);
-            return ResponseEntity.status(HttpStatus.OK).body(Collections.emptyList());
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of similar workers retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Worker not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/{id}/similar")
+    public ResponseEntity<?> getSimilarWorkers(@PathVariable Long id) {
+        try {
+            System.out.println("WorkerController: Handling GET /api/worker/" + id + "/similar");
+            List<Worker> similarWorkers = workerService.getSimilarWorkers(id);
+            if (similarWorkers.isEmpty()) {
+                System.out.println("WorkerController: No similar workers found for ID: " + id);
+                return ResponseEntity.status(HttpStatus.OK).body(Collections.emptyList());
+            }
+            System.out.println("WorkerController: Found " + similarWorkers.size() + " similar workers for ID: " + id);
+            return ResponseEntity.ok(similarWorkers);
+        } catch (IllegalArgumentException e) {
+            System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to retrieve similar workers: " + e.getMessage());
         }
-        System.out.println("WorkerController: Found " + similarWorkers.size() + " similar workers for ID: " + id);
-        return ResponseEntity.ok(similarWorkers);
-    } catch (IllegalArgumentException e) {
-        System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found: " + e.getMessage());
-    } catch (Exception e) {
-        System.out.println("WorkerController: Error retrieving similar workers for ID: " + id + ", error: " + e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body("Failed to retrieve similar workers: " + e.getMessage());
     }
-}
 
     @GetMapping("/category/{categoryName}/available")
     public ResponseEntity<List<Worker>> getAvailableWorkersByCategory(@PathVariable String categoryName) {
@@ -729,6 +680,7 @@ public ResponseEntity<?> getSimilarWorkers(@PathVariable Long id) {
         public int getWorkersNotified() { return workersNotified; }
         public void setWorkersNotified(int workersNotified) { this.workersNotified = workersNotified; }
     }
+
     static class TokenResponse {
         private String token;
         public TokenResponse(String token) { this.token = token; }

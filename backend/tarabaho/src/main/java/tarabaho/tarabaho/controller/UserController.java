@@ -1,14 +1,9 @@
 package tarabaho.tarabaho.controller;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +31,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.jwt.JwtUtil;
+import tarabaho.tarabaho.service.SupabaseRestStorageService;
 import tarabaho.tarabaho.service.UserService;
 
 @RestController
@@ -50,7 +46,9 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Existing endpoints (unchanged)
+    @Autowired
+    private SupabaseRestStorageService storageService;
+
     @Operation(summary = "Get all users", description = "Retrieve a list of all registered users")
     @ApiResponse(responseCode = "200", description = "List of users returned successfully")
     @GetMapping("/all")
@@ -242,43 +240,36 @@ public class UserController {
         }
 
         try {
-            String contentType = file.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                return ResponseEntity.badRequest().body("Only image files are allowed.");
-            }
-
+            // Validate authentication
             String username = authentication.getName();
             Optional<User> userOpt = userService.findByUsername(username);
             if (!userOpt.isPresent()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
             }
 
-            String uploadDir = "Uploads/profiles/";
-            File directory = new File(uploadDir);
-            if (!directory.exists()) {
-                boolean created = directory.mkdirs();
-                if (!created) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body("Failed to create upload directory: " + uploadDir);
+            User user = userOpt.get();
+
+            // Delete existing profile picture if it exists
+            if (user.getProfilePicture() != null && !user.getProfilePicture().isEmpty()) {
+                String existingFileName = user.getProfilePicture().substring(user.getProfilePicture().lastIndexOf("/") + 1);
+                try {
+                    storageService.deleteFile("profile-picture", existingFileName);
+                } catch (IOException e) {
+                    // Log the error but continue with the upload to avoid blocking the user
+                    System.err.println("Failed to delete old profile picture: " + e.getMessage());
                 }
             }
 
-            if (!directory.canWrite()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Upload directory is not writable: " + uploadDir);
-            }
+            // Upload new profile picture to Supabase
+            String publicUrl = storageService.uploadFile(file, "profile-picture");
 
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir, fileName).toAbsolutePath().normalize();
-            System.out.println("Saving file to: " + filePath.toString());
-
-            Files.write(filePath, file.getBytes());
-
-            User user = userOpt.get();
-            user.setProfilePicture("/profiles/" + fileName);
+            // Update user profile picture
+            user.setProfilePicture(publicUrl);
             userService.saveUser(user);
 
             return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -420,6 +411,7 @@ public class UserController {
         public Double getPreferredRadius() { return preferredRadius; }
         public void setPreferredRadius(Double preferredRadius) { this.preferredRadius = preferredRadius; }
     }
+
     static class TokenResponse {
         private String token;
         public TokenResponse(String token) { this.token = token; }

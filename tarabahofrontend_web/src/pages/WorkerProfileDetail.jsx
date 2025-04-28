@@ -22,7 +22,6 @@ const WorkerProfileDetail = () => {
   const [error, setError] = useState("");
   const [isBookmarked, setIsBookmarked] = useState(false);
   const BACKEND_URL = "http://localhost:8080";
-  const token = localStorage.getItem("jwtToken");
 
   useEffect(() => {
     const fetchWorkerData = async () => {
@@ -33,8 +32,7 @@ const WorkerProfileDetail = () => {
       try {
         console.log(`Fetching worker details for ID: ${workerId}`);
         const workerResponse = await axios.get(`${BACKEND_URL}/api/worker/${workerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         });
         console.log("Worker response:", workerResponse.data);
         const fetchedWorker = workerResponse.data;
@@ -60,7 +58,7 @@ const WorkerProfileDetail = () => {
         console.error("Worker error status:", workerErr.response?.status);
         setError(
           workerErr.response?.status === 401
-            ? "Please log in to view worker details."
+            ? "Your session has expired. Please log in again."
             : workerErr.response?.data?.replace("⚠️ ", "") || "Failed to load worker details. Please try again."
         );
         if (workerErr.response?.status === 401) {
@@ -74,8 +72,7 @@ const WorkerProfileDetail = () => {
       try {
         console.log(`Fetching ratings for worker ID: ${workerId}`);
         const ratingsResponse = await axios.get(`${BACKEND_URL}/api/rating/worker/${workerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         });
         console.log("Ratings response:", ratingsResponse.data);
         const fetchedRatings = ratingsResponse.data;
@@ -101,8 +98,7 @@ const WorkerProfileDetail = () => {
       try {
         console.log(`Fetching similar workers for ID: ${workerId}`);
         const similarResponse = await axios.get(`${BACKEND_URL}/api/worker/${workerId}/similar`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         });
         console.log("Similar workers response:", similarResponse.data);
         const fetchedSimilarWorkers = similarResponse.data;
@@ -126,8 +122,7 @@ const WorkerProfileDetail = () => {
       try {
         console.log(`Fetching bookmark status for worker ID: ${workerId}`);
         const bookmarkResponse = await axios.get(`${BACKEND_URL}/api/bookmarks/worker/${workerId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         });
         console.log("Bookmark status:", bookmarkResponse.data);
         setIsBookmarked(bookmarkResponse.data);
@@ -140,7 +135,7 @@ const WorkerProfileDetail = () => {
     };
 
     fetchWorkerData();
-  }, [workerId, navigate, token]);
+  }, [workerId, navigate]);
 
   const getUserImage = (firstName) => {
     switch (firstName.toLowerCase()) {
@@ -178,8 +173,7 @@ const WorkerProfileDetail = () => {
         `${BACKEND_URL}/api/bookmarks/worker/${workerId}`,
         {},
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         }
       );
       console.log("Bookmark toggle response:", response.data);

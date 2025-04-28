@@ -61,7 +61,7 @@ const UserProfile = () => {
             password: "",
           })
           setProfileImage(
-            response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : "/placeholder.svg",
+            response.data.profilePicture || "/placeholder.svg" // Use Supabase URL directly
           )
         }
       } catch (err) {
@@ -98,7 +98,7 @@ const UserProfile = () => {
         headers: { "Content-Type": "multipart/form-data" },
       })
       setUser(response.data)
-      setProfileImage(response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : profileImage)
+      setProfileImage(response.data.profilePicture || profileImage) // Use Supabase URL
       setSelectedFile(null)
       setError("")
       console.log("Upload successful:", response.data)

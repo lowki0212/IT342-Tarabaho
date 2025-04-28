@@ -12,7 +12,6 @@ const BookingRequest = () => {
   const [bookingId, setBookingId] = useState(null);
   const [error, setError] = useState("");
   const BACKEND_URL = "http://localhost:8080";
-  const token = localStorage.getItem("jwtToken");
   const hasRun = useRef(false);
 
   useEffect(() => {
@@ -42,8 +41,7 @@ const BookingRequest = () => {
           `${BACKEND_URL}/api/booking/category`,
           requestBody,
           {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
+            withCredentials: true, // Use cookies for authentication
             timeout: 5000,
           }
         );
@@ -69,6 +67,9 @@ const BookingRequest = () => {
             ? "You already have a pending or active booking. Please complete or cancel it first."
             : errorMessage
         );
+        if (err.response?.status === 401) {
+          navigate("/login"); // Redirect to login on unauthorized
+        }
       }
     };
 
@@ -78,7 +79,7 @@ const BookingRequest = () => {
       console.log("Cleaning up useEffect for createBooking, resetting hasRun");
       hasRun.current = false;
     };
-  }, [workerId, token]);
+  }, [workerId, navigate]);
 
   useEffect(() => {
     if (bookingId) {
@@ -87,8 +88,7 @@ const BookingRequest = () => {
           const response = await axios.get(
             `${BACKEND_URL}/api/booking/${bookingId}/status`,
             {
-              headers: { Authorization: `Bearer ${token}` },
-              withCredentials: true,
+              withCredentials: true, // Use cookies for authentication
             }
           );
           const status = response.data.status;
@@ -107,11 +107,14 @@ const BookingRequest = () => {
         } catch (err) {
           console.error("Failed to check booking status:", err.response?.data, err.message);
           setError("Failed to check booking status.");
+          if (err.response?.status === 401) {
+            navigate("/login"); // Redirect to login on unauthorized
+          }
         }
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [bookingId, navigate, token]);
+  }, [bookingId, navigate]);
 
   const handleCancelBooking = async () => {
     try {
@@ -119,8 +122,7 @@ const BookingRequest = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/cancel`,
         {},
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Use cookies for authentication
         }
       );
       setBookingStatus("CANCELLED");
@@ -131,6 +133,9 @@ const BookingRequest = () => {
         "Failed to cancel booking. Please try again.";
       console.error("Failed to cancel booking:", err.response?.data, err.message);
       setError(errorMessage);
+      if (err.response?.status === 401) {
+        navigate("/login"); // Redirect to login on unauthorized
+      }
     }
   };
 

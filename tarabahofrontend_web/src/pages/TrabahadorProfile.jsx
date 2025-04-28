@@ -59,9 +59,7 @@ const TrabahadorProfile = () => {
             biography: workerData.biography || "",
             password: "",
           })
-          setProfileImage(
-            workerData.profilePicture ? `${BACKEND_URL}${workerData.profilePicture}` : "/placeholder.svg"
-          )
+          setProfileImage(workerData.profilePicture || "/placeholder.svg")
         } else {
           setError("Worker not found.")
         }
@@ -94,9 +92,7 @@ const TrabahadorProfile = () => {
         }
       )
       setWorker(response.data)
-      setProfileImage(
-        response.data.profilePicture ? `${BACKEND_URL}${response.data.profilePicture}` : profileImage
-      )
+      setProfileImage(response.data.profilePicture || profileImage)
       setSelectedFile(null)
       setError("")
     } catch (err) {
@@ -284,7 +280,7 @@ const TrabahadorProfile = () => {
 
   const handleCertificateClick = (certificate) => {
     if (certificate.certificateFilePath) {
-      setSelectedCertificateImage(`${BACKEND_URL}${certificate.certificateFilePath}`)
+      setSelectedCertificateImage(certificate.certificateFilePath)
     }
   }
 
@@ -620,9 +616,7 @@ const TrabahadorProfile = () => {
                             src={
                               newCertificate.certificateFile
                                 ? URL.createObjectURL(newCertificate.certificateFile)
-                                : certificate.certificateFilePath
-                                ? `${BACKEND_URL}${certificate.certificateFilePath}`
-                                : "/placeholder.svg"
+                                : certificate.certificateFilePath || "/placeholder.svg"
                             }
                             alt="Certificate Preview"
                             className="certificate-preview-image"

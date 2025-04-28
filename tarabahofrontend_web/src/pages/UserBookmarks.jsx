@@ -15,40 +15,38 @@ const UserBookmarks = () => {
   const [bookmarkedWorkers, setBookmarkedWorkers] = useState([])
   const [error, setError] = useState("")
   const BACKEND_URL = "http://localhost:8080"
-  const token = localStorage.getItem("jwtToken")
 
   useEffect(() => {
     const fetchBookmarkedWorkers = async () => {
       try {
-        console.log("Fetching bookmarked workers");
+        console.log("Fetching bookmarked workers")
         const response = await axios.get(`${BACKEND_URL}/api/bookmarks`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
-        });
-        console.log("Bookmarked workers response:", response.data);
+          withCredentials: true, // Send cookies
+        })
+        console.log("Bookmarked workers response:", response.data)
         const workersData = response.data.map(worker => ({
           id: worker.id ?? 0,
           name: `${worker.firstName ?? "Unknown"} ${worker.lastName ?? "Worker"}`,
           image: worker.profilePicture ?? "/placeholder.svg",
-        }));
-        setBookmarkedWorkers(workersData);
+        }))
+        setBookmarkedWorkers(workersData)
       } catch (err) {
-        console.error("Failed to fetch bookmarked workers:", err);
-        console.error("Error response:", err.response?.data);
-        console.error("Error status:", err.response?.status);
+        console.error("Failed to fetch bookmarked workers:", err)
+        console.error("Error response:", err.response?.data)
+        console.error("Error status:", err.response?.status)
         setError(
           err.response?.status === 401
-            ? "Please log in to view bookmarks."
+            ? "Your session has expired. Please log in again."
             : err.response?.data?.replace("⚠️ ", "") || "Failed to load bookmarked workers. Please try again."
-        );
+        )
         if (err.response?.status === 401) {
-          navigate("/signin");
+          navigate("/login")
         }
       }
-    };
+    }
 
-    fetchBookmarkedWorkers();
-  }, [navigate, token]);
+    fetchBookmarkedWorkers()
+  }, [navigate])
 
   const handleProfileClick = () => {
     navigate("/user-profile")
@@ -62,11 +60,25 @@ const UserBookmarks = () => {
     setShowLogoutModal(true)
   }
 
-  const confirmLogout = () => {
-    console.log("User logged out")
-    localStorage.removeItem("jwtToken")
-    setShowLogoutModal(false)
-    navigate("/signin")
+  const confirmLogout = async () => {
+    try {
+      // Call backend logout endpoint to invalidate the session/cookie
+      await axios.post(
+        `${BACKEND_URL}/api/user/logout`,
+        {},
+        {
+          withCredentials: true, // Send cookies
+        }
+      )
+      console.log("User logged out")
+      setShowLogoutModal(false)
+      navigate("/login")
+    } catch (err) {
+      console.error("Failed to logout:", err)
+      // Proceed with logout even if backend call fails
+      setShowLogoutModal(false)
+      navigate("/login")
+    }
   }
 
   const cancelLogout = () => {

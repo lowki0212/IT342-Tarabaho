@@ -1,18 +1,36 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import axios from "axios"
-import UserNavbar from "../components/UserNavbar"
-import Footer from "../components/Footer"
-import "../styles/User-browse-category.css"
-import { FaStar, FaRegStar, FaSearch, FaFilter, FaMapMarkerAlt, FaHeart, FaRegHeart } from "react-icons/fa"
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
+import "../styles/User-browse-category.css";
+import { FaStar, FaRegStar, FaSearch, FaFilter, FaMapMarkerAlt, FaHeart, FaRegHeart } from "react-icons/fa";
+
+// Utility function to resolve image URLs
+const getImageUrl = (profilePicture) => {
+  // Replace with your Supabase storage base URL
+  const SUPABASE_STORAGE_URL = "https://your-supabase-project.supabase.co/storage/v1/object/public";
+  
+  if (!profilePicture) {
+    return "/placeholder.svg?height=200&width=200"; // Fallback placeholder
+  }
+  
+  // If profilePicture is already a full URL, use it
+  if (profilePicture.startsWith("http")) {
+    return profilePicture;
+  }
+  
+  // If profilePicture is a relative path, prepend Supabase storage URL
+  return `${SUPABASE_STORAGE_URL}${profilePicture.startsWith("/") ? "" : "/"}${profilePicture}`;
+};
 
 class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null }
+  state = { hasError: false, error: null };
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error }
+    return { hasError: true, error };
   }
 
   render() {
@@ -25,181 +43,178 @@ class ErrorBoundary extends React.Component {
             Try Again
           </button>
         </div>
-      )
+      );
     }
-    return this.props.children
+    return this.props.children;
   }
 }
 
 const UserBrowseCategory = () => {
-  const { categoryName } = useParams()
-  const navigate = useNavigate()
-  const [workers, setWorkers] = useState([])
-  const [filteredWorkers, setFilteredWorkers] = useState([])
-  const [category, setCategory] = useState(null)
-  const [error, setError] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("rating")
-  const [isLoading, setIsLoading] = useState(true)
-  const [showFilters, setShowFilters] = useState(false)
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 })
-  const [ratingFilter, setRatingFilter] = useState(0)
-  const [favorites, setFavorites] = useState([])
-  const BACKEND_URL = "http://localhost:8080"
-  const token = localStorage.getItem("jwtToken")
+  const { categoryName } = useParams();
+  const navigate = useNavigate();
+  const [workers, setWorkers] = useState([]);
+  const [filteredWorkers, setFilteredWorkers] = useState([]);
+  const [category, setCategory] = useState(null);
+  const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("rating");
+  const [isLoading, setIsLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [ratingFilter, setRatingFilter] = useState(0);
+  const [favorites, setFavorites] = useState([]);
+  const BACKEND_URL = "http://localhost:8080";
 
   useEffect(() => {
     const fetchCategoryAndWorkers = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         // Fetch categories
         const categoryResponse = await axios.get(`${BACKEND_URL}/api/categories`, {
-          headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
-        })
-        const data = Array.isArray(categoryResponse.data) ? categoryResponse.data : []
+        });
+        const data = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
         const foundCategory = data.find(
           (cat) => cat && cat.name && cat.name.toLowerCase() === categoryName.toLowerCase(),
-        )
+        );
         if (!foundCategory) {
-          setError("Category not found.")
-          setIsLoading(false)
-          return
+          setError("Category not found.");
+          setIsLoading(false);
+          return;
         }
-        setCategory(foundCategory)
+        setCategory(foundCategory);
 
         // Fetch workers for this category
-        const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
+        const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
         const workersResponse = await axios.get(
           `${BACKEND_URL}/api/worker/category/${formattedCategoryName}/available`,
           {
-            headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
           },
-        )
-        setWorkers(workersResponse.data)
-        setFilteredWorkers(workersResponse.data)
-        setError("")
+        );
+        setWorkers(workersResponse.data);
+        setFilteredWorkers(workersResponse.data);
+        setError("");
       } catch (err) {
-        console.error(`Failed to fetch data for ${categoryName}:`, err)
+        console.error(`Failed to fetch data for ${categoryName}:`, err);
         setError(
           err.response?.status === 401
-            ? "Please log in to view workers."
+            ? "Your session has expired. Please log in again."
             : err.response?.data?.replace("⚠️ ", "") || "Failed to load workers. Please try again.",
-        )
+        );
         if (err.response?.status === 401) {
-          navigate("/login")
+          navigate("/login");
         }
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
     // Load favorites from localStorage
-    const savedFavorites = localStorage.getItem("favoriteWorkers")
+    const savedFavorites = localStorage.getItem("favoriteWorkers");
     if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites))
+      setFavorites(JSON.parse(savedFavorites));
     }
 
-    fetchCategoryAndWorkers()
-  }, [categoryName, navigate, token])
+    fetchCategoryAndWorkers();
+  }, [categoryName, navigate]);
 
   // Handle search, sort, and filters
   useEffect(() => {
-    let updatedWorkers = [...workers]
+    let updatedWorkers = [...workers];
 
     // Filter by search query
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase();
       updatedWorkers = updatedWorkers.filter((worker) => {
-        const fullName = `${worker.firstName || ""} ${worker.lastName || ""}`.toLowerCase()
-        const bio = (worker.biography || "").toLowerCase()
-        return fullName.includes(query) || bio.includes(query)
-      })
+        const fullName = `${worker.firstName || ""} ${worker.lastName || ""}`.toLowerCase();
+        const bio = (worker.biography || "").toLowerCase();
+        return fullName.includes(query) || bio.includes(query);
+      });
     }
 
     // Apply price filter
     updatedWorkers = updatedWorkers.filter(
       (worker) => worker.hourly >= priceRange.min && worker.hourly <= priceRange.max,
-    )
+    );
 
     // Apply rating filter
     if (ratingFilter > 0) {
-      updatedWorkers = updatedWorkers.filter((worker) => (worker.stars || 0) >= ratingFilter)
+      updatedWorkers = updatedWorkers.filter((worker) => (worker.stars || 0) >= ratingFilter);
     }
 
     // Sort by selected criterion
     updatedWorkers.sort((a, b) => {
       if (sortBy === "rating") {
-        return (b.stars || 0) - (a.stars || 0) // Highest rating first
+        return (b.stars || 0) - (a.stars || 0);
       } else if (sortBy === "price_low") {
-        return (a.hourly || 0) - (b.hourly || 0) // Lowest price first
+        return (a.hourly || 0) - (b.hourly || 0);
       } else if (sortBy === "price_high") {
-        return (b.hourly || 0) - (a.hourly || 0) // Highest price first
+        return (b.hourly || 0) - (a.hourly || 0);
       } else if (sortBy === "name") {
-        const nameA = `${a.firstName || ""} ${a.lastName || ""}`.toLowerCase()
-        const nameB = `${b.firstName || ""} ${b.lastName || ""}`.toLowerCase()
-        return nameA.localeCompare(nameB)
+        const nameA = `${a.firstName || ""} ${a.lastName || ""}`.toLowerCase();
+        const nameB = `${b.firstName || ""} ${b.lastName || ""}`.toLowerCase();
+        return nameA.localeCompare(nameB);
       }
-      return 0
-    })
+      return 0;
+    });
 
-    setFilteredWorkers(updatedWorkers)
-  }, [searchQuery, sortBy, workers, priceRange, ratingFilter])
+    setFilteredWorkers(updatedWorkers);
+  }, [searchQuery, sortBy, workers, priceRange, ratingFilter]);
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value)
-  }
+    setSearchQuery(e.target.value);
+  };
 
   const handleSortChange = (e) => {
-    setSortBy(e.target.value)
-  }
+    setSortBy(e.target.value);
+  };
 
   const toggleFilters = () => {
-    setShowFilters(!showFilters)
-  }
+    setShowFilters(!showFilters);
+  };
 
   const handlePriceChange = (e, type) => {
-    const value = Number.parseInt(e.target.value)
-    setPriceRange((prev) => ({ ...prev, [type]: value }))
-  }
+    const value = Number.parseInt(e.target.value);
+    setPriceRange((prev) => ({ ...prev, [type]: value }));
+  };
 
   const handleRatingFilterChange = (rating) => {
-    setRatingFilter(rating === ratingFilter ? 0 : rating)
-  }
+    setRatingFilter(rating === ratingFilter ? 0 : rating);
+  };
 
   const clearFilters = () => {
-    setPriceRange({ min: 0, max: 1000 })
-    setRatingFilter(0)
-    setSearchQuery("")
-  }
+    setPriceRange({ min: 0, max: 1000 });
+    setRatingFilter(0);
+    setSearchQuery("");
+  };
 
   const toggleFavorite = (workerId) => {
-    let newFavorites
+    let newFavorites;
     if (favorites.includes(workerId)) {
-      newFavorites = favorites.filter((id) => id !== workerId)
+      newFavorites = favorites.filter((id) => id !== workerId);
     } else {
-      newFavorites = [...favorites, workerId]
+      newFavorites = [...favorites, workerId];
     }
-    setFavorites(newFavorites)
-    localStorage.setItem("favoriteWorkers", JSON.stringify(newFavorites))
-  }
+    setFavorites(newFavorites);
+    localStorage.setItem("favoriteWorkers", JSON.stringify(newFavorites));
+  };
 
   const renderStars = (rating = 0) => {
-    const stars = []
+    const stars = [];
     for (let i = 1; i <= 5; i++) {
       stars.push(
         i <= rating ? <FaStar key={i} className="star-filled" /> : <FaRegStar key={i} className="star-empty" />,
-      )
+      );
     }
-    return stars
-  }
+    return stars;
+  };
 
   const handleViewWorker = (workerId) => {
-    navigate(`/worker-profile-detail/${workerId}`)
-  }
+    navigate(`/worker-profile-detail/${workerId}`);
+  };
 
-  const displayCategoryName = categoryName ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1) : "Category"
+  const displayCategoryName = categoryName ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1) : "Category";
 
   return (
     <ErrorBoundary>
@@ -313,15 +328,15 @@ const UserBrowseCategory = () => {
                 const displayName =
                   worker.firstName && worker.lastName
                     ? `${worker.firstName} ${worker.lastName}`
-                    : worker.username || "Unknown Worker"
+                    : worker.username || "Unknown Worker";
                 return (
                   <div key={worker.id} className="worker-card">
                     <div className="worker-card-header">
                       <div
                         className="favorite-button"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          toggleFavorite(worker.id)
+                          e.stopPropagation();
+                          toggleFavorite(worker.id);
                         }}
                       >
                         {favorites.includes(worker.id) ? (
@@ -334,11 +349,7 @@ const UserBrowseCategory = () => {
                     <div className="worker-card-content" onClick={() => handleViewWorker(worker.id)}>
                       <div className="worker-image-container">
                         <img
-                          src={
-                            worker.profilePicture
-                              ? `${BACKEND_URL}${worker.profilePicture}`
-                              : "/placeholder.svg?height=200&width=200"
-                          }
+                          src={getImageUrl(worker.profilePicture)}
                           alt={displayName}
                           className="worker-image"
                         />
@@ -366,7 +377,7 @@ const UserBrowseCategory = () => {
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -374,7 +385,7 @@ const UserBrowseCategory = () => {
         <Footer />
       </div>
     </ErrorBoundary>
-  )
-}
+  );
+};
 
-export default UserBrowseCategory
+export default UserBrowseCategory;

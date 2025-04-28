@@ -31,30 +31,33 @@ const BookingHistory = () => {
   const [activeTab, setActiveTab] = useState("active")
   const navigate = useNavigate()
   const BACKEND_URL = "http://localhost:8080"
-  const token = localStorage.getItem("jwtToken")
 
   useEffect(() => {
     const fetchBookings = async () => {
       setIsLoading(true)
       try {
         const response = await axios.get(`${BACKEND_URL}/api/booking/user`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         })
         setBookings(response.data)
         setError("")
       } catch (err) {
         const errorMessage =
-          err.response?.data.replace("⚠️ ", "") || "Failed to fetch booking history. Please try again."
+          err.response?.status === 401
+            ? "Your session has expired. Please log in again."
+            : err.response?.data.replace("⚠️ ", "") || "Failed to fetch booking history. Please try again."
         console.error("Failed to fetch bookings:", err.response?.data, err.message)
         setError(errorMessage)
+        if (err.response?.status === 401) {
+          navigate("/login")
+        }
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchBookings()
-  }, [token])
+  }, [navigate])
 
   const handleCancelBooking = async (bookingId) => {
     try {
@@ -62,8 +65,7 @@ const BookingHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/cancel`,
         {},
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         },
       )
       setBookings((prevBookings) =>
@@ -72,9 +74,15 @@ const BookingHistory = () => {
       setSuccess("Booking cancelled successfully.")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
-      const errorMessage = err.response?.data.replace("⚠️ ", "") || "Failed to cancel booking. Please try again."
+      const errorMessage =
+        err.response?.status === 401
+          ? "Your session has expired. Please log in again."
+          : err.response?.data.replace("⚠️ ", "") || "Failed to cancel booking. Please try again."
       console.error("Failed to cancel booking:", err.response?.data, err.message)
       setError(errorMessage)
+      if (err.response?.status === 401) {
+        navigate("/login")
+      }
       setTimeout(() => setError(""), 3000)
     }
   }
@@ -85,8 +93,7 @@ const BookingHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/start`,
         {},
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         },
       )
       setBookings((prevBookings) =>
@@ -95,9 +102,15 @@ const BookingHistory = () => {
       setSuccess("Job started successfully.")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
-      const errorMessage = err.response?.data.replace("⚠️ ", "") || "Failed to start job. Please try again."
+      const errorMessage =
+        err.response?.status === 401
+          ? "Your session has expired. Please log in again."
+          : err.response?.data.replace("⚠️ ", "") || "Failed to start job. Please try again."
       console.error("Failed to start job:", err.response?.data, err.message)
       setError(errorMessage)
+      if (err.response?.status === 401) {
+        navigate("/login")
+      }
       setTimeout(() => setError(""), 3000)
     }
   }
@@ -108,8 +121,7 @@ const BookingHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/complete/accept`,
         {},
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         },
       )
       setBookings((prevBookings) =>
@@ -121,9 +133,15 @@ const BookingHistory = () => {
       setSuccess("Completion accepted successfully.")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
-      const errorMessage = err.response?.data.replace("⚠️ ", "") || "Failed to accept completion. Please try again."
+      const errorMessage =
+        err.response?.status === 401
+          ? "Your session has expired. Please log in again."
+          : err.response?.data.replace("⚠️ ", "") || "Failed to accept completion. Please try again."
       console.error("Failed to accept completion:", err.response?.data, err.message)
       setError(errorMessage)
+      if (err.response?.status === 401) {
+        navigate("/login")
+      }
       setTimeout(() => setError(""), 3000)
     }
   }
@@ -138,8 +156,7 @@ const BookingHistory = () => {
         `${BACKEND_URL}/api/rating`,
         { bookingId: ratingBookingId, rating, comment },
         {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // Send cookies
         },
       )
       setShowRatingModal(false)
@@ -149,9 +166,15 @@ const BookingHistory = () => {
       setSuccess("Thank you for your rating!")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
-      const errorMessage = err.response?.data.replace("⚠️ ", "") || "Failed to submit rating. Please try again."
+      const errorMessage =
+        err.response?.status === 401
+          ? "Your session has expired. Please log in again."
+          : err.response?.data.replace("⚠️ ", "") || "Failed to submit rating. Please try again."
       console.error("Failed to submit rating:", err.response?.data, err.message)
       setError(errorMessage)
+      if (err.response?.status === 401) {
+        navigate("/login")
+      }
       setTimeout(() => setError(""), 3000)
     }
   }
@@ -407,7 +430,7 @@ const BookingHistory = () => {
                 <div className="modal-header">
                   <h2>Booking Details</h2>
                   <button className="close-button" onClick={closeModal}>
-                    &times;
+                    ×
                   </button>
                 </div>
                 <div className="modal-body">
@@ -508,7 +531,7 @@ const BookingHistory = () => {
                 <div className="modal-header">
                   <h2>Rate Your Experience</h2>
                   <button className="close-button" onClick={() => setShowRatingModal(false)}>
-                    &times;
+                    ×
                   </button>
                 </div>
                 <div className="modal-body">
