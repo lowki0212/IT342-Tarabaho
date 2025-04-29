@@ -1,7 +1,5 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
@@ -16,6 +14,7 @@ import kentMImg from "../assets/images/kent m.png";
 const WorkerProfileDetail = () => {
   const { workerId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [worker, setWorker] = useState(null);
   const [ratings, setRatings] = useState([]);
   const [similarWorkers, setSimilarWorkers] = useState([]);
@@ -25,14 +24,11 @@ const WorkerProfileDetail = () => {
 
   useEffect(() => {
     const fetchWorkerData = async () => {
-      // Reset error state
       setError("");
-
-      // Fetch worker details
       try {
         console.log(`Fetching worker details for ID: ${workerId}`);
         const workerResponse = await axios.get(`${BACKEND_URL}/api/worker/${workerId}`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         });
         console.log("Worker response:", workerResponse.data);
         const fetchedWorker = workerResponse.data;
@@ -54,8 +50,6 @@ const WorkerProfileDetail = () => {
         setWorker(workerData);
       } catch (workerErr) {
         console.error("Failed to fetch worker:", workerErr);
-        console.error("Worker error response:", workerErr.response?.data);
-        console.error("Worker error status:", workerErr.response?.status);
         setError(
           workerErr.response?.status === 401
             ? "Your session has expired. Please log in again."
@@ -65,14 +59,13 @@ const WorkerProfileDetail = () => {
           console.log("Redirecting to login due to 401 error for worker");
           navigate("/login");
         }
-        return; // Exit if worker fetch fails
+        return;
       }
 
-      // Fetch ratings
       try {
         console.log(`Fetching ratings for worker ID: ${workerId}`);
         const ratingsResponse = await axios.get(`${BACKEND_URL}/api/rating/worker/${workerId}`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         });
         console.log("Ratings response:", ratingsResponse.data);
         const fetchedRatings = ratingsResponse.data;
@@ -89,16 +82,13 @@ const WorkerProfileDetail = () => {
         setRatings(ratingsData);
       } catch (ratingsErr) {
         console.error("Failed to fetch ratings:", ratingsErr);
-        console.error("Ratings error response:", ratingsErr.response?.data);
-        console.error("Ratings error status:", ratingsErr.response?.status);
-        setRatings([]); // Fallback to empty list
+        setRatings([]);
       }
 
-      // Fetch similar workers
       try {
         console.log(`Fetching similar workers for ID: ${workerId}`);
         const similarResponse = await axios.get(`${BACKEND_URL}/api/worker/${workerId}/similar`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         });
         console.log("Similar workers response:", similarResponse.data);
         const fetchedSimilarWorkers = similarResponse.data;
@@ -113,24 +103,19 @@ const WorkerProfileDetail = () => {
         setSimilarWorkers(similarWorkersData);
       } catch (similarErr) {
         console.error("Failed to fetch similar workers:", similarErr);
-        console.error("Similar workers error response:", similarErr.response?.data);
-        console.error("Similar workers error status:", similarErr.response?.status);
-        setSimilarWorkers([]); // Fallback to empty list
+        setSimilarWorkers([]);
       }
 
-      // Fetch bookmark status
       try {
         console.log(`Fetching bookmark status for worker ID: ${workerId}`);
         const bookmarkResponse = await axios.get(`${BACKEND_URL}/api/bookmarks/worker/${workerId}`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         });
         console.log("Bookmark status:", bookmarkResponse.data);
         setIsBookmarked(bookmarkResponse.data);
       } catch (bookmarkErr) {
         console.error("Failed to fetch bookmark status:", bookmarkErr);
-        console.error("Bookmark error response:", bookmarkErr.response?.data);
-        console.error("Bookmark error status:", bookmarkErr.response?.status);
-        setIsBookmarked(false); // Fallback to not bookmarked
+        setIsBookmarked(false);
       }
     };
 
@@ -163,7 +148,9 @@ const WorkerProfileDetail = () => {
   };
 
   const handleBookNow = () => {
-    navigate(`/booking/${workerId}/payment`);
+    navigate(`/booking/${workerId}/payment`, {
+      state: { selectedCategory: location.state?.selectedCategory },
+    });
   };
 
   const toggleBookmark = async () => {
@@ -173,15 +160,13 @@ const WorkerProfileDetail = () => {
         `${BACKEND_URL}/api/bookmarks/worker/${workerId}`,
         {},
         {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         }
       );
       console.log("Bookmark toggle response:", response.data);
       setIsBookmarked(response.data);
     } catch (err) {
       console.error("Failed to toggle bookmark:", err);
-      console.error("Bookmark error response:", err.response?.data);
-      console.error("Bookmark error status:", err.response?.status);
       if (err.response?.status === 401) {
         navigate("/login");
       }
@@ -189,7 +174,9 @@ const WorkerProfileDetail = () => {
   };
 
   const handleSelectWorker = (workerId) => {
-    navigate(`/worker-profile-detail/${workerId}`);
+    navigate(`/worker-profile-detail/${workerId}`, {
+      state: { selectedCategory: location.state?.selectedCategory },
+    });
   };
 
   if (error) {

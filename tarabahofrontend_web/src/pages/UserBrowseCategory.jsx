@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -8,31 +6,22 @@ import Footer from "../components/Footer";
 import "../styles/User-browse-category.css";
 import { FaStar, FaRegStar, FaSearch, FaFilter, FaMapMarkerAlt, FaHeart, FaRegHeart } from "react-icons/fa";
 
-// Utility function to resolve image URLs
 const getImageUrl = (profilePicture) => {
-  // Replace with your Supabase storage base URL
   const SUPABASE_STORAGE_URL = "https://your-supabase-project.supabase.co/storage/v1/object/public";
-  
   if (!profilePicture) {
-    return "/placeholder.svg?height=200&width=200"; // Fallback placeholder
+    return "/placeholder.svg?height=200&width=200";
   }
-  
-  // If profilePicture is already a full URL, use it
   if (profilePicture.startsWith("http")) {
     return profilePicture;
   }
-  
-  // If profilePicture is a relative path, prepend Supabase storage URL
   return `${SUPABASE_STORAGE_URL}${profilePicture.startsWith("/") ? "" : "/"}${profilePicture}`;
 };
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
-
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -69,7 +58,6 @@ const UserBrowseCategory = () => {
     const fetchCategoryAndWorkers = async () => {
       setIsLoading(true);
       try {
-        // Fetch categories
         const categoryResponse = await axios.get(`${BACKEND_URL}/api/categories`, {
           withCredentials: true,
         });
@@ -84,7 +72,6 @@ const UserBrowseCategory = () => {
         }
         setCategory(foundCategory);
 
-        // Fetch workers for this category
         const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1);
         const workersResponse = await axios.get(
           `${BACKEND_URL}/api/worker/category/${formattedCategoryName}/available`,
@@ -110,7 +97,6 @@ const UserBrowseCategory = () => {
       }
     };
 
-    // Load favorites from localStorage
     const savedFavorites = localStorage.getItem("favoriteWorkers");
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
@@ -119,11 +105,8 @@ const UserBrowseCategory = () => {
     fetchCategoryAndWorkers();
   }, [categoryName, navigate]);
 
-  // Handle search, sort, and filters
   useEffect(() => {
     let updatedWorkers = [...workers];
-
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       updatedWorkers = updatedWorkers.filter((worker) => {
@@ -132,18 +115,12 @@ const UserBrowseCategory = () => {
         return fullName.includes(query) || bio.includes(query);
       });
     }
-
-    // Apply price filter
     updatedWorkers = updatedWorkers.filter(
       (worker) => worker.hourly >= priceRange.min && worker.hourly <= priceRange.max,
     );
-
-    // Apply rating filter
     if (ratingFilter > 0) {
       updatedWorkers = updatedWorkers.filter((worker) => (worker.stars || 0) >= ratingFilter);
     }
-
-    // Sort by selected criterion
     updatedWorkers.sort((a, b) => {
       if (sortBy === "rating") {
         return (b.stars || 0) - (a.stars || 0);
@@ -158,7 +135,6 @@ const UserBrowseCategory = () => {
       }
       return 0;
     });
-
     setFilteredWorkers(updatedWorkers);
   }, [searchQuery, sortBy, workers, priceRange, ratingFilter]);
 
@@ -211,7 +187,9 @@ const UserBrowseCategory = () => {
   };
 
   const handleViewWorker = (workerId) => {
-    navigate(`/worker-profile-detail/${workerId}`);
+    navigate(`/worker-profile-detail/${workerId}`, {
+      state: { selectedCategory: categoryName.charAt(0).toUpperCase() + categoryName.slice(1) },
+    });
   };
 
   const displayCategoryName = categoryName ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1) : "Category";
@@ -220,14 +198,12 @@ const UserBrowseCategory = () => {
     <ErrorBoundary>
       <div className={`browse-category-page ${categoryName?.toLowerCase() || ""}`}>
         <UserNavbar activePage="user-browse" />
-
         <div className="category-header">
           <div className="category-header-content">
             <h1>{displayCategoryName} Workers</h1>
             <p>Find skilled {displayCategoryName.toLowerCase()} professionals for your needs</p>
           </div>
         </div>
-
         <div className="browse-controls">
           <div className="search-filter-container">
             <div className="search-container">
@@ -240,7 +216,6 @@ const UserBrowseCategory = () => {
                 className="search-input"
               />
             </div>
-
             <div className="filter-sort-container">
               <div className="sort-container">
                 <label htmlFor="sort-select">Sort by:</label>
@@ -251,13 +226,11 @@ const UserBrowseCategory = () => {
                   <option value="name">Name</option>
                 </select>
               </div>
-
               <button className="filter-button" onClick={toggleFilters}>
                 <FaFilter /> Filters
               </button>
             </div>
           </div>
-
           {showFilters && (
             <div className="filters-panel">
               <div className="filter-section">
@@ -281,7 +254,6 @@ const UserBrowseCategory = () => {
                   />
                 </div>
               </div>
-
               <div className="filter-section">
                 <h3>Minimum Rating</h3>
                 <div className="rating-filter">
@@ -301,14 +273,12 @@ const UserBrowseCategory = () => {
                   )}
                 </div>
               </div>
-
               <button className="clear-filters-button" onClick={clearFilters}>
                 Clear All Filters
               </button>
             </div>
           )}
         </div>
-
         <div className="workers-container">
           {isLoading ? (
             <div className="loading-spinner">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import UserNavbar from "../components/UserNavbar";
 import Footer from "../components/Footer";
@@ -8,11 +8,15 @@ import "../styles/BookingSystem.css";
 const BookingRequest = () => {
   const { workerId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [bookingStatus, setBookingStatus] = useState("PENDING");
   const [bookingId, setBookingId] = useState(null);
   const [error, setError] = useState("");
   const BACKEND_URL = "http://localhost:8080";
   const hasRun = useRef(false);
+
+  // Check if booking was already created (from online payment flow)
+  const bookingCreated = location.state?.bookingCreated || false;
 
   useEffect(() => {
     console.log("BookingRequest component mounted");
@@ -27,12 +31,44 @@ const BookingRequest = () => {
     }
     hasRun.current = true;
 
+    const fetchExistingBooking = async () => {
+      try {
+        const response = await axios.get(
+          `${BACKEND_URL}/api/booking/user`,
+          { withCredentials: true }
+        );
+        const bookings = response.data;
+        console.log("Fetched user bookings:", bookings);
+        const activeBooking = bookings.find(booking =>
+          [ "PENDING", "ACCEPTED", "IN_PROGRESS", "WORKER_COMPLETED" ].includes(booking.status) &&
+          booking.worker?.id === parseInt(workerId)
+        );
+        if (activeBooking) {
+          setBookingId(activeBooking.id);
+          setBookingStatus(activeBooking.status);
+          console.log("Found existing booking:", activeBooking);
+        } else {
+          setError("No active booking found for this worker.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch existing booking:", err.response?.data, err.message);
+        setError("Failed to fetch existing booking. Please try again.");
+        if (err.response?.status === 401) {
+          navigate("/login");
+        }
+      }
+    };
+
     const createBooking = async () => {
+      const jobDetails = sessionStorage.getItem("jobDetails") || "Default job details";
+      const paymentMethod = sessionStorage.getItem("paymentMethod") || "CASH";
+      const categoryName = sessionStorage.getItem("categoryName") || "";
+
       const requestBody = {
         workerId: parseInt(workerId),
-        categoryName: "Cleaning",
-        paymentMethod: "CASH",
-        jobDetails: "AAAA",
+        paymentMethod,
+        jobDetails,
+        categoryName,
       };
       console.log("Sending request to /api/booking/category:", requestBody);
 
@@ -41,7 +77,7 @@ const BookingRequest = () => {
           `${BACKEND_URL}/api/booking/category`,
           requestBody,
           {
-            withCredentials: true, // Use cookies for authentication
+            withCredentials: true,
             timeout: 5000,
           }
         );
@@ -51,6 +87,9 @@ const BookingRequest = () => {
         }
         setBookingId(response.data.id);
         console.log("Booking created:", response.data);
+        sessionStorage.removeItem("jobDetails");
+        sessionStorage.removeItem("paymentMethod");
+        sessionStorage.removeItem("categoryName");
       } catch (err) {
         if (!hasRun.current) {
           console.log("Component unmounted, ignoring error");
@@ -61,25 +100,33 @@ const BookingRequest = () => {
           "Failed to create booking. Please try again.";
         console.error("Failed to create booking:", err.response?.data, err.message);
         setError(
-          errorMessage.includes("Category not found")
-            ? "The requested category is not available. Please try another service."
+          errorMessage.includes("Worker has no associated categories")
+            ? "The worker has no available services. Please try another worker."
             : errorMessage.includes("User already has an active or pending booking")
             ? "You already have a pending or active booking. Please complete or cancel it first."
+            : errorMessage.includes("Category not found")
+            ? "The selected category is not available. Please try another service."
             : errorMessage
         );
         if (err.response?.status === 401) {
-          navigate("/login"); // Redirect to login on unauthorized
+          navigate("/login");
         }
       }
     };
 
-    createBooking();
+    if (bookingCreated) {
+      console.log("Booking already created in SuccessPage; fetching existing booking.");
+      fetchExistingBooking();
+    } else {
+      console.log("No prior booking; creating a new one.");
+      createBooking();
+    }
 
     return () => {
       console.log("Cleaning up useEffect for createBooking, resetting hasRun");
       hasRun.current = false;
     };
-  }, [workerId, navigate]);
+  }, [workerId, navigate, bookingCreated]);
 
   useEffect(() => {
     if (bookingId) {
@@ -88,7 +135,7 @@ const BookingRequest = () => {
           const response = await axios.get(
             `${BACKEND_URL}/api/booking/${bookingId}/status`,
             {
-              withCredentials: true, // Use cookies for authentication
+              withCredentials: true,
             }
           );
           const status = response.data.status;
@@ -108,7 +155,7 @@ const BookingRequest = () => {
           console.error("Failed to check booking status:", err.response?.data, err.message);
           setError("Failed to check booking status.");
           if (err.response?.status === 401) {
-            navigate("/login"); // Redirect to login on unauthorized
+            navigate("/login");
           }
         }
       }, 5000);
@@ -122,7 +169,7 @@ const BookingRequest = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/cancel`,
         {},
         {
-          withCredentials: true, // Use cookies for authentication
+          withCredentials: true,
         }
       );
       setBookingStatus("CANCELLED");
@@ -134,7 +181,7 @@ const BookingRequest = () => {
       console.error("Failed to cancel booking:", err.response?.data, err.message);
       setError(errorMessage);
       if (err.response?.status === 401) {
-        navigate("/login"); // Redirect to login on unauthorized
+        navigate("/login");
       }
     }
   };

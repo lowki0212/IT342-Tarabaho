@@ -35,6 +35,8 @@ import ChatPage from "./pages/ChatPage"
 import WorkerProfileDetail from "./pages/WorkerProfileDetail" // Add the new import
 import Terms from "./pages/Terms"
 import Privacy from "./pages/Privacy"
+import SuccessPage from "./pages/SuccessPage";
+import FailedPage from "./pages/FailedPage";
 
 function App() {
   return (
@@ -86,7 +88,11 @@ function App() {
         <Route path="/booking/:workerId/payment" element={<PaymentPage />} />
         <Route path="/booking/:workerId/request" element={<BookingRequest />} />
         <Route path="/chat/:bookingId" element={<ChatPage />} />
+        {/* PAYMONGO ROUTES */}
+        <Route path="/booking/:workerId/success" element={<SuccessPage />} />
+        <Route path="/booking/:workerId/failed" element={<FailedPage />} /> 
       </Routes>
+
     </Router>
   )
 }
