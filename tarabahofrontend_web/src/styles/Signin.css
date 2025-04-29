@@ -177,6 +177,7 @@ html {
 
 /* Right side - Login form */
 .signin-right {
+  color: #000 !important;
   flex: 1;
   background-color: white;
   padding: 40px;
@@ -277,7 +278,7 @@ html {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #555;
+  color: #000000 !important;
   font-size: 0.95rem;
 }
 
@@ -298,7 +299,7 @@ html {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: #777;
+  color: #0078ff;
   z-index: 2;
 }
 

@@ -331,21 +331,6 @@ const UserBrowseCategory = () => {
                     : worker.username || "Unknown Worker";
                 return (
                   <div key={worker.id} className="worker-card">
-                    <div className="worker-card-header">
-                      <div
-                        className="favorite-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(worker.id);
-                        }}
-                      >
-                        {favorites.includes(worker.id) ? (
-                          <FaHeart className="favorite-icon active" />
-                        ) : (
-                          <FaRegHeart className="favorite-icon" />
-                        )}
-                      </div>
-                    </div>
                     <div className="worker-card-content" onClick={() => handleViewWorker(worker.id)}>
                       <div className="worker-image-container">
                         <img
@@ -382,8 +367,8 @@ const UserBrowseCategory = () => {
             </div>
           )}
         </div>
-        <Footer />
       </div>
+      <Footer />
     </ErrorBoundary>
   );
 };

@@ -126,7 +126,7 @@ const Terms = () => {
           <span id="eligibility" className="section-anchor"></span>
           <h2>2. Eligibility</h2>
           <ul>
-            <li>Minimum age to join as a Trabahador: 13 years old</li>
+            <li>Minimum age to join as a Trabahador: 15 years old</li>
             <li>Minimum age to post or hire as an Employer: 18 years old</li>
             <li>Priority is given to TESDA-accredited individuals and out-of-school youth.</li>
             <li>Users must provide accurate and truthful information upon registration.</li>

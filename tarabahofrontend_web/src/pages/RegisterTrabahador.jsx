@@ -1,17 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
-import "../styles/RegisterTrabahador.css"
+import styles from "../styles/register-trabahador.module.css"
 
 const RegisterTrabahador = () => {
   const navigate = useNavigate()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Form state
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -35,14 +30,42 @@ const RegisterTrabahador = () => {
     certificateFile: null,
   })
 
-  // Error state
   const [errors, setErrors] = useState({})
+  const [step, setStep] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  const [showPassword, setShowPassword] = useState(false)
+
+  // Initialize progress bar on component mount
+  useEffect(() => {
+    const progressBar = document.querySelector(`.${styles.formProgressBar}`)
+    if (progressBar) {
+      progressBar.style.width = step === 1 ? "50%" : "100%"
+    }
+  }, [step])
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return re.test(email)
+  }
+
+  const validatePassword = (password) => {
+    let strength = 0
+    if (password.length >= 8) strength += 1
+    if (/[A-Z]/.test(password)) strength += 1
+    if (/[0-9]/.test(password)) strength += 1
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1
+
+    setPasswordStrength(strength)
+    return strength >= 3
+  }
 
   const handleBack = () => {
-    if (currentStep === 1) {
+    if (step === 1) {
       navigate("/register")
     } else {
-      setCurrentStep(1)
+      setStep(1)
     }
   }
 
@@ -59,6 +82,11 @@ const RegisterTrabahador = () => {
         ...errors,
         [name]: "",
       })
+    }
+
+    // Update password strength when password changes
+    if (name === "password") {
+      validatePassword(value)
     }
   }
 
@@ -177,6 +205,8 @@ const RegisterTrabahador = () => {
     // Client-side validation
     if (!formData.username.trim()) newErrors.username = "Username is required"
     if (!formData.password) newErrors.password = "Password is required"
+    else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters"
+    
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match"
     }
@@ -184,9 +214,7 @@ const RegisterTrabahador = () => {
       newErrors.name = "Full name is required"
     }
     if (!formData.email.trim()) newErrors.email = "Email is required"
-    else if (!formData.email.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
-      newErrors.email = "Invalid email format"
-    }
+    else if (!validateEmail(formData.email)) newErrors.email = "Invalid email format"
     if (!formData.contactNo.trim()) newErrors.contactNo = "Contact number is required"
     if (!formData.address.trim()) newErrors.address = "Address is required"
     if (!formData.hourly || formData.hourly <= 0) newErrors.hourly = "Hourly rate must be greater than 0"
@@ -219,11 +247,28 @@ const RegisterTrabahador = () => {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleNext = async () => {
+  const handleNextStep = async (e) => {
+    e.preventDefault()
+    console.log("Next button clicked")
+
     if (await validateStep1()) {
-      setCurrentStep(2)
+      setStep(2)
+      // Update progress bar
+      try {
+        const progressBar = document.querySelector(`.${styles.formProgressBar}`)
+        if (progressBar) {
+          progressBar.style.width = "100%"
+        }
+      } catch (error) {
+        console.error("Error updating progress bar:", error)
+      }
       window.scrollTo(0, 0)
     }
+  }
+
+  const handlePrevStep = () => {
+    console.log("Back button clicked")
+    setStep(1)
   }
 
   const handleSubmit = async (e) => {
@@ -247,7 +292,7 @@ const RegisterTrabahador = () => {
         phoneNumber: formData.contactNo,
         birthday: formData.birthday,
         address: formData.address,
-        hourly: parseFloat(formData.hourly), // Added hourly rate
+        hourly: Number.parseFloat(formData.hourly),
       }
 
       console.log("Sending registration request with data:", workerData)
@@ -335,10 +380,16 @@ const RegisterTrabahador = () => {
         console.log("Certificate uploaded successfully")
       }
 
-      // Step 4: Redirect to login page
-      console.log("Registration successful, redirecting to login page")
-      setIsSubmitting(false)
-      navigate("/signin")
+      // Show success message
+      const successMessage = document.querySelector(`.${styles.successMessage}`)
+      if (successMessage) {
+        successMessage.classList.add(styles.show)
+      }
+
+      // Redirect after showing success message
+      setTimeout(() => {
+        navigate("/signin")
+      }, 2000)
     } catch (error) {
       console.error("Registration failed:", error)
       setErrors({ general: error.message || "Registration failed. Please try again." })
@@ -346,221 +397,355 @@ const RegisterTrabahador = () => {
     }
   }
 
+  const getPasswordStrengthText = () => {
+    switch (passwordStrength) {
+      case 0:
+        return "Very weak"
+      case 1:
+        return "Weak"
+      case 2:
+        return "Medium"
+      case 3:
+        return "Strong"
+      case 4:
+        return "Very strong"
+      default:
+        return ""
+    }
+  }
+
+  const getPasswordStrengthColor = () => {
+    switch (passwordStrength) {
+      case 0:
+        return "#ff4d4d"
+      case 1:
+        return "#ff9933"
+      case 2:
+        return "#ffcc00"
+      case 3:
+        return "#99cc33"
+      case 4:
+        return "#00cc66"
+      default:
+        return "#ccc"
+    }
+  }
+
   return (
-    <div className="register-trabahador-container">
-      <button className="back-button" onClick={handleBack}>
+    <div className={styles.registerTrabahadorContainer}>
+      <button className={styles.backButton} onClick={handleBack} aria-label="Go back">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
-      <div className="register-trabahador-form">
-        {currentStep === 1 ? (
-          <>
-            {/* Step 1: Personal Information */}
-            <div className="form-left-section">
-              <div className="logo-container">
-                <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-              </div>
-              <h2 className="form-title">Worker Sign-Up Form</h2>
-              <p className="form-description">
-                Use this form and get started quickly. Create an online account with a few clicks.
-              </p>
-              {errors.general && <div className="error-message">{errors.general}</div>}
-            </div>
+      <div className={styles.successMessage}>
+        <div className={styles.successIcon}>✓</div>
+        <h3>Registration Successful!</h3>
+        <p>Redirecting to login page...</p>
+      </div>
 
-            <div className="form-right-section">
-              <div className="right-content">
-                <div className="form-group">
+      <form onSubmit={handleSubmit} className={styles.registerTrabahadorForm}>
+        <div className={styles.formProgress}>
+          <div className={styles.formProgressBar}></div>
+        </div>
+        <div className={styles.formSteps}>
+          <div className={`${styles.formStep} ${step >= 1 ? styles.active : ""} ${step > 1 ? styles.completed : ""}`}>
+            <div className={styles.stepNumber}>1</div>
+            <span className={styles.stepLabel}>Account</span>
+          </div>
+          <div className={`${styles.formStep} ${step >= 2 ? styles.active : ""}`}>
+            <div className={styles.stepNumber}>2</div>
+            <span className={styles.stepLabel}>Documents</span>
+          </div>
+        </div>
+
+        <div className={styles.formLeftSection}>
+          <div className={styles.logoContainer}>
+            <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className={styles.logo} />
+          </div>
+
+          <div className={styles.leftContent}>
+            <h2 className={styles.formTitle}>Create Worker Account</h2>
+            <p className={styles.formDescription}>
+              Join Tarabaho today and connect with opportunities that match your skills and schedule.
+            </p>
+
+            {errors.general && <div className={`${styles.errorMessage} ${styles.general}`}>{errors.general}</div>}
+
+            {step === 1 && (
+              <>
+                <div className={styles.formGroup}>
                   <label htmlFor="username">
-                    Username <span className="required">*</span>
+                    Username <span className={styles.required}>*</span>
                   </label>
-                  <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    placeholder="Enter username"
-                  />
-                  {errors.username && <div className="error-message">{errors.username}</div>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="password">
-                    Password <span className="required">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Enter password"
-                  />
-                  {errors.password && <div className="error-message">{errors.password}</div>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="confirmPassword">
-                    Confirm Password <span className="required">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    placeholder="Confirm password"
-                  />
-                  {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
-                </div>
-
-                <div className="name-group">
-                  <label>Your name</label>
-                  <div className="name-inputs">
+                  <div className={styles.inputWithIcon}>
                     <input
                       type="text"
-                      name="firstName"
-                      value={formData.firstName}
+                      id="username"
+                      name="username"
+                      value={formData.username}
                       onChange={handleInputChange}
-                      placeholder="First"
-                    />
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      placeholder="Last"
+                      className={errors.username ? styles.error : ""}
+                      placeholder="Choose a username"
                     />
                   </div>
-                  {errors.name && <div className="error-message">{errors.name}</div>}
+                  {errors.username && <div className={styles.errorText}>{errors.username}</div>}
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="email">
-                    Email address <span className="required">*</span>
+                <div className={styles.formGroup}>
+                  <label htmlFor="password">
+                    Password <span className={styles.required}>*</span>
                   </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="Enter email address"
-                  />
-                  {errors.email && <div className="error-message">{errors.email}</div>}
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className={errors.password ? styles.error : ""}
+                      placeholder="Create a strong password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className={styles.togglePassword}
+                      tabIndex="0"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.password && <div className={styles.errorText}>{errors.password}</div>}
+
+                  {formData.password && (
+                    <div className={styles.passwordStrength}>
+                      <div className={styles.strengthBars}>
+                        <div
+                          className={styles.strengthBar}
+                          style={{ backgroundColor: passwordStrength >= 1 ? getPasswordStrengthColor() : "" }}
+                        ></div>
+                        <div
+                          className={styles.strengthBar}
+                          style={{ backgroundColor: passwordStrength >= 2 ? getPasswordStrengthColor() : "" }}
+                        ></div>
+                        <div
+                          className={styles.strengthBar}
+                          style={{ backgroundColor: passwordStrength >= 3 ? getPasswordStrengthColor() : "" }}
+                        ></div>
+                        <div
+                          className={styles.strengthBar}
+                          style={{ backgroundColor: passwordStrength >= 4 ? getPasswordStrengthColor() : "" }}
+                        ></div>
+                      </div>
+                      <span className={styles.strengthText} style={{ color: getPasswordStrengthColor() }}>
+                        {getPasswordStrengthText()}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="contactNo">
-                    Contact no. <span className="required">*</span>
+                <div className={styles.formGroup}>
+                  <label htmlFor="confirmPassword">
+                    Confirm Password <span className={styles.required}>*</span>
                   </label>
-                  <input
-                    type="text"
-                    id="contactNo"
-                    name="contactNo"
-                    value={formData.contactNo}
-                    onChange={handleInputChange}
-                    placeholder="Enter contact number"
-                  />
-                  {errors.contactNo && <div className="error-message">{errors.contactNo}</div>}
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      className={errors.confirmPassword ? styles.error : ""}
+                      placeholder="Confirm your password"
+                    />
+                  </div>
+                  {errors.confirmPassword && <div className={styles.errorText}>{errors.confirmPassword}</div>}
                 </div>
+              </>
+            )}
 
-                <div className="form-group">
-                  <label htmlFor="birthday">Birthday</label>
-                  <input
-                    type="date"
-                    id="birthday"
-                    name="birthday"
-                    value={formData.birthday}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="address">
-                    Address <span className="required">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Enter your address"
-                  />
-                  {errors.address && <div className="error-message">{errors.address}</div>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="hourly">
-                    Hourly Rate (in PHP) <span className="required">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="hourly"
-                    name="hourly"
-                    value={formData.hourly}
-                    onChange={handleInputChange}
-                    placeholder="Enter hourly rate"
-                    min="1"
-                  />
-                  {errors.hourly && <div className="error-message">{errors.hourly}</div>}
-                </div>
-
-                <button className="next-button" onClick={handleNext} disabled={isLoading}>
-                  {isLoading ? "Checking..." : "Next"}
+            {step === 2 && (
+              <div className={styles.formNavigation}>
+                <button type="button" className={styles.prevButton} onClick={handlePrevStep}>
+                  Back
                 </button>
               </div>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Step 2: Documents */}
-            <div className="form-left-section">
-              <div className="logo-container">
-                <img src={logo || "/placeholder.svg"} alt="Tarabaho Logo" className="logo" />
-              </div>
-              <h2 className="form-title">Worker Sign-Up Form</h2>
-              <p className="form-description">
-                Use this form and get started quickly. Create an online account with a few clicks.
-              </p>
-              {errors.general && <div className="error-message">{errors.general}</div>}
-            </div>
+            )}
+          </div>
+        </div>
 
-            <div className="form-right-section">
-              <div className="right-content">
-                <div className="form-group">
-                  <label htmlFor="picture">
-                    2x2 picture of you (Profile Picture) <span className="required">*</span>
+        <div className={styles.formRightSection}>
+          <div className={styles.rightContent}>
+            {step === 1 && (
+              <>
+                <h3 className={styles.sectionTitle}>Personal Information</h3>
+
+                <div className={styles.nameGroup}>
+                  <label>
+                    Your name <span className={styles.required}>*</span>
                   </label>
-                  <div className="file-input-container">
+                  <div className={styles.nameInputs}>
+                    <div className={styles.inputWrapper}>
+                      <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className={errors.firstName ? styles.error : ""}
+                      />
+                      {errors.firstName && <div className={styles.errorText}>{errors.firstName}</div>}
+                    </div>
+                    <div className={styles.inputWrapper}>
+                      <input
+                        type="text"
+                        name="lastName"
+                        placeholder="Last"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className={errors.lastName ? styles.error : ""}
+                      />
+                      {errors.lastName && <div className={styles.errorText}>{errors.lastName}</div>}
+                    </div>
+                  </div>
+                  {errors.name && <div className={styles.errorText}>{errors.name}</div>}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="email">
+                    Email address <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={errors.email ? styles.error : ""}
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+                  {errors.email && <div className={styles.errorText}>{errors.email}</div>}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="contactNo">
+                    Contact no. <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="tel"
+                      id="contactNo"
+                      name="contactNo"
+                      value={formData.contactNo}
+                      onChange={handleInputChange}
+                      className={errors.contactNo ? styles.error : ""}
+                      placeholder="e.g., +63 912 345 6789"
+                    />
+                  </div>
+                  {errors.contactNo && <div className={styles.errorText}>{errors.contactNo}</div>}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="birthday">
+                    Birthday <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="date"
+                      id="birthday"
+                      name="birthday"
+                      value={formData.birthday}
+                      onChange={handleInputChange}
+                      className={errors.birthday ? styles.error : ""}
+                    />
+                  </div>
+                  {errors.birthday && <div className={styles.errorText}>{errors.birthday}</div>}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="address">
+                    Address <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="text"
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className={errors.address ? styles.error : ""}
+                      placeholder="Your full address"
+                    />
+                  </div>
+                  {errors.address && <div className={styles.errorText}>{errors.address}</div>}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="hourly">
+                    Hourly Rate (in PHP) <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.inputWithIcon}>
+                    <input
+                      type="number"
+                      id="hourly"
+                      name="hourly"
+                      value={formData.hourly}
+                      onChange={handleInputChange}
+                      className={errors.hourly ? styles.error : ""}
+                      placeholder="Enter hourly rate"
+                      min="1"
+                    />
+                  </div>
+                  {errors.hourly && <div className={styles.errorText}>{errors.hourly}</div>}
+                </div>
+                <button type="button" className={styles.nextButton} onClick={handleNextStep}>
+                  Next
+                </button>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <h3 className={styles.sectionTitle}>Documents</h3>
+
+                {/* 2x2 Picture */}
+                <div className={styles.formGroup}>
+                  <label htmlFor="picture">
+                    2x2 picture of you (Profile Picture) <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.fileInputContainer}>
                     <input
                       type="file"
                       id="picture"
                       name="picture"
                       onChange={handleFileChange}
                       accept="image/*"
-                      className="file-input"
+                      className={styles.fileInput}
                     />
                     <button
                       type="button"
-                      className="choose-file-btn"
+                      className={styles.chooseFileBtn}
                       onClick={() => document.getElementById("picture").click()}
                     >
                       Choose File
                     </button>
-                    <span className="file-name">{formData.picture ? formData.picture.name : "No file chosen"}</span>
+                    <span className={styles.fileName}>
+                      {formData.picture ? formData.picture.name : "No file chosen"}
+                    </span>
                   </div>
-                  {errors.picture && <div className="error-message">{errors.picture}</div>}
+                  {errors.picture && <div className={styles.errorMessage}>{errors.picture}</div>}
                 </div>
 
-                {/* TESDA Certificates Section */}
-                <div className="form-group">
-                  <label>TESDA Certificates <span className="required">*</span></label>
-                  <div className="certificate-inputs">
-                    <div className="form-group">
+                {/* TESDA Certificates */}
+                <div className={styles.formGroup}>
+                  <label>
+                    TESDA Certificates <span className={styles.required}>*</span>
+                  </label>
+                  <div className={styles.certificateInputs}>
+                    <div className={styles.formGroup}>
                       <label htmlFor="courseName">Course Name</label>
                       <input
                         type="text"
@@ -570,10 +755,10 @@ const RegisterTrabahador = () => {
                         onChange={handleCertificateInputChange}
                         placeholder="Enter course name"
                       />
-                      {errors.courseName && <div className="error-message">{errors.courseName}</div>}
+                      {errors.courseName && <div className={styles.errorMessage}>{errors.courseName}</div>}
                     </div>
 
-                    <div className="form-group">
+                    <div className={styles.formGroup}>
                       <label htmlFor="certificateNumber">Certificate Number</label>
                       <input
                         type="text"
@@ -583,10 +768,12 @@ const RegisterTrabahador = () => {
                         onChange={handleCertificateInputChange}
                         placeholder="Enter certificate number"
                       />
-                      {errors.certificateNumber && <div className="error-message">{errors.certificateNumber}</div>}
+                      {errors.certificateNumber && (
+                        <div className={styles.errorMessage}>{errors.certificateNumber}</div>
+                      )}
                     </div>
 
-                    <div className="form-group">
+                    <div className={styles.formGroup}>
                       <label htmlFor="issueDate">Issue Date</label>
                       <input
                         type="date"
@@ -595,51 +782,55 @@ const RegisterTrabahador = () => {
                         value={certificateForm.issueDate}
                         onChange={handleCertificateInputChange}
                       />
-                      {errors.issueDate && <div className="error-message">{errors.issueDate}</div>}
+                      {errors.issueDate && <div className={styles.errorMessage}>{errors.issueDate}</div>}
                     </div>
 
-                    <div className="form-group">
+                    <div className={styles.formGroup}>
                       <label htmlFor="certificateFile">Certificate File</label>
-                      <div className="file-input-container">
+                      <div className={styles.fileInputContainer}>
                         <input
                           type="file"
                           id="certificateFile"
                           name="certificateFile"
                           onChange={handleCertificateFileChange}
                           accept="image/*,application/pdf"
-                          className="file-input"
+                          className={styles.fileInput}
                         />
                         <button
                           type="button"
-                          className="choose-file-btn"
+                          className={styles.chooseFileBtn}
                           onClick={() => document.getElementById("certificateFile").click()}
                         >
                           Choose File
                         </button>
-                        <span className="file-name">
-                          {certificateForm.certificateFile ? certificateForm.certificateFile.name : "No file chosen"}
+                        <span className={styles.fileName}>
+                          {certificateForm.certificateFile
+                            ? certificateForm.certificateFile.name
+                            : "No file chosen"}
                         </span>
                       </div>
-                      {errors.certificateFile && <div className="error-message">{errors.certificateFile}</div>}
+                      {errors.certificateFile && (
+                        <div className={styles.errorMessage}>{errors.certificateFile}</div>
+                      )}
                     </div>
 
-                    <button type="button" className="add-certificate-btn" onClick={addCertificate}>
+                    <button type="button" className={styles.addCertificateBtn} onClick={addCertificate}>
                       Add Certificate
                     </button>
                   </div>
 
                   {/* Display added certificates */}
                   {formData.certificates.length > 0 && (
-                    <div className="certificate-list">
+                    <div className={styles.certificateList}>
                       <h4>Added Certificates:</h4>
                       {formData.certificates.map((cert, index) => (
-                        <div key={index} className="certificate-item">
+                        <div key={index} className={styles.certificateItem}>
                           <p>
                             {cert.courseName} - {cert.certificateNumber} (Issued: {cert.issueDate})
                           </p>
                           <button
                             type="button"
-                            className="remove-certificate-btn"
+                            className={styles.removeCertificateBtn}
                             onClick={() => removeCertificate(index)}
                           >
                             Remove
@@ -648,17 +839,22 @@ const RegisterTrabahador = () => {
                       ))}
                     </div>
                   )}
-                  {errors.certificates && <div className="error-message">{errors.certificates}</div>}
+                  {errors.certificates && <div className={styles.errorMessage}>{errors.certificates}</div>}
                 </div>
 
-                <button className="signup-button" onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Sign Up"}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+                <div className={styles.formNavigation}>
+                  <button type="button" className={styles.prevButton} onClick={handlePrevStep}>
+                    Back
+                  </button>
+                  <button type="submit" className={styles.signupButton} disabled={isSubmitting}>
+                    {isSubmitting ? "Submitting..." : "Sign Up"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </form>
     </div>
   )
 }

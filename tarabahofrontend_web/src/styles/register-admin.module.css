@@ -1,14 +1,4 @@
-body,
-html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.register-user-container {
+.registerAdminContainer {
   min-height: 100vh;
   width: 100vw;
   display: flex;
@@ -20,7 +10,7 @@ html {
   padding: 2rem 1rem;
 }
 
-.back-button {
+.backButton {
   position: absolute;
   top: 1.5rem;
   left: 1.5rem;
@@ -37,33 +27,33 @@ html {
   color: white;
 }
 
-.back-button:hover {
+.backButton:hover {
   transform: translateX(-3px);
   background: rgba(255, 255, 255, 0.2);
 }
 
-.register-user-form {
+.registerAdminForm {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 800px; /* Adjusted to match screenshot */
+  max-width: 800px;
   min-height: 600px;
-  border-radius: 0; /* Removed border radius to match screenshot */
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  background-color: #0056b3; /* Changed to match the blue in the screenshot */
+  background-color: #0056b3;
   position: relative;
 }
 
-.form-progress {
+.formProgress {
   width: 100%;
   height: 6px;
   background-color: #e0e0e0;
   position: relative;
-  margin-bottom: 30px; /* Add margin to create space for step numbers */
+  margin-bottom: 30px;
 }
 
-.form-progress-bar {
+.formProgressBar {
   position: absolute;
   top: 0;
   left: 0;
@@ -73,16 +63,16 @@ html {
   transition: width 0.5s ease;
 }
 
-.form-steps {
+.formSteps {
   display: flex;
   justify-content: space-between;
   padding: 0 15%;
-  margin-top: 15px; /* Increased from 10px to ensure visibility */
+  margin-top: 15px;
   position: relative;
   z-index: 2;
 }
 
-.form-step {
+.formStep {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,7 +80,7 @@ html {
   z-index: 1;
 }
 
-.step-number {
+.stepNumber {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -105,37 +95,32 @@ html {
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.form-step.active .step-number {
+.formStep.active .stepNumber {
   background-color: #0078ff;
   color: white;
   box-shadow: 0 0 0 5px rgba(0, 120, 255, 0.2);
 }
 
-.step-label {
+.stepLabel {
   margin-top: 8px;
   font-size: 0.8rem;
   color: #666;
   font-weight: 500;
 }
 
-.form-step.active .step-label {
+.formStep.active .stepLabel {
   color: #0078ff;
   font-weight: 600;
 }
 
-.form-step.completed .step-number {
+.formStep.completed .stepNumber {
   background-color: #00cc66;
   color: white;
 }
 
-.form-content {
-  display: flex;
+.formLeftSection {
   flex: 1;
-}
-
-.form-left-section {
-  flex: 1;
-  background: #0056b3; /* Changed to match the blue in the screenshot */
+  background: #0056b3;
   padding: 2rem;
   display: flex;
   flex-direction: column;
@@ -143,7 +128,7 @@ html {
   overflow: hidden;
 }
 
-.form-left-section::before {
+.formLeftSection::before {
   content: "";
   position: absolute;
   top: -50%;
@@ -154,7 +139,7 @@ html {
   z-index: 0;
 }
 
-.logo-container {
+.logoContainer {
   display: flex;
   align-items: center;
   position: relative;
@@ -166,7 +151,7 @@ html {
   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.2));
 }
 
-.form-title {
+.formTitle {
   color: white;
   font-size: 1.8rem;
   margin-bottom: 0.5rem;
@@ -175,7 +160,7 @@ html {
   z-index: 1;
 }
 
-.form-description {
+.formDescription {
   color: rgba(255, 255, 255, 0.8);
   font-size: 1rem;
   margin-bottom: 2rem;
@@ -184,51 +169,51 @@ html {
   z-index: 1;
 }
 
-.form-right-section {
+.formRightSection {
   flex: 1.5;
-  background-color: #0056b3; /* Changed to match the blue in the screenshot */
+  background-color: #0056b3;
   padding: 2rem;
   display: flex;
   flex-direction: column;
 }
 
-.section-title {
+.sectionTitle {
   color: white;
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   font-weight: 600;
 }
 
-.left-content,
-.right-content {
+.leftContent,
+.rightContent {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.form-group {
+.formGroup {
   margin-bottom: 1.5rem;
   position: relative;
 }
 
-.form-group label,
-.name-group label {
+.formGroup label,
+.nameGroup label {
   display: block;
-  color: white !important;
+  color: white;
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   font-weight: 500;
 }
 
-.form-right-section .form-group label {
+.formRightSection .formGroup label {
   color: white;
 }
 
-.input-with-icon {
+.inputWithIcon {
   position: relative;
 }
 
-.input-icon {
+.inputIcon {
   position: absolute;
   left: 8px;
   top: 50%;
@@ -239,9 +224,9 @@ html {
   z-index: 1;
 }
 
-.form-group input {
+.formGroup input {
   width: 100%;
-  padding: 0.75rem 0.75rem 0.75rem 35px;
+  padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   background-color: white;
@@ -249,44 +234,43 @@ html {
   color: #333;
   transition: all 0.3s ease;
   box-sizing: border-box;
-  text-indent: 0;
 }
 
-.form-right-section .form-group input {
+.formRightSection .formGroup input {
   border: 1px solid #e0e0e0;
   background-color: #f9f9f9;
   color: #333;
 }
 
-.form-group input:focus {
+.formGroup input:focus {
   outline: none;
   border-color: #0078ff;
   box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.2);
 }
 
-.form-group input::placeholder {
+.formGroup input::placeholder {
   color: #999;
   opacity: 1;
 }
 
-.form-right-section .form-group input::placeholder {
+.formRightSection .formGroup input::placeholder {
   color: #999;
   opacity: 1;
 }
 
-.form-group input.error {
+.formGroup input.error {
   border-color: #ff4d4d;
   background-color: rgba(255, 77, 77, 0.05);
 }
 
-.error-text {
+.errorText {
   color: #ff4d4d;
   font-size: 0.8rem;
   margin-top: 0.5rem;
   display: block;
 }
 
-.error-message {
+.errorMessage {
   background-color: rgba(255, 77, 77, 0.1);
   border-left: 3px solid #ff4d4d;
   color: #ff4d4d;
@@ -296,15 +280,15 @@ html {
   font-size: 0.9rem;
 }
 
-.error-message.general {
+.errorMessage.general {
   background-color: rgba(255, 77, 77, 0.2);
 }
 
-.name-group {
+.nameGroup {
   margin-bottom: 1.5rem;
 }
 
-.name-group label {
+.nameGroup label {
   display: block;
   color: white;
   margin-bottom: 0.5rem;
@@ -312,17 +296,17 @@ html {
   font-weight: 500;
 }
 
-.name-inputs {
+.nameInputs {
   display: flex;
   gap: 1rem;
 }
 
-.input-wrapper {
+.inputWrapper {
   flex: 1;
   position: relative;
 }
 
-.name-inputs input {
+.nameInputs input {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #e0e0e0;
@@ -333,17 +317,17 @@ html {
   transition: all 0.3s ease;
 }
 
-.name-inputs input:focus {
+.nameInputs input:focus {
   outline: none;
   border-color: #0078ff;
   box-shadow: 0 0 0 3px rgba(0, 120, 255, 0.2);
 }
 
-.name-inputs input::placeholder {
+.nameInputs input::placeholder {
   color: #aaa;
 }
 
-.name-inputs input.error {
+.nameInputs input.error {
   border-color: #ff4d4d;
   background-color: rgba(255, 77, 77, 0.05);
 }
@@ -353,17 +337,17 @@ html {
   margin-left: 2px;
 }
 
-.password-strength {
+.passwordStrength {
   margin-top: 0.75rem;
 }
 
-.strength-bars {
+.strengthBars {
   display: flex;
   gap: 5px;
   margin-bottom: 5px;
 }
 
-.strength-bar {
+.strengthBar {
   height: 4px;
   flex: 1;
   background-color: #e0e0e0;
@@ -371,12 +355,12 @@ html {
   transition: background-color 0.3s ease;
 }
 
-.strength-text {
+.strengthText {
   font-size: 0.8rem;
   font-weight: 500;
 }
 
-.next-button {
+.nextButton {
   background-color: #0078ff;
   color: white;
   border: none;
@@ -397,8 +381,8 @@ html {
   position: relative;
 }
 
-.prev-button,
-.signup-button {
+.prevButton,
+.signupButton {
   background-color: #0078ff;
   color: white;
   border: none;
@@ -416,20 +400,20 @@ html {
   box-shadow: 0 4px 10px rgba(0, 120, 255, 0.3);
 }
 
-.next-button:hover,
-.signup-button:hover {
+.nextButton:hover,
+.signupButton:hover {
   background-color: #0066cc;
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(0, 120, 255, 0.4);
 }
 
-.next-button:active,
-.signup-button:active {
+.nextButton:active,
+.signupButton:active {
   transform: translateY(0);
   box-shadow: 0 2px 5px rgba(0, 120, 255, 0.3);
 }
 
-.prev-button {
+.prevButton {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -442,43 +426,43 @@ html {
   z-index: 100;
 }
 
-.prev-button:hover {
+.prevButton:hover {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.button-icon {
+.buttonIcon {
   width: 18px;
   height: 18px;
 }
 
-.form-navigation {
+.formNavigation {
   margin-bottom: 1.5rem;
   position: relative;
   z-index: 100;
 }
 
-.terms-privacy {
+.termsPrivacy {
   margin: 1.5rem 0;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.8);
 }
 
-.terms-privacy a {
+.termsPrivacy a {
   color: #0078ff;
   text-decoration: none;
 }
 
-.terms-privacy a:hover {
+.termsPrivacy a:hover {
   text-decoration: underline;
 }
 
-.signup-button {
+.signupButton {
   align-self: flex-start;
   margin-top: 1rem;
 }
 
-.signup-button.loading {
+.signupButton.loading {
   opacity: 0.8;
   cursor: not-allowed;
 }
@@ -500,7 +484,7 @@ html {
   }
 }
 
-.success-message {
+.successMessage {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -516,13 +500,13 @@ html {
   transition: all 0.3s ease;
 }
 
-.success-message.show {
+.successMessage.show {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, -50%) scale(1);
 }
 
-.success-icon {
+.successIcon {
   width: 60px;
   height: 60px;
   background-color: #00cc66;
@@ -535,17 +519,17 @@ html {
   margin: 0 auto 1rem;
 }
 
-.success-message h3 {
+.successMessage h3 {
   color: #333;
   margin-bottom: 0.5rem;
 }
 
-.success-message p {
+.successMessage p {
   color: #666;
 }
 
 /* Toggle password button */
-.toggle-password {
+.togglePassword {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -561,71 +545,71 @@ html {
   z-index: 2;
 }
 
-.toggle-password:hover {
+.togglePassword:hover {
   background-color: rgba(0, 120, 255, 0.1);
 }
 
-.toggle-password:focus {
+.togglePassword:focus {
   outline: none;
   box-shadow: 0 0 0 2px rgba(0, 120, 255, 0.2);
 }
 
 /* Responsive adjustments */
 @media (max-width: 992px) {
-  .register-user-form {
+  .registerAdminForm {
     max-width: 90%;
   }
 }
 
 @media (max-width: 768px) {
-  .register-user-form {
+  .registerAdminForm {
     flex-direction: column;
     height: auto;
     max-height: none;
   }
 
-  .form-left-section,
-  .form-right-section {
+  .formLeftSection,
+  .formRightSection {
     width: 100%;
   }
 
-  .form-right-section {
+  .formRightSection {
     background-color: #0056b3;
   }
 
-  .name-inputs {
+  .nameInputs {
     flex-direction: column;
     gap: 1rem;
   }
 
-  .form-steps {
+  .formSteps {
     padding: 0 10%;
   }
 }
 
 @media (max-width: 480px) {
-  .register-user-container {
+  .registerAdminContainer {
     padding: 1rem 0.5rem;
   }
 
-  .register-user-form {
+  .registerAdminForm {
     max-width: 100%;
     border-radius: 8px;
   }
 
-  .form-title {
+  .formTitle {
     font-size: 1.5rem;
   }
 
-  .form-description {
+  .formDescription {
     font-size: 0.9rem;
   }
 
-  .form-steps {
+  .formSteps {
     padding: 0 5%;
   }
 
-  .step-label {
+  .stepLabel {
     font-size: 0.7rem;
   }
 }
