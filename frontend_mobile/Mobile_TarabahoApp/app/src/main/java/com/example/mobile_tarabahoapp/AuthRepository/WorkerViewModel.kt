@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobile_tarabahoapp.api.ApiService
+import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.Worker
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -21,11 +22,7 @@ class WorkerViewModel : ViewModel() {
     private val _isLoading = mutableStateOf(false)
     val isLoading get() = _isLoading
 
-    private val api: ApiService = Retrofit.Builder()
-        .baseUrl("http://10.0.2.2:8080/") // ← Emulator localhost (adjust if real device)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(ApiService::class.java)
+    private val api = RetrofitClient.apiService
 
     fun fetchWorkers() {
         viewModelScope.launch {
