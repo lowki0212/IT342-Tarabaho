@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,51 +27,41 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AppNavigation
+import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
 
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
-data class ServiceProvider(
-    val id: Int,
-    val name: String,
-    val profession: String,
-    val location: String,
-    val rating: Float,
-    val reviews: Int,
-    val imageRes: Int,
-    var isFavorite: Boolean = false
-)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
+
+    val workerViewModel: WorkerViewModel = viewModel() // 1️⃣ declare ViewModel FIRST
+
+    val workers by workerViewModel.workers.observeAsState(emptyList())
     var searchQuery by remember { mutableStateOf("Gardener") }
     var selectedCategoryIndex by remember { mutableStateOf(1) } // Gardener selected by default
 
+
+    LaunchedEffect(Unit) {
+        workerViewModel.fetchWorkers()
+    }
+
     val categories = listOf(
-        "Work" to R.drawable.ic_work,
-        "Gardener" to R.drawable.ic_gardener,
+        "All" to R.drawable.ic_work,
+        "Cleaning" to R.drawable.ic_work,
+        "Gardening" to R.drawable.ic_gardener,
         "Errands" to R.drawable.ic_errands,
-        "Caretaker" to R.drawable.ic_caretaker
+        "Tutoring" to R.drawable.ic_work,
+        "Babysitting" to R.drawable.ic_caretaker
     )
 
-    // Sample data for service providers
-    val serviceProviders = remember {
-        mutableStateListOf(
-            ServiceProvider(
-                id = 1,
-                name = "Angelo Quieta",
-                profession = "Caretaker",
-                location = "Siomai Sa Tisa",
-                rating = 4f,
-                reviews = 1872,
-                imageRes = R.drawable.profile_angelo,
-                isFavorite = false
-            )
-        )
-    }
+
 
     Scaffold(
         bottomBar = {
@@ -224,12 +215,22 @@ fun HomeScreen(navController: NavController) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         categories.forEachIndexed { index, (name, iconRes) ->
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.clickable { selectedCategoryIndex = index }
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        selectedCategoryIndex = index
+                                        if (name == "All") {
+                                            workerViewModel.fetchWorkers()
+                                        } else {
+                                            workerViewModel.fetchWorkersByCategory(name)
+                                        }
+                                    }
+
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -257,7 +258,8 @@ fun HomeScreen(navController: NavController) {
                                     text = name,
                                     color = Color.White,
                                     fontSize = 12.sp,
-                                    textAlign = TextAlign.Center
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -274,10 +276,11 @@ fun HomeScreen(navController: NavController) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "532 founds",
+                    text = "${workers.size} found",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
+
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -302,18 +305,8 @@ fun HomeScreen(navController: NavController) {
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(serviceProviders) { provider ->
-                    ServiceProviderCard(
-                        serviceProvider = provider,
-                        onFavoriteClick = {
-                            val index = serviceProviders.indexOfFirst { it.id == provider.id }
-                            if (index != -1) {
-                                serviceProviders[index] = serviceProviders[index].copy(
-                                    isFavorite = !serviceProviders[index].isFavorite
-                                )
-                            }
-                        }
-                    )
+                items(workers) { worker ->
+                    WorkerCard(worker = worker)
                 }
 
                 // Add some bottom padding
@@ -324,115 +317,6 @@ fun HomeScreen(navController: NavController) {
         }
     }
 }
-
-@Composable
-fun ServiceProviderCard(
-    serviceProvider: ServiceProvider,
-    onFavoriteClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Profile image
-            Image(
-                painter = painterResource(id = serviceProvider.imageRes),
-                contentDescription = "Profile picture of ${serviceProvider.name}",
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-
-            // Provider details
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Text(
-                        text = serviceProvider.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    IconButton(
-                        onClick = onFavoriteClick,
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (serviceProvider.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = if (serviceProvider.isFavorite) Color.Red else Color.Gray
-                        )
-                    }
-                }
-
-                Text(
-                    text = serviceProvider.profession,
-                    fontSize = 14.sp,
-                    color = Color.DarkGray
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Location",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = serviceProvider.location,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(start = 2.dp)
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Rating",
-                        tint = Color(0xFFFFC107),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "${serviceProvider.rating}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
-                    Text(
-                        text = "${serviceProvider.reviews} Reviews",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {

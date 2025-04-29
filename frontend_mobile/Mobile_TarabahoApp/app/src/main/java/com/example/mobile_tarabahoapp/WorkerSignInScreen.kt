@@ -1,20 +1,19 @@
 package com.example.mobile_tarabahoapp
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,99 +24,46 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.mobile_tarabahoapp.AuthRepository.LoginViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.livedata.observeAsState
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.mobile_tarabahoapp.AuthRepository.WorkerLoginViewModel
 
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            TarabahoTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = "login") {
-                        composable("login") {
-                            LoginScreen(navController)
-                        }
-                        composable("signup") {
-                            SignUpScreen(onSignUpSuccess = {
-                                navController.popBackStack()
-                                navController.navigate("login")
-                            })
-                        }
-                        composable("home") {
-                            HomeScreen(navController)
-                        }
-                        composable("settings") {
-                            SettingsScreen(navController)
-
-                        }
-                        composable("profilesettings"){
-                            EditProfileScreen(navController)
-                        }
-                        
-                        composable ("worker_signin"){
-                            WorkerSignInScreen(navController)
-                        }
-
-                        composable ("worker_home"){
-                            WorkerHomeScreen(navController)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {
-    // Email and password states—initialize with default values or empty strings as needed.
-    var email by remember { mutableStateOf("Paul.Binayo@Email.com") }
-    var password by remember { mutableStateOf("********") }
+fun WorkerSignInScreen(navController: NavController) {
+    val viewModel: WorkerLoginViewModel = viewModel()
+
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
 
-    // Observe login result and error messages from the ViewModel.
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
 
-    // If loginResult is not null, navigate to the home screen.
-    loginResult?.let { token ->
-        // You may choose to store token, then navigate.
-        LaunchedEffect(token) {
-            // Optionally, perform any token storage in SharedPreferences here.
-            navController.navigate("home") {
-                // Clear the back stack if desired.
-                popUpTo("login") { inclusive = true }
+    loginResult?.let {
+        LaunchedEffect(it) {
+            navController.navigate("worker_home") {
+                popUpTo("worker_signin") { inclusive = true }
             }
         }
     }
-
-    // Optionally, display error message on the screen.
-    val errorMessage = loginError ?: ""
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .verticalScroll(rememberScrollState())
     ) {
-        // Blue header with logo
+        // Blue header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -132,7 +78,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "T A R A B A H A",
+                        text = "T A R A B A H O",
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -147,9 +93,16 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "TARAI TERABAHO",
+                    text = "WORKER PORTAL",
                     color = Color.White,
-                    fontSize = 12.sp
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Sign in to your worker account",
+                    color = Color.White,
+                    fontSize = 14.sp
                 )
             }
         }
@@ -167,56 +120,56 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Google login button
-                OutlinedButton(
-                    onClick = { /* Handle Google login */ },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
-                    border = BorderStroke(1.dp, Color.LightGray)
+                // Worker icon
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFE3F2FD)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_google),
-                            contentDescription = "Google Icon",
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Continue with Google")
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Engineering,
+                        contentDescription = "Worker",
+                        tint = Color(0xFF2962FF),
+                        modifier = Modifier.size(36.dp)
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Or login with",
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    text = "Worker Sign In",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2962FF)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Email field
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = null,
-                    placeholder = { Text("Email") },
+                    value = username, // <-- use username here
+                    onValueChange = { username = it }, // <-- and here
+                    label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(4.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color.LightGray,
                         focusedBorderColor = Color(0xFF2962FF)
                     ),
-                    singleLine = true
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
+                    }
                 )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -224,8 +177,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = null,
-                    placeholder = { Text("Password") },
+                    label = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(4.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -235,6 +187,13 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
+                    },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
@@ -245,16 +204,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         }
                     }
                 )
-
-                // Display error message if any
-                if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -280,23 +229,20 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         )
                     }
 
-                    TextButton(onClick = { navController.navigate("worker_signin") }) {
+                    TextButton(onClick = { /* Handle forgot password */ }) {
                         Text(
-                            text = "Switch to Worker?",
+                            text = "Forgot Password?",
                             color = Color(0xFF2962FF),
                             fontSize = 14.sp
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Login button
                 Button(
-                    onClick = {
-                        // Call login in the ViewModel.
-                        viewModel.login(email, password)
-                    },
+                    onClick = {  viewModel.login(username, password)},
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -306,9 +252,23 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     )
                 ) {
                     Text(
-                        text = "Log In",
+                        text = "Sign In as Worker",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Switch to client mode
+                TextButton(
+                    onClick = { navController.navigate("login") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Switch to Client Sign In",
+                        color = Color(0xFF2962FF),
+                        fontSize = 14.sp
                     )
                 }
             }
@@ -316,18 +276,20 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
 
         // Sign up text
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Don't have an account?",
+                    text = "Don't have a worker account?",
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
-                TextButton(onClick = { navController.navigate("signup") }) {
+                TextButton(onClick = { navController.navigate("worker_signup") }) {
                     Text(
                         text = "Sign Up",
                         color = Color(0xFF2962FF),
@@ -337,12 +299,97 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 }
             }
         }
+
+        // Information section
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = "Information",
+                        tint = Color(0xFF2962FF),
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "Worker Benefits",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                BenefitItem(
+                    icon = Icons.Default.MonetizationOn,
+                    text = "Earn competitive rates for your services"
+                )
+
+                BenefitItem(
+                    icon = Icons.Default.Schedule,
+                    text = "Flexible working hours that fit your schedule"
+                )
+
+                BenefitItem(
+                    icon = Icons.Default.Star,
+                    text = "Build your reputation with client reviews"
+                )
+
+                BenefitItem(
+                    icon = Icons.Default.Security,
+                    text = "Secure payment processing system"
+                )
+            }
+        }
+
+        // Add some bottom padding
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
+
+@Composable
+fun BenefitItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String
+) {
+    Row(
+        modifier = Modifier.padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF2962FF),
+            modifier = Modifier.size(16.dp)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = Color.DarkGray
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
-fun LoginScreenPreview() {
+fun WorkerSignInScreenPreview() {
     TarabahoTheme {
-        LoginScreen(rememberNavController())
+        WorkerSignInScreen(rememberNavController())
     }
 }

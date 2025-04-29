@@ -52,7 +52,9 @@ public class SecurityConfig {
                         "/api/worker/check-duplicates",
                         "/api/worker/token",
                         "/api/worker/login",
-                        "/api/worker/{workerId}/upload-initial-picture"
+                        "/api/worker/{workerId}/upload-initial-picture",
+                        "/api/worker/category/**",   // ✅ ADD THIS
+                        "/api/worker/all"             // ✅ ADD THIS if you want all workers public too
                     ).permitAll()
                     .requestMatchers("/api/certificate/worker/**").permitAll()
                     .requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
@@ -61,12 +63,13 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").authenticated()
                     .requestMatchers("/api/user/me", "/api/user/update-phone").authenticated()
                     .requestMatchers("/api/user/**").authenticated()
-                    .requestMatchers("/api/worker/**").authenticated()
+                    .requestMatchers("/api/worker/**").authenticated()   // This now only applies to the *rest* of worker endpoints
                     .requestMatchers("/api/certificate/**").authenticated()
                     // All other requests require authentication
                     .anyRequest().authenticated();
                 System.out.println("Authorization rules configured.");
             })
+            
             .oauth2Login(oauth -> {
                 System.out.println("Configuring OAuth2 login...");
                 oauth	

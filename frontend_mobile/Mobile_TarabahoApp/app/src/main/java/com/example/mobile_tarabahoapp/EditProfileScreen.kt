@@ -256,7 +256,7 @@ fun EditProfileScreen(navController: NavController) {
                         // First name
                         OutlinedTextField(
                             value = firstName,
-                            onValueChange = { firstName = it },
+                            onValueChange = {}, // No-op so user cannot change it
                             label = { Text("First Name") },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(4.dp),
@@ -264,13 +264,15 @@ fun EditProfileScreen(navController: NavController) {
                                 unfocusedBorderColor = Color.LightGray,
                                 focusedBorderColor = Color(0xFF2962FF)
                             ),
-                            singleLine = true
+                            singleLine = true,
+                            readOnly = true, // 🔥 Make it non-editable
+                            enabled = true   // ✅ Keep it "enabled" to keep the normal color (set to false if you want it grayed out)
                         )
 
                         // Last name
                         OutlinedTextField(
                             value = lastName,
-                            onValueChange = { lastName = it },
+                            onValueChange = {}, // No-op so user cannot change it
                             label = { Text("Last Name") },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(4.dp),
@@ -278,8 +280,11 @@ fun EditProfileScreen(navController: NavController) {
                                 unfocusedBorderColor = Color.LightGray,
                                 focusedBorderColor = Color(0xFF2962FF)
                             ),
-                            singleLine = true
+                            singleLine = true,
+                            readOnly = true, // 🔥 Make it non-editable
+                            enabled = true   // ✅ Keep it "enabled" to keep the normal color (set to false if you want it grayed out)
                         )
+
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -287,7 +292,7 @@ fun EditProfileScreen(navController: NavController) {
                     // Username
                     OutlinedTextField(
                         value = username,
-                        onValueChange = { username = it },
+                        onValueChange = {}, // No-op, user can't edit
                         label = { Text("Username") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(4.dp),
@@ -296,6 +301,8 @@ fun EditProfileScreen(navController: NavController) {
                             focusedBorderColor = Color(0xFF2962FF)
                         ),
                         singleLine = true,
+                        readOnly = true, // 🔥 Not editable
+                        enabled = true,  // ✅ Looks normal, not grayed out
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,

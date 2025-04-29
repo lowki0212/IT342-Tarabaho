@@ -50,7 +50,16 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("change_payment_method") {
             ChangePaymentMethodScreen(navController)
-        }        // Add more screens here later, like:
+        }
+
+        composable("worker_signin") {
+            WorkerSignInScreen(navController)
+        }
+
+        composable("worker_home") {
+            WorkerHomeScreen(navController)
+        }
+        // Add more screens here later, like:
         // composable("home") { HomeScreen() }
     }
 
