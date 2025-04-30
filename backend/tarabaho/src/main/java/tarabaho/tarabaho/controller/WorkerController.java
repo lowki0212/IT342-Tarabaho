@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.dto.WorkerDuplicateCheckDTO;
 import tarabaho.tarabaho.dto.WorkerRegisterDTO;
 import tarabaho.tarabaho.dto.WorkerUpdateDTO;
@@ -219,19 +220,20 @@ public class WorkerController {
             String jwtToken = jwtUtil.generateToken(worker.getUsername());
 
             Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
-            tokenCookie.setHttpOnly(true);
+             tokenCookie.setHttpOnly(true);
             tokenCookie.setSecure(false);
             tokenCookie.setPath("/");
             tokenCookie.setMaxAge(24 * 60 * 60);
             tokenCookie.setDomain("localhost");
-            response.addCookie(tokenCookie);
-            System.out.println("WorkerController: Token generated and cookie set for username: " + worker.getUsername());
+             response.addCookie(tokenCookie);
+           
+             System.out.println("WorkerController: Token generated and cookie set for username: " + worker.getUsername());
 
-            AuthResponse body = new AuthResponse(jwtToken);
+            AuthResponse body = new AuthResponse(jwtToken, worker.getId());
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             System.out.println("WorkerController: Login failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null, null));
         }
     }
 
@@ -616,6 +618,17 @@ public class WorkerController {
         }
     }
 
+    @Operation(summary = "Get worker by username", description = "Find a worker by their username")
+    @GetMapping("/username/{username}")
+    public ResponseEntity<?> getWorkerByUsername(@PathVariable String username) {
+    Optional<Worker> workerOpt = workerService.findByUsername(username);
+    if (workerOpt.isPresent()) {
+        return ResponseEntity.ok(workerOpt.get());
+    } else {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found with username: " + username);
+    }
+}
+
     static class LoginRequest {
         private String username;
         private String password;
@@ -626,24 +639,6 @@ public class WorkerController {
         public void setPassword(String password) { this.password = password; }
     }
 
-    static class AuthResponse {
-        private String token;
-        private String error;
-
-        public AuthResponse(String token) {
-            this.token = token;
-        }
-
-        public AuthResponse(String token, String error) {
-            this.token = token;
-            this.error = error;
-        }
-
-        public String getToken() { return token; }
-        public void setToken(String token) { this.token = token; }
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-    }
 
     static class RatingRequest {
         private Long bookingId;

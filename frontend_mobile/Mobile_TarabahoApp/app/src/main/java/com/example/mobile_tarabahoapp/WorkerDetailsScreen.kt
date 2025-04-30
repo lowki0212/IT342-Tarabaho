@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,13 +25,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkerDetailsScreen(navController: NavController) {
+fun WorkerDetailsScreen(navController: NavController, workerId: String) {
+    val viewModel: WorkerViewModel = viewModel()
+    val worker by viewModel.selectedWorker.observeAsState()
+
     var isFavorite by remember { mutableStateOf(false) }
+
+    LaunchedEffect(workerId) {
+        viewModel.fetchWorkerById(workerId)
+    }
 
     Scaffold(
         bottomBar = {
@@ -51,7 +63,7 @@ fun WorkerDetailsScreen(navController: NavController) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = {  navController.navigate("settings")},
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -153,58 +165,85 @@ fun WorkerDetailsScreen(navController: NavController) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    // Profile image
-                    Image(
-                        painter = painterResource(id = R.drawable.profile_angelo),
-                        contentDescription = "Profile picture",
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    // Worker details
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 16.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Angelo Quieta",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                        // Profile image
+                        AsyncImage(
+                            model = worker?.profilePicture ?: "", // Dynamically load image URL
+                            contentDescription = "Profile picture of ${worker?.firstName}",
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                                // Optional fallback
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        // Worker details
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 16.dp)
+                        ) {
+                            Text(
+                                text = "${worker?.firstName} ${worker?.lastName}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
 
-                        Text(
-                            text = "Gardener",
-                            fontSize = 14.sp,
-                            color = Color.DarkGray
+                            Spacer(modifier = Modifier.height(4.dp))
+
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = "Location",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = worker?.phoneNumber ?: "No contact number",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Hourly Rate
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFE3F2FD)
                         )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
+                    ) {
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = "Location",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(16.dp)
-                            )
                             Text(
-                                text = "Siomai sa Tisa",
-                                fontSize = 12.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(start = 4.dp)
+                                text = "₱${worker?.hourly ?: 0} / hour",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2962FF),
+                                modifier = Modifier.padding(start = 8.dp)
                             )
                         }
                     }
@@ -240,31 +279,156 @@ fun WorkerDetailsScreen(navController: NavController) {
                 )
             }
 
-            // About me section
-            Column(
+            // Description section
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Text(
-                    text = "About me",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Description",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
 
-                Text(
-                    text = "Dr. David Patel, a dedicated cardiologist, brings a wealth of experience to Golden Gate Cardiology Center in Golden Gate, CA.",
-                    fontSize = 14.sp,
-                    color = Color.DarkGray
-                )
+                    Text(
+                        text = worker?.biography ?: "No description available.",
+                        fontSize = 14.sp,
+                        color = Color.DarkGray
+                    )
+                }
+            }
 
-                Text(
-                    text = "view more",
-                    fontSize = 14.sp,
-                    color = Color(0xFF2962FF),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            // Contact Information
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Contact Information",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    // Email
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Email",
+                            tint = Color(0xFF2962FF),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                        ) {
+                            Text(
+                                text = "Email:",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = worker?.email ?: "No email",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color(0xFFEEEEEE)
+                    )
+
+                    // Address
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Address",
+                            tint = Color(0xFF2962FF),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                        ) {
+                            Text(
+                                text = "Address:",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = worker?.address ?: "No address",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color(0xFFEEEEEE)
+                    )
+
+                    // Contact Number
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Phone,
+                            contentDescription = "Contact Number",
+                            tint = Color(0xFF2962FF),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                        ) {
+                            Text(
+                                text = "Contact No.:",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = worker?.phoneNumber ?: "No contact number",
+                                fontSize = 14.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+                }
             }
 
             // Working time section
@@ -290,7 +454,7 @@ fun WorkerDetailsScreen(navController: NavController) {
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Monday-Friday, 08:00 AM-18:00 pM",
+                        text = "Monday-Friday, 08:00 AM-18:00 PM",
                         fontSize = 14.sp,
                         color = Color.DarkGray,
                         modifier = Modifier.padding(start = 8.dp)
@@ -398,6 +562,9 @@ fun StatItem(
 @Composable
 fun WorkerDetailsScreenPreview() {
     TarabahoTheme {
-        WorkerDetailsScreen(rememberNavController())
+        WorkerDetailsScreen(
+            navController = rememberNavController(),
+            workerId = "1"
+        )
     }
 }

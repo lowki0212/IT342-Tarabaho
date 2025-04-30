@@ -297,8 +297,6 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }
-
-            // Service providers list
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -306,9 +304,10 @@ fun HomeScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(workers) { worker ->
-                    WorkerCard(worker = worker)
+                    WorkerCard(worker = worker) {
+                        navController.navigate("worker_details/${worker.id}")
+                    }
                 }
-
                 // Add some bottom padding
                 item {
                     Spacer(modifier = Modifier.height(16.dp))

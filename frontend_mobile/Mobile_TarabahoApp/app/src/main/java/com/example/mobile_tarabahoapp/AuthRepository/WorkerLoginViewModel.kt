@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.LoginRequest
+import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.utils.TokenManager
 import kotlinx.coroutines.launch
 
@@ -22,24 +23,32 @@ class WorkerLoginViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     response.body()?.let { authResponse ->
+                        // ✅ Save JWT token
                         TokenManager.saveToken(authResponse.token)
-                        loginResult.value = authResponse
+
+                        // ✅ Save workerId directly from AuthResponse
+                        if (authResponse.workerId != null) {
+                            TokenManager.saveWorkerId(authResponse.workerId)
+                            loginResult.value = authResponse // ✅ Trigger success
+                        } else {
+                            loginError.value = "⚠️ Login succeeded but worker ID is missing."
+                        }
+
                     } ?: run {
-                        loginError.value = "Empty response from server."
+                        loginError.value = "⚠️ Empty response from server."
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val message = response.code().let {
-                        when (it) {
-                            401 -> "Invalid username or password"
-                            else -> "Login failed: $errorBody"
-                        }
+                    val message = when (response.code()) {
+                        401 -> "Invalid username or password"
+                        else -> "Login failed: $errorBody"
                     }
                     loginError.value = message
                 }
             } catch (e: Exception) {
-                loginError.value = "An error occurred: ${e.localizedMessage}"
+                loginError.value = "⚠️ An error occurred: ${e.localizedMessage}"
             }
         }
     }
+
 }

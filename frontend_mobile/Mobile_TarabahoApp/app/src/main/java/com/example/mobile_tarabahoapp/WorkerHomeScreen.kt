@@ -142,7 +142,7 @@ fun WorkerHomeScreen(navController: NavController) {
                             tint = Color.White
                         )
                     }
-                    IconButton(onClick = { /* Handle profile */ }) {
+                    IconButton(onClick = {  navController.navigate("worker_edit_profile")}) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Profile",

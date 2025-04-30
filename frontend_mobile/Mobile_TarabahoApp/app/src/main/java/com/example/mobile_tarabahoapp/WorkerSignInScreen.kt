@@ -1,5 +1,6 @@
 package com.example.mobile_tarabahoapp
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,8 +33,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerLoginViewModel
+import com.example.mobile_tarabahoapp.api.RetrofitClient
 
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import com.example.mobile_tarabahoapp.utils.TokenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,13 +52,29 @@ fun WorkerSignInScreen(navController: NavController) {
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
 
-    loginResult?.let {
-        LaunchedEffect(it) {
-            navController.navigate("worker_home") {
-                popUpTo("worker_signin") { inclusive = true }
+    LaunchedEffect(loginResult) {
+        loginResult?.let {
+            try {
+                val response = RetrofitClient.apiService.getWorkerByUsername(username)
+                if (response.isSuccessful) {
+                    val worker = response.body()
+                    if (worker != null) {
+                        TokenManager.saveWorkerId(worker.id ?: -1L)
+                        navController.navigate("worker_home") {
+                            popUpTo("worker_signin") { inclusive = true }
+                        }
+                    } else {
+                        Log.e("WorkerSignIn", "Worker is null in response")
+                    }
+                } else {
+                    Log.e("WorkerSignIn", "Failed to fetch worker by username: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("WorkerSignIn", "Exception while fetching worker: ${e.localizedMessage}")
             }
         }
     }
+
 
     Column(
         modifier = Modifier

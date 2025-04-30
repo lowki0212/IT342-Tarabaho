@@ -17,8 +17,8 @@ fun AppNavigation(navController: NavHostController) {
             )
         }
         composable("worker_details/{workerId}") { backStackEntry ->
-            val workerId = backStackEntry.arguments?.getString("workerId")
-            WorkerDetailsScreen(navController)
+            val workerId = backStackEntry.arguments?.getString("workerId") ?: return@composable
+            WorkerDetailsScreen(navController = navController, workerId = workerId)
         }
         composable("login") {
             LoginScreen(navController)
@@ -31,12 +31,8 @@ fun AppNavigation(navController: NavHostController) {
             SettingsScreen(navController)
         }
 
-        composable("edit_profile") {
-            EditProfileScreen(navController)
-        }
-
-        composable("profilesettings"){
-            EditProfileScreen(navController)
+        composable(route = "profilesettings") {
+            EditProfileScreen(navController = navController)
         }
 
         composable("search_results") {
@@ -58,6 +54,10 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("worker_home") {
             WorkerHomeScreen(navController)
+        }
+
+        composable("worker_edit_profile") {
+            WorkerEditProfileScreen(navController = navController)
         }
         // Add more screens here later, like:
         // composable("home") { HomeScreen() }

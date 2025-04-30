@@ -1,22 +1,22 @@
 package com.example.mobile_tarabahoapp.model
 
 data class Worker(
-    val id: Long,
-    val username: String,
-    val password: String?, // Optional depending on endpoint (can hide in UI)
-    val firstName: String,
-    val lastName: String,
-    val email: String,
-    val phoneNumber: String,
-    val address: String?,
-    val biography: String?,
-    val birthday: String?, // format: yyyy-MM-dd
-    val profilePicture: String?, // Supabase URL
-    val hourly: Double,
-    val isAvailable: Boolean,
-    val isVerified: Boolean,
-    val stars: Double,
-    val ratingCount: Int,
-    val latitude: Double?,
-    val longitude: Double?
-)   
+    val id: Long? = null,
+    val username: String = "",
+    val password: String = "",
+    val firstName: String? = null,
+    val lastName: String? = null,
+    val email: String? = null,
+    val phoneNumber: String? = null,
+    val address: String? = null,
+    val biography: String? = null,
+    val birthday: String? = null,
+    val profilePicture: String? = null,
+    val hourly: Double? = null,
+    val isAvailable: Boolean? = null,
+    val isVerified: Boolean? = null,
+    val stars: Double? = null,
+    val ratingCount: Int? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)

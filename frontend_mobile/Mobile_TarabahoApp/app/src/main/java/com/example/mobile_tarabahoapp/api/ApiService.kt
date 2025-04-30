@@ -6,6 +6,7 @@ import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
 import com.example.mobile_tarabahoapp.model.RegisterRequest
 import com.example.mobile_tarabahoapp.model.User
 import com.example.mobile_tarabahoapp.model.Worker
+import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -38,6 +39,18 @@ interface ApiService {
 
     @GET("api/worker/category/{categoryName}/workers")
     suspend fun getWorkersByCategory(@Path("categoryName") categoryName: String): Response<List<Worker>>
+
+    @GET("api/worker/{id}")
+    suspend fun getWorkerById(@Path("id") id: String): Response<Worker>
+
+    @PUT("api/worker/{id}")
+    suspend fun updateWorkerProfile(@Path("id") id: Long, @Body request: WorkerUpdateRequest): Response<Worker>
+
+    @GET("/api/worker/username/{username}")
+    suspend fun getWorkerByUsername(@Path("username") username: String): Response<Worker>
+
+    @POST("api/worker/login")
+    suspend fun sessionLoginWorker(@Body worker: Worker): Response<Worker>
 
 
 }

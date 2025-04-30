@@ -194,7 +194,7 @@ fun SettingsScreen(navController: NavController) {
 
                             navController.navigate("profilesettings") {
 
-                        }}
+                            }}
                     )
 
                     SettingsItem(

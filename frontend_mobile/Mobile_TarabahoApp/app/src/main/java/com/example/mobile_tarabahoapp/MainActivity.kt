@@ -66,16 +66,23 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(navController)
 
                         }
-                        composable("profilesettings"){
+                        composable("edit_profile") {
                             EditProfileScreen(navController)
                         }
-                        
+
+
                         composable ("worker_signin"){
                             WorkerSignInScreen(navController)
                         }
 
                         composable ("worker_home"){
                             WorkerHomeScreen(navController)
+                        }
+                        composable(route = "profilesettings") {
+                            EditProfileScreen(navController = navController)
+                        }
+                        composable("worker_edit_profile") {
+                            WorkerEditProfileScreen(navController = navController)
                         }
                     }
                 }

@@ -111,11 +111,13 @@ public class UserController {
             response.addCookie(tokenCookie);
             System.out.println("UserController: Token generated and cookie set for username: " + user.getUsername());
 
-            AuthResponse body = new AuthResponse(jwtToken);
+            AuthResponse body = new AuthResponse(jwtToken,null);
             return ResponseEntity.ok(body);
         } catch (Exception e) {
             System.out.println("UserController: Login failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null, null));
+
+
         }
     }
 

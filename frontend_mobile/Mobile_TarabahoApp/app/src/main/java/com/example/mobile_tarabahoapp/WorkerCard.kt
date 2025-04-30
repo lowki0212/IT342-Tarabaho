@@ -1,6 +1,7 @@
 package com.example.mobile_tarabahoapp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -22,11 +23,12 @@ import androidx.compose.ui.tooling.preview.Preview
 
 
 @Composable
-fun WorkerCard(worker: Worker) {
+fun WorkerCard(worker: Worker, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() }, // ✅ Now this works
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
