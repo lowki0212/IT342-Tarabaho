@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
+import Cookies from "js-cookie"
 import logo from "../assets/images/logowhite.png"
 import styles from "../styles/register-trabahador.module.css"
 
 const RegisterTrabahador = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -36,8 +38,34 @@ const RegisterTrabahador = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false) // Track admin status
 
-  // Initialize progress bar on component mount
+  // Check for admin token on mount
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/api/admin/me", {
+          method: "GET",
+          credentials: "include",
+        })
+
+        if (response.ok) {
+          setIsAdmin(true)
+          console.log("Valid admin token found")
+        } else {
+          setIsAdmin(false)
+          console.log("No valid admin token")
+        }
+      } catch (error) {
+        setIsAdmin(false)
+        console.error("Error checking admin status:", error)
+      }
+    }
+
+    checkAdminStatus()
+  }, [])
+
+  // Initialize progress bar on step change
   useEffect(() => {
     const progressBar = document.querySelector(`.${styles.formProgressBar}`)
     if (progressBar) {
@@ -63,7 +91,7 @@ const RegisterTrabahador = () => {
 
   const handleBack = () => {
     if (step === 1) {
-      navigate("/register")
+      navigate(isAdmin ? "/admin/manage-trabahador" : "/register")
     } else {
       setStep(1)
     }
@@ -386,9 +414,13 @@ const RegisterTrabahador = () => {
         successMessage.classList.add(styles.show)
       }
 
-      // Redirect after showing success message
+      // Redirect based on route
       setTimeout(() => {
-        navigate("/signin")
+        if (location.pathname === "/admin/manage-trabahador/register-worker") {
+          navigate("/admin/manage-trabahador")
+        } else {
+          navigate(isAdmin ? "/admin/manage-trabahador" : "/signin")
+        }
       }, 2000)
     } catch (error) {
       console.error("Registration failed:", error)
@@ -442,7 +474,7 @@ const RegisterTrabahador = () => {
       <div className={styles.successMessage}>
         <div className={styles.successIcon}>✓</div>
         <h3>Registration Successful!</h3>
-        <p>Redirecting to login page...</p>
+        <p>Redirecting...</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.registerTrabahadorForm}>
@@ -531,7 +563,7 @@ const RegisterTrabahador = () => {
                         ></div>
                         <div
                           className={styles.strengthBar}
-                          style={{ backgroundColor: passwordStrength >= 3 ? getPasswordStrengthColor() : "" }}
+                          style={{ backgroundColor: passwordStrength >= 1 ? getPasswordStrengthColor() : "" }}
                         ></div>
                         <div
                           className={styles.strengthBar}

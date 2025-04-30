@@ -26,11 +26,10 @@ public class Certificate {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "worker_id")
-    @JsonBackReference
+    @JsonBackReference("worker-certificates")
     private Worker worker;
 
     // Getters and Setters
-
     public Long getId() {
         return id;
     }

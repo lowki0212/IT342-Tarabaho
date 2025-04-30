@@ -82,10 +82,11 @@ public class Worker {
         joinColumns = @JoinColumn(name = "worker_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    @JsonManagedReference
+    
     private List<Category> categories = new ArrayList<>();
 
     @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("worker-certificates")
     private List<Certificate> certificates = new ArrayList<>();
 
     // Ensure default values before persisting or updating

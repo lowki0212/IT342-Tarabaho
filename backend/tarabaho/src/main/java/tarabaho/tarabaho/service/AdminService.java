@@ -1,12 +1,21 @@
 package tarabaho.tarabaho.service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import tarabaho.tarabaho.dto.WorkerUpdateDTO;
 import tarabaho.tarabaho.entity.Admin;
+import tarabaho.tarabaho.entity.Category;
+import tarabaho.tarabaho.entity.Certificate;
+import tarabaho.tarabaho.entity.User;
+import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.repository.AdminRepository;
+import tarabaho.tarabaho.repository.CategoryRepository;
+import tarabaho.tarabaho.repository.WorkerRepository;
 
 @Service
 public class AdminService {
@@ -14,14 +23,30 @@ public class AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private WorkerRepository workerRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private CertificateService certificateService;
+
+    @Autowired
+    private UserService userService;
+
     public List<Admin> getAllAdmins() {
         return adminRepository.findAll();
     }
-    
+
     public Admin findByUsername(String username) {
         return adminRepository.findByUsername(username);
     }
-    
+
+    public Optional<User> findUserById(Long id) {
+        return userService.findById(id);
+    }
+
     public Admin registerAdmin(Admin admin) throws Exception {
         if (adminRepository.findByUsername(admin.getUsername()) != null) {
             throw new Exception("Username already exists");
@@ -51,7 +76,7 @@ public class AdminService {
     public Admin editAdmin(Long id, Admin updatedAdmin) throws Exception {
         Admin existingAdmin = adminRepository.findById(id)
             .orElseThrow(() -> new Exception("Admin not found"));
-        
+
         // Update fields (avoid updating ID)
         existingAdmin.setFirstname(updatedAdmin.getFirstname());
         existingAdmin.setLastname(updatedAdmin.getLastname());
@@ -60,7 +85,7 @@ public class AdminService {
         existingAdmin.setEmail(updatedAdmin.getEmail());
         existingAdmin.setAddress(updatedAdmin.getAddress());
         existingAdmin.setProfilePicture(updatedAdmin.getProfilePicture()); // Update profile picture
-        
+
         // Check for duplicates (excluding this admin)
         Admin byUsername = adminRepository.findByUsername(updatedAdmin.getUsername());
         if (byUsername != null && !byUsername.getId().equals(id)) {
@@ -70,7 +95,7 @@ public class AdminService {
         if (byEmail != null && !byEmail.getId().equals(id)) {
             throw new Exception("Email already exists");
         }
-        
+
         return adminRepository.save(existingAdmin);
     }
 
@@ -79,5 +104,114 @@ public class AdminService {
             .orElseThrow(() -> new Exception("Admin not found"));
         admin.setProfilePicture(filePath);
         return adminRepository.save(admin);
+    }
+
+    public Worker editWorker(Long id, WorkerUpdateDTO workerDTO) throws Exception {
+        Worker existingWorker = workerRepository.findById(id)
+            .orElseThrow(() -> new Exception("Worker not found with id: " + id));
+
+        // Update only the fields provided in the DTO
+        if (workerDTO.getEmail() != null && !workerDTO.getEmail().equals(existingWorker.getEmail())) {
+            if (workerRepository.findAllByEmail(workerDTO.getEmail()).size() > 0) {
+                throw new IllegalArgumentException("Email already exists.");
+            }
+            existingWorker.setEmail(workerDTO.getEmail());
+        }
+
+        if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().equals(existingWorker.getPhoneNumber())) {
+            if (!workerDTO.getPhoneNumber().isEmpty() && workerRepository.findAllByPhoneNumber(workerDTO.getPhoneNumber()).size() > 0) {
+                throw new IllegalArgumentException("Phone number already exists.");
+            }
+            existingWorker.setPhoneNumber(workerDTO.getPhoneNumber());
+        }
+
+        if (workerDTO.getAddress() != null) {
+            existingWorker.setAddress(workerDTO.getAddress());
+        }
+
+        if (workerDTO.getBiography() != null) {
+            existingWorker.setBiography(workerDTO.getBiography());
+        }
+
+        if (workerDTO.getFirstName() != null) {
+            existingWorker.setFirstName(workerDTO.getFirstName());
+        }
+
+        if (workerDTO.getLastName() != null) {
+            existingWorker.setLastName(workerDTO.getLastName());
+        }
+
+        if (workerDTO.getHourly() != null) {
+            if (workerDTO.getHourly() <= 0) {
+                throw new IllegalArgumentException("Hourly rate must be greater than 0.");
+            }
+            existingWorker.setHourly(workerDTO.getHourly());
+        }
+
+        if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
+            try {
+                existingWorker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid birthday format. Use YYYY-MM-DD.");
+            }
+        }
+
+        if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
+            existingWorker.setPassword(workerDTO.getPassword());
+        }
+
+        if (workerDTO.getIsAvailable() != null) {
+            existingWorker.setIsAvailable(workerDTO.getIsAvailable());
+        }
+
+        if (workerDTO.getIsVerified() != null) {
+            existingWorker.setIsVerified(workerDTO.getIsVerified());
+        }
+
+        if (workerDTO.getLatitude() != null) {
+            existingWorker.setLatitude(workerDTO.getLatitude());
+        }
+
+        if (workerDTO.getLongitude() != null) {
+            existingWorker.setLongitude(workerDTO.getLongitude());
+        }
+
+        if (workerDTO.getAverageResponseTime() != null) {
+            existingWorker.setAverageResponseTime(workerDTO.getAverageResponseTime());
+        }
+
+        return workerRepository.save(existingWorker);
+    }
+
+    public Worker addCategoriesToWorker(Long workerId, List<Long> categoryIds) throws Exception {
+        Worker worker = workerRepository.findById(workerId)
+            .orElseThrow(() -> new Exception("Worker not found with id: " + workerId));
+
+        List<Category> categories = categoryRepository.findAllById(categoryIds);
+        if (categories.size() != categoryIds.size()) {
+            throw new IllegalArgumentException("One or more category IDs are invalid.");
+        }
+
+        // Add new categories, avoiding duplicates
+        List<Category> currentCategories = worker.getCategories();
+        for (Category category : categories) {
+            if (!currentCategories.contains(category)) {
+                currentCategories.add(category);
+            }
+        }
+        worker.setCategories(currentCategories);
+
+        return workerRepository.save(worker);
+    }
+
+    public List<Certificate> getCertificatesByWorkerId(Long workerId) {
+        return certificateService.getCertificatesByWorkerId(workerId);
+    }
+
+    public void deleteWorker(Long id) throws Exception {
+        if (!workerRepository.existsById(id)) {
+            throw new Exception("Worker not found with id: " + id);
+        }
+        workerRepository.deleteById(id);
     }
 }

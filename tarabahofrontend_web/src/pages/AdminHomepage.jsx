@@ -1,13 +1,65 @@
-import { Link } from "react-router-dom"
-import AdminNavbar from "../components/AdminNavbar"
-import Footer from "../components/Footer"
-import "../styles/admin-homepage.css"
+import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import AdminNavbar from "../components/AdminNavbar";
+import Footer from "../components/Footer";
+import "../styles/admin-homepage.css";
 
 const AdminHomepage = () => {
-  // Mock dashboard data (in a real app, this would come from an API)
-  const dashboardData = {
-    totalUsers: 150,
-    totalTrabahadors: 75,
+  // State to hold dynamic data
+  const [dashboardData, setDashboardData] = useState({
+    totalUsers: 0,
+    totalTrabahadors: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch users
+        const usersResponse = await fetch("http://localhost:8080/api/admin/users", {
+          method: "GET",
+          credentials: "include", // Include cookies (for JWT token)
+        });
+        if (!usersResponse.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const users = await usersResponse.json();
+
+        // Fetch workers
+        const workersResponse = await fetch("http://localhost:8080/api/admin/workers", {
+          method: "GET",
+          credentials: "include", // Include cookies (for JWT token)
+        });
+        if (!workersResponse.ok) {
+          throw new Error("Failed to fetch workers");
+        }
+        const workers = await workersResponse.json();
+
+        // Update state with fetched data
+        setDashboardData({
+          totalUsers: users.length,
+          totalTrabahadors: workers.length,
+        });
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []); // Empty dependency array to run once on mount
+
+  // Render loading state
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // Render error state
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
   return (
@@ -72,9 +124,9 @@ const AdminHomepage = () => {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default AdminHomepage
+export default AdminHomepage;

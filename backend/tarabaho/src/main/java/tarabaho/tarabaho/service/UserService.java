@@ -19,6 +19,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
     public User registerUser(User user) {
         // Validate new fields
         if (user.getPreferredRadius() != null && user.getPreferredRadius() <= 0) {

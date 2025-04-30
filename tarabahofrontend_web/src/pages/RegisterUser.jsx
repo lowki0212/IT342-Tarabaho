@@ -19,14 +19,32 @@ const RegisterUser = () => {
     password: "",
     confirmPassword: "",
   })
-
   const [errors, setErrors] = useState({})
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
-  // Initialize progress bar on component mount
+  // Check if user is admin on mount
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await axios.get("http://localhost:8080/api/admin/me", {
+          withCredentials: true,
+        })
+        if (response.status === 200 && response.data.username) {
+          setIsAdmin(true)
+        }
+      } catch (err) {
+        console.log("Not an admin or not authenticated:", err.message)
+        setIsAdmin(false)
+      }
+    }
+    checkAdminStatus()
+  }, [])
+
+  // Initialize progress bar
   useEffect(() => {
     const progressBar = document.querySelector(`.${styles.formProgressBar}`)
     if (progressBar) {
@@ -45,25 +63,18 @@ const RegisterUser = () => {
     if (/[A-Z]/.test(password)) strength += 1
     if (/[0-9]/.test(password)) strength += 1
     if (/[^A-Za-z0-9]/.test(password)) strength += 1
-
     setPasswordStrength(strength)
     return strength >= 3
   }
 
   const validateForm = () => {
     const newErrors = {}
-
-    // Step 1 validation
     if (step === 1) {
       if (!formData.username.trim()) newErrors.username = "Username is required"
       if (!formData.password) newErrors.password = "Password is required"
-      // Make password validation less strict for testing
       else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters"
-
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match"
     }
-
-    // Step 2 validation - unchanged
     if (step === 2) {
       if (!formData.firstName.trim()) newErrors.firstName = "First name is required"
       if (!formData.lastName.trim()) newErrors.lastName = "Last name is required"
@@ -73,7 +84,6 @@ const RegisterUser = () => {
       if (!formData.contactNo.trim()) newErrors.contactNo = "Contact number is required"
       if (!formData.birthday) newErrors.birthday = "Birthday is required"
     }
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -84,28 +94,19 @@ const RegisterUser = () => {
       ...prevState,
       [name]: value,
     }))
-
-    // Clear error when user types
     if (errors[name]) {
-      setErrors({
-        ...errors,
-        [name]: "",
-      })
+      setErrors({ ...errors, [name]: "" })
     }
-
-    // Update password strength when password changes
     if (name === "password") {
       validatePassword(value)
     }
   }
 
   const handleNextStep = (e) => {
-    e.preventDefault() // Prevent form submission
+    e.preventDefault()
     console.log("Next button clicked")
-
     if (validateForm()) {
       setStep(2)
-      // Update progress bar
       try {
         const progressBar = document.querySelector(`.${styles.formProgressBar}`)
         if (progressBar) {
@@ -124,12 +125,9 @@ const RegisterUser = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!validateForm()) return
-
     setLoading(true)
 
-    // Prepare payload for API (excluding confirmPassword)
     const payload = {
       firstname: formData.firstName,
       lastname: formData.lastName,
@@ -142,21 +140,21 @@ const RegisterUser = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:8080/api/user/register", payload, {
+      const registerUrl = isAdmin
+        ? "http://localhost:8080/api/admin/users/register"
+        : "http://localhost:8080/api/user/register"
+      const res = await axios.post(registerUrl, payload, {
         withCredentials: true,
       })
-
       setLoading(false)
 
-      // Show success message
       const successMessage = document.querySelector(`.${styles.successMessage}`)
       if (successMessage) {
         successMessage.classList.add(styles.show)
       }
 
-      // Redirect after showing success message
       setTimeout(() => {
-        navigate("/signin")
+        navigate(isAdmin ? "/admin/manage-users" : "/signin")
       }, 2000)
     } catch (err) {
       setLoading(false)
@@ -168,40 +166,28 @@ const RegisterUser = () => {
   }
 
   const handleBack = () => {
-    navigate("/register")
+    navigate(isAdmin ? "/admin/manage-users" : "/register")
   }
 
   const getPasswordStrengthText = () => {
     switch (passwordStrength) {
-      case 0:
-        return "Very weak"
-      case 1:
-        return "Weak"
-      case 2:
-        return "Medium"
-      case 3:
-        return "Strong"
-      case 4:
-        return "Very strong"
-      default:
-        return ""
+      case 0: return "Very weak"
+      case 1: return "Weak"
+      case 2: return "Medium"
+      case 3: return "Strong"
+      case 4: return "Very strong"
+      default: return ""
     }
   }
 
   const getPasswordStrengthColor = () => {
     switch (passwordStrength) {
-      case 0:
-        return "#ff4d4d"
-      case 1:
-        return "#ff9933"
-      case 2:
-        return "#ffcc00"
-      case 3:
-        return "#99cc33"
-      case 4:
-        return "#00cc66"
-      default:
-        return "#ccc"
+      case 0: return "#ff4d4d"
+      case 1: return "#ff9933"
+      case 2: return "#ffcc00"
+      case 3: return "#99cc33"
+      case 4: return "#00cc66"
+      default: return "#ccc"
     }
   }
 
@@ -216,7 +202,7 @@ const RegisterUser = () => {
       <div className={styles.successMessage}>
         <div className={styles.successIcon}>✓</div>
         <h3>Registration Successful!</h3>
-        <p>Redirecting to login page...</p>
+        <p>Redirecting to {isAdmin ? "manage users" : "login"} page...</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.registerUserForm}>

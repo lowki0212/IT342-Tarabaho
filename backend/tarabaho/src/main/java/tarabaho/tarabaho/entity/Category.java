@@ -3,7 +3,7 @@ package tarabaho.tarabaho.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +29,7 @@ public class Category {
     private String tagline; // e.g., "Keep your space spotless"
 
     @ManyToMany(mappedBy = "categories")
-    @JsonBackReference
+    @JsonIgnore
     private List<Worker> workers = new ArrayList<>();
 
     // Getters and setters
