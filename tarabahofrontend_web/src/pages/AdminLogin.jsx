@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios"; // Add axios import
+import axios from "axios";
 import logo from "../assets/images/logowhite.png";
 import "../styles/admin-login.css";
 
@@ -10,6 +10,7 @@ const AdminLogin = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -18,11 +19,11 @@ const AdminLogin = () => {
       await axios.post(
         "http://localhost:8080/api/admin/login",
         { username, password },
-        { withCredentials: true } // Ensure cookie is set
+        { withCredentials: true }
       );
       console.log("Admin login successful!");
       setError("");
-      navigate("/admin/homepage"); // Updated to match your original navigation
+      navigate("/admin/homepage");
     } catch (err) {
       console.log("Admin login failed:", err.response?.data || err.message);
       setError("Invalid username or password");
@@ -37,7 +38,7 @@ const AdminLogin = () => {
     <div className="admin-login-page">
       <div className="admin-login-container">
         <button className="back-button" onClick={handleBack}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -54,14 +55,7 @@ const AdminLogin = () => {
               {error && <div className="error-message">{error}</div>}
 
               <div className="input-group">
-                <svg
-                  className="input-icon"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
                     stroke="white"
@@ -87,14 +81,7 @@ const AdminLogin = () => {
               </div>
 
               <div className="input-group">
-                <svg
-                  className="input-icon"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
+                <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <rect
                     x="3"
                     y="11"
@@ -116,26 +103,28 @@ const AdminLogin = () => {
                   <circle cx="12" cy="16" r="1" fill="white" />
                 </svg>
                 <input
-                  type="password"
+                  type={showAdminPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="toggle-password"
+                  onClick={() => setShowAdminPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showAdminPassword ? "Hide" : "Show"}
+                </button>
               </div>
 
               <div className="links-container">
-                <Link to="/register" className="auth-link">
-                  No account yet?
-                </Link>
-                <Link to="/forgot-password" className="auth-link">
-                  Forgot Password?
-                </Link>
+                <Link to="/register" className="auth-link">No account yet?</Link>
+                <Link to="/forgot-password" className="auth-link">Forgot Password?</Link>
               </div>
 
-              <button type="submit" className="login-button">
-                Login
-              </button>
+              <button type="submit" className="login-button">Login</button>
             </form>
           </div>
         </div>

@@ -95,6 +95,19 @@
     justify-content: center;
     align-items: center;
   }
+  .togglePassword {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #0078ff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0;
+    z-index: 3;
+  }
   
   .brandLogo {
     height: 120px;
@@ -128,6 +141,8 @@
     align-items: center;
     gap: 15px;
   }
+
+  
   
   .featureIcon {
     width: 36px;

@@ -39,6 +39,20 @@ html {
   position: relative;
   z-index: 2;
 }
+.toggle-password {
+  position: absolute;
+  right: 27px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  z-index: 3;
+}
+
 
 .back-button {
   position: absolute;

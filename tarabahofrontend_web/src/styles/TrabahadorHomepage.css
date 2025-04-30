@@ -88,6 +88,35 @@ html {
   letter-spacing: 0.1em;
 }
 
+.trabahador-loading {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 3rem;
+  animation: pulse 1.5s infinite;
+}
+
+.trabahador-error {
+  color: #ff3b30;
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  background-color: rgba(255, 59, 48, 0.1);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid #ff3b30;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
 .trabahador-actions {
   display: flex;
   gap: 2rem;

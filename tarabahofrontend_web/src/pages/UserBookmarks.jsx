@@ -151,9 +151,9 @@ const UserBookmarks = () => {
           <span className="watermark-subtext">TARA! TRABAHO</span>
         </div>
       </div>
-      <Footer />
       {/* Logout Confirmation Modal */}
       {showLogoutModal && <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />}
+      <Footer />
     </div>
   )
 }

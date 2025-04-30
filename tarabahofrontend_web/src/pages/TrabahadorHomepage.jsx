@@ -1,11 +1,55 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import axios from "axios"
 import TrabahadorNavbar from "../components/TrabahadorNavbar"
 import Footer from "../components/Footer"
 import "../styles/TrabahadorHomepage.css"
 
 const TrabahadorHomepage = () => {
-  // Mock Trabahador name (in a real app, this would come from an API or localStorage)
-  const trabahadorName = "Paul Dave"
+  const [trabahadorName, setTrabahadorName] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const BACKEND_URL = "http://localhost:8080"
+
+  useEffect(() => {
+    const fetchTrabahadorProfile = async () => {
+      try {
+        // Get username from localStorage
+        const username = localStorage.getItem("username")
+
+        if (!username) {
+          setError("User not logged in")
+          setIsLoading(false)
+          return
+        }
+
+        // Fetch worker data
+        const response = await axios.get(`${BACKEND_URL}/api/worker/all`, {
+          withCredentials: true,
+        })
+
+        // Find the worker with matching username
+        const workerData = response.data.find((worker) => worker.username === username)
+
+        if (workerData) {
+          // Set the first name from the worker data
+          setTrabahadorName(workerData.firstName || "")
+        } else {
+          setError("Worker profile not found")
+        }
+      } catch (err) {
+        console.error("Failed to fetch worker profile:", err)
+        setError("Failed to load profile data")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTrabahadorProfile()
+  }, [])
 
   return (
     <div className="trabahador-homepage">
@@ -34,7 +78,15 @@ const TrabahadorHomepage = () => {
               <div className="trabahador-tagline">T A R A ! T R A B A H O</div>
             </div>
 
-            <h1 className="trabahador-welcome-heading">WELCOME {trabahadorName.toUpperCase()}!</h1>
+            {isLoading ? (
+              <div className="trabahador-loading">Loading...</div>
+            ) : error ? (
+              <div className="trabahador-error">{error}</div>
+            ) : (
+              <h1 className="trabahador-welcome-heading">
+                WELCOME {trabahadorName ? trabahadorName.toUpperCase() : "TRABAHADOR"}!
+              </h1>
+            )}
 
             <div className="trabahador-actions">
               <Link to="/trabahador-history" className="trabahador-action-button">
@@ -44,7 +96,7 @@ const TrabahadorHomepage = () => {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
   )
 }

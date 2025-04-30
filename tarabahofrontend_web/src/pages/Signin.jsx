@@ -44,6 +44,9 @@ const SignIn = () => {
   const [trabahadorCredentials, setTrabahadorCredentials] = useState({ username: "", password: "" })
   const [error, setError] = useState("") // Ensure error is always a string
   const [isLoading, setIsLoading] = useState(false) // Added loading state
+  const [showUserPassword, setShowUserPassword] = useState(false)
+  const [showTrabahadorPassword, setShowTrabahadorPassword] = useState(false)
+
   const navigate = useNavigate()
 
   const handleUserLogin = async (e) => {
@@ -282,15 +285,23 @@ const SignIn = () => {
                         <div className={styles.inputIconWrapper}></div>
                         <input
                           id="password"
-                          type="password"
-                          name="password"
+                          type={showUserPassword ? "text" : "password"}
+                          name="password" 
                           placeholder="Enter your password"
                           value={userCredentials.password}
                           onChange={handleUserInputChange}
                           required
                           disabled={isLoading}
-                          className={styles.formInput}
+                          className={styles.formInput} 
                         />
+                        <button
+                          type="button"
+                          className={styles.togglePassword}
+                          onClick={() => setShowUserPassword((prev) => !prev)}
+                          tabIndex={-1}
+                        >
+                          {showUserPassword ? "Hide" : "Show"}
+                        </button>
                       </div>
                     </div>
 
@@ -368,7 +379,7 @@ const SignIn = () => {
                         <div className={styles.inputIconWrapper}></div>
                         <input
                           id="trabahador-password"
-                          type="password"
+                          type={showTrabahadorPassword ? "text" : "password"}
                           name="password"
                           placeholder="Enter your password"
                           value={trabahadorCredentials.password}
@@ -377,6 +388,15 @@ const SignIn = () => {
                           disabled={isLoading}
                           className={styles.formInput}
                         />
+                        <button
+                          type="button"
+                          className={styles.togglePassword}
+                          onClick={() => setShowTrabahadorPassword((prev) => !prev)}
+                          tabIndex={-1}
+                        >
+                          {showTrabahadorPassword ? "Hide" : "Show"}
+                        </button>
+
                       </div>
                     </div>
 
