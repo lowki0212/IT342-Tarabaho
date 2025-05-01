@@ -351,6 +351,32 @@ public class BookingController {
         }
     }
 
+
+//////////
+    @Operation(summary = "Get booking details", description = "Retrieve full booking details by ID")
+    @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "Booking details retrieved"),
+    @ApiResponse(responseCode = "401", description = "User not authenticated"),
+    @ApiResponse(responseCode = "404", description = "Booking not found")
+    })
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<?> getBookingById(
+        @PathVariable Long bookingId,
+        Authentication authentication
+    ) {
+    try {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+        }
+
+        Booking booking = bookingService.getBookingById(bookingId);
+
+        return ResponseEntity.ok(booking);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+    }
+}
+
     static class BookingStatusResponse {
         private String status;
 

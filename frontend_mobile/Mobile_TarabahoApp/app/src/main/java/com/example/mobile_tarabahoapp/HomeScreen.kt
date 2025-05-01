@@ -61,8 +61,6 @@ fun HomeScreen(navController: NavController) {
         "Babysitting" to R.drawable.ic_caretaker
     )
 
-
-
     Scaffold(
         bottomBar = {
             NavigationBar(

@@ -34,15 +34,16 @@ import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkerDetailsScreen(navController: NavController, workerId: String) {
+fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
     val viewModel: WorkerViewModel = viewModel()
     val worker by viewModel.selectedWorker.observeAsState()
 
     var isFavorite by remember { mutableStateOf(false) }
 
     LaunchedEffect(workerId) {
-        viewModel.fetchWorkerById(workerId)
+        viewModel.fetchWorkerById(workerId.toString())
     }
+
 
     Scaffold(
         bottomBar = {
@@ -470,8 +471,14 @@ fun WorkerDetailsScreen(navController: NavController, workerId: String) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Book button
+
                 Button(
-                    onClick = { /* Handle booking */ },
+                    onClick = {
+                        worker?.let {
+                            navController.navigate("book_appointment/${it.id}")
+                        }
+                    },
+                    enabled = worker != null, // Disable the button if worker is null (optional, good for UX)
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
@@ -486,6 +493,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: String) {
                         fontWeight = FontWeight.Bold
                     )
                 }
+
 
                 // Message button
                 Button(
@@ -564,7 +572,7 @@ fun WorkerDetailsScreenPreview() {
     TarabahoTheme {
         WorkerDetailsScreen(
             navController = rememberNavController(),
-            workerId = "1"
+            workerId = 1L
         )
     }
 }

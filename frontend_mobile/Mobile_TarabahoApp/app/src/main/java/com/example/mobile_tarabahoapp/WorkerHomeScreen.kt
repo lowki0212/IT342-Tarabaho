@@ -1,5 +1,5 @@
 package com.example.mobile_tarabahoapp
-
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -12,12 +12,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,17 +28,25 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
+import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
+import com.example.mobile_tarabahoapp.api.RetrofitClient
+import com.example.mobile_tarabahoapp.model.Booking
+import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import com.example.mobile_tarabahoapp.utils.TokenManager
 import java.text.SimpleDateFormat
 import java.util.*
-
+import kotlinx.coroutines.delay
 enum class JobStatus {
     PENDING_ACCEPTANCE,
     UPCOMING,
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED,
+    CANCELLED
 }
 
 data class Job(
@@ -50,251 +61,272 @@ data class Job(
     val description: String
 )
 
+fun Booking.toJob(): Job {
+    val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    return Job(
+        id = this.id.toString(),
+        title = this.category?.name ?: "Unknown",
+        clientName = "${this.user?.firstname ?: "Unknown"} ${this.user?.lastname ?: ""}",
+        clientImage = R.drawable.client_david, // Default client image
+        location = this.user?.location ?: "No location",
+        dateTime = try {
+            formatter.parse(this.createdAt)
+        } catch (e: Exception) {
+            Date()
+        },
+
+        payment = 0.0, // Set appropriate payment value if available in your Booking model
+        status = when (this.status) {
+            "PENDING" -> JobStatus.PENDING_ACCEPTANCE
+            "ACCEPTED" -> JobStatus.UPCOMING
+            "IN_PROGRESS" -> JobStatus.IN_PROGRESS
+            "WORKER_COMPLETED" -> JobStatus.IN_PROGRESS
+            "COMPLETED" -> JobStatus.COMPLETED
+            "REJECTED", "CANCELLED" -> JobStatus.CANCELLED
+            else -> JobStatus.PENDING_ACCEPTANCE
+        },
+        description = this.jobDetails ?: ""
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkerHomeScreen(navController: NavController) {
+fun WorkerHomeScreen(
+    navController: NavController,
+    bookingViewModel: BookingViewModel = viewModel(),
+    workerViewModel: WorkerViewModel = viewModel()
+) {
     val dateFormat = SimpleDateFormat("EEE, MMM dd • h:mm a", Locale.getDefault())
 
-    // Sample job data
-    val jobs = remember {
-        listOf(
-            Job(
-                id = "1",
-                title = "Garden Maintenance",
-                clientName = "Maria Rodriguez",
-                clientImage = R.drawable.client_maria,
-                location = "123 Palm Avenue, Cebu City",
-                dateTime = Calendar.getInstance().apply {
-                    add(Calendar.DAY_OF_MONTH, 1)
-                    set(Calendar.HOUR_OF_DAY, 10)
-                    set(Calendar.MINUTE, 0)
-                }.time,
-                payment = 350.0,
-                status = JobStatus.PENDING_ACCEPTANCE,
-                description = "Need help with garden maintenance including trimming hedges, mowing lawn, and removing weeds."
-            ),
-            Job(
-                id = "2",
-                title = "Lawn Mowing",
-                clientName = "John Smith",
-                clientImage = R.drawable.client_john,
-                location = "45 Mango Street, Mandaue City",
-                dateTime = Calendar.getInstance().apply {
-                    add(Calendar.DAY_OF_MONTH, 2)
-                    set(Calendar.HOUR_OF_DAY, 14)
-                    set(Calendar.MINUTE, 30)
-                }.time,
-                payment = 250.0,
-                status = JobStatus.PENDING_ACCEPTANCE,
-                description = "Need lawn mowing service for front and backyard. Approximately 200 sq meters total."
-            ),
-            Job(
-                id = "3",
-                title = "Plant Watering",
-                clientName = "Emily Chen",
-                clientImage = R.drawable.client_emily,
-                location = "78 Acacia Road, Lapu-Lapu City",
-                dateTime = Calendar.getInstance().apply {
-                    add(Calendar.HOUR_OF_DAY, 3)
-                }.time,
-                payment = 150.0,
-                status = JobStatus.UPCOMING,
-                description = "Need someone to water indoor and outdoor plants while I'm away for the day."
-            ),
-            Job(
-                id = "4",
-                title = "Garden Cleanup",
-                clientName = "David Wilson",
-                clientImage = R.drawable.client_david,
-                location = "22 Orchid Street, Talisay City",
-                dateTime = Calendar.getInstance().time,
-                payment = 400.0,
-                status = JobStatus.IN_PROGRESS,
-                description = "Complete garden cleanup including removing fallen leaves, trimming overgrown plants, and organizing garden tools."
-            )
-        )
+    val activeBookings by bookingViewModel.activeBookings.observeAsState(emptyList())
+    val pastBookings by bookingViewModel.pastBookings.observeAsState(emptyList())
+    val error by bookingViewModel.error.observeAsState()
+    val worker by workerViewModel.selectedWorker.observeAsState()
+
+    LaunchedEffect(Unit) {
+        bookingViewModel.fetchWorkerBookings()
+        val workerId = TokenManager.getWorkerId().toString()
+        workerViewModel.fetchWorkerById(workerId)
     }
 
-    val pendingJobs = jobs.filter { it.status == JobStatus.PENDING_ACCEPTANCE }
-    val upcomingJobs = jobs.filter { it.status == JobStatus.UPCOMING }
-    val inProgressJobs = jobs.filter { it.status == JobStatus.IN_PROGRESS }
+    LaunchedEffect(Unit) {
+        while (true) {
+            bookingViewModel.fetchWorkerBookings()
+            delay(3000)
+        }
+    }
+    val workerName = worker?.firstName ?: "Worker"
+    val activeJobs = activeBookings.map { it.toJob() }
+    val pastJobs = pastBookings.map { it.toJob() }
+
+    var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
-            // Top App Bar with profile and notification icons
             TopAppBar(
-                title = {
-                    Text(
-                        text = "TARABAHO!",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF2962FF),
-                    titleContentColor = Color.White
-                ),
+                title = { Text("Worker Dashboard", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF2962FF)),
                 actions = {
-                    IconButton(onClick = { /* Handle notifications */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color.White
-                        )
+                    IconButton(onClick = { /* Notifications */ }) {
+                        Icon(Icons.Default.Notifications, contentDescription = "Notifications", tint = Color.White)
                     }
-                    IconButton(onClick = {  navController.navigate("worker_edit_profile")}) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = Color.White
-                        )
+                    IconButton(onClick = { navController.navigate("worker_edit_profile") }) {
+                        Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
                     }
                 }
             )
         }
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(Color(0xFFF5F5F5))
         ) {
             // Worker welcome section
-            item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF2962FF)),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Worker avatar
+                    Image(
+                        painter = painterResource(id = R.drawable.worker_avatar),
+                        contentDescription = "Worker Avatar",
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = "Welcome back, $workerName!!",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "You have ${activeJobs.count { it.status == JobStatus.PENDING_ACCEPTANCE }} new job requests",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            // Job statistics
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                StatCard(
+                    icon = Icons.Default.CheckCircle,
+                    value = "${pastJobs.count { it.status == JobStatus.COMPLETED }}",
+                    label = "Completed",
+                    color = Color(0xFF4CAF50),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                StatCard(
+                    icon = Icons.Default.Star,
+                    value = "4.8",
+                    label = "Rating",
+                    color = Color(0xFFFFC107),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                StatCard(
+                    icon = Icons.Default.MonetizationOn,
+                    value = "₱5,240",
+                    label = "Earned",
+                    color = Color(0xFF2962FF),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Tab Row for Active and Past Bookings
+            TabRow(
+                selectedTabIndex = selectedTab,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                containerColor = Color.White,
+                contentColor = Color(0xFF2962FF),
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                        height = 3.dp,
+                        color = Color(0xFF2962FF)
+                    )
+                }
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = {
+                        Text(
+                            text = "Active (${activeJobs.size})",
+                            fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = {
+                        Text(
+                            text = "Past Bookings (${pastJobs.size})",
+                            fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+            }
+
+            // Display error message if any
+            error?.let {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2962FF)),
-                    shape = RoundedCornerShape(12.dp)
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
                 ) {
-                    Row(
+                    Text(
+                        text = it,
+                        color = Color(0xFFD32F2F),
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+            // Content based on selected tab
+            when (selectedTab) {
+                0 -> {
+                    // ACTIVE BOOKINGS TAB
+                    LazyColumn(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp) // ➡️ Added padding for better spacing
                     ) {
-                        // Worker avatar
-                        Image(
-                            painter = painterResource(id = R.drawable.worker_avatar),
-                            contentDescription = "Worker Avatar",
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .border(2.dp, Color.White, CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column {
-                            Text(
-                                text = "Welcome back, Andre!",
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                        items(activeBookings) { booking ->
+                            JobCard(
+                                job = booking.toJob(),
+                                dateFormat = dateFormat, // ➡️ FIXED: Added dateFormat so it shows proper dates
+                                onAccept = if (booking.status == "PENDING") {
+                                    { bookingViewModel.acceptBooking(booking.id) }
+                                } else null,
+                                onDecline = if (booking.status == "PENDING") {
+                                    { bookingViewModel.rejectBooking(booking.id) }
+                                } else null,
+                                onComplete = if (booking.status == "IN_PROGRESS") {
+                                    { bookingViewModel.completeBooking(booking.id) }
+                                } else null,
+                                onViewDetails = {
+                                    navController.navigate("worker_booking_details/${booking.id}")
+                                }
                             )
+                        }
+                    }
+                }
 
-                            Text(
-                                text = "You have ${pendingJobs.size} new job requests",
-                                color = Color.White,
-                                fontSize = 14.sp
+                1 -> {
+                    // PAST BOOKINGS TAB
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp) // ➡️ Added padding here as well
+                    ) {
+                        items(pastBookings) { booking ->
+                            JobCard(
+                                job = booking.toJob(),
+                                dateFormat = dateFormat, // ➡️ FIXED: Added dateFormat here also
+                                onViewDetails = {
+                                    navController.navigate("worker_booking_details/${booking.id}")
+                                }
                             )
                         }
                     }
                 }
             }
 
-            // Job statistics
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    StatCard(
-                        icon = Icons.Default.CheckCircle,
-                        value = "12",
-                        label = "Completed",
-                        color = Color(0xFF4CAF50),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    StatCard(
-                        icon = Icons.Default.Star,
-                        value = "4.8",
-                        label = "Rating",
-                        color = Color(0xFFFFC107),
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    StatCard(
-                        icon = Icons.Default.MonetizationOn,
-                        value = "₱5,240",
-                        label = "Earned",
-                        color = Color(0xFF2962FF),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Pending acceptance jobs section
-            if (pendingJobs.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "New Job Requests", count = pendingJobs.size)
-                }
-
-                items(pendingJobs) { job ->
-                    JobCard(
-                        job = job,
-                        dateFormat = dateFormat,
-                        onAccept = { /* Handle job acceptance */ },
-                        onDecline = { /* Handle job decline */ },
-                        onViewDetails = { /* Navigate to job details */ }
-                    )
-                }
-            }
-
-            // Upcoming jobs section
-            if (upcomingJobs.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "Upcoming Jobs", count = upcomingJobs.size)
-                }
-
-                items(upcomingJobs) { job ->
-                    JobCard(
-                        job = job,
-                        dateFormat = dateFormat,
-                        onViewDetails = { /* Navigate to job details */ }
-                    )
-                }
-            }
-
-            // In progress jobs section
-            if (inProgressJobs.isNotEmpty()) {
-                item {
-                    SectionHeader(title = "In Progress", count = inProgressJobs.size)
-                }
-
-                items(inProgressJobs) { job ->
-                    JobCard(
-                        job = job,
-                        dateFormat = dateFormat,
-                        onComplete = { /* Handle job completion */ },
-                        onViewDetails = { /* Navigate to job details */ }
-                    )
-                }
-            }
-
-            // Bottom padding
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
         }
     }
 }
@@ -324,7 +356,7 @@ fun SectionHeader(title: String, count: Int) {
 
 @Composable
 fun StatCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     value: String,
     label: String,
     color: Color,
@@ -407,6 +439,7 @@ fun JobCard(
                     JobStatus.UPCOMING -> Color(0xFF2962FF) to "Upcoming"
                     JobStatus.IN_PROGRESS -> Color(0xFF7B1FA2) to "In Progress"
                     JobStatus.COMPLETED -> Color(0xFF388E3C) to "Completed"
+                    JobStatus.CANCELLED -> Color(0xFFD32F2F) to "Cancelled"
                 }
 
                 Box(
