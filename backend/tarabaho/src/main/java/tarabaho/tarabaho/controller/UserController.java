@@ -107,7 +107,7 @@ public class UserController {
             tokenCookie.setSecure(true);
             tokenCookie.setPath("/");
             tokenCookie.setMaxAge(24 * 60 * 60);
-            tokenCookie.setDomain("localhost");
+            tokenCookie.setAttribute("SameSite", "None");
             response.addCookie(tokenCookie);
             System.out.println("UserController: Token generated and cookie set for username: " + user.getUsername());
 
