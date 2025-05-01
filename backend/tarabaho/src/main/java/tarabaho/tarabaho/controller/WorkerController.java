@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.dto.WorkerDuplicateCheckDTO;
@@ -220,14 +221,13 @@ public class WorkerController {
             String jwtToken = jwtUtil.generateToken(worker.getUsername());
 
             Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
-             tokenCookie.setHttpOnly(true);
-            tokenCookie.setSecure(false);
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(true);
             tokenCookie.setPath("/");
             tokenCookie.setMaxAge(24 * 60 * 60);
-            tokenCookie.setDomain("localhost");
-             response.addCookie(tokenCookie);
-           
-             System.out.println("WorkerController: Token generated and cookie set for username: " + worker.getUsername());
+            tokenCookie.setAttribute("SameSite", "None");
+            response.addCookie(tokenCookie);
+            System.out.println("WorkerController: Token generated and cookie set for username: " + worker.getUsername());
 
             AuthResponse body = new AuthResponse(jwtToken, worker.getId());
             return ResponseEntity.ok(body);
@@ -264,6 +264,37 @@ public class WorkerController {
         } catch (Exception e) {
             System.err.println("WorkerController: getToken failed: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Logout worker", description = "Logs out the currently authenticated worker")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Worker logged out successfully"),
+        @ApiResponse(responseCode = "500", description = "Logout failed")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            System.out.println("WorkerController: Entering /logout endpoint");
+
+            // Clear the JWT cookie
+            Cookie tokenCookie = new Cookie("jwtToken", null);
+            tokenCookie.setMaxAge(0);
+            tokenCookie.setPath("/");
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(true);
+            tokenCookie.setAttribute("SameSite", "None");
+            response.addCookie(tokenCookie);
+            System.out.println("WorkerController: Cookie cleared: jwtToken=; Path=/; Max-Age=0; HttpOnly; SameSite=None");
+
+            // Invalidate session
+            request.getSession(false).invalidate();
+
+            return ResponseEntity.ok("Worker logged out successfully.");
+        } catch (Exception e) {
+            System.err.println("WorkerController: Logout failed: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
         }
     }
 
@@ -330,7 +361,6 @@ public class WorkerController {
                 try {
                     storageService.deleteFile("profile-picture", existingFileName);
                 } catch (IOException e) {
-                    // Log the error but continue with the upload to avoid blocking the user
                     System.err.println("Failed to delete old profile picture: " + e.getMessage());
                 }
             }
@@ -621,13 +651,13 @@ public class WorkerController {
     @Operation(summary = "Get worker by username", description = "Find a worker by their username")
     @GetMapping("/username/{username}")
     public ResponseEntity<?> getWorkerByUsername(@PathVariable String username) {
-    Optional<Worker> workerOpt = workerService.findByUsername(username);
-    if (workerOpt.isPresent()) {
-        return ResponseEntity.ok(workerOpt.get());
-    } else {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found with username: " + username);
+        Optional<Worker> workerOpt = workerService.findByUsername(username);
+        if (workerOpt.isPresent()) {
+            return ResponseEntity.ok(workerOpt.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found with username: " + username);
+        }
     }
-}
 
     static class LoginRequest {
         private String username;
@@ -638,7 +668,6 @@ public class WorkerController {
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
     }
-
 
     static class RatingRequest {
         private Long bookingId;
