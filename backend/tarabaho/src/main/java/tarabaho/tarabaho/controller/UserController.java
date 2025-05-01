@@ -349,28 +349,30 @@ public class UserController {
         @ApiResponse(responseCode = "500", description = "Logout failed")
     })
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            System.out.println("Entering /logout endpoint");
-            request.logout();
-            System.out.println("After request.logout()");
+public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+    try {
+        System.out.println("Entering /logout endpoint");
 
-            Cookie tokenCookie = new Cookie("jwtToken", null);
-            tokenCookie.setMaxAge(0);
-            tokenCookie.setPath("/");
-            tokenCookie.setDomain("localhost");
-            tokenCookie.setHttpOnly(true);
-            tokenCookie.setSecure(false);
-            response.addCookie(tokenCookie);
-            System.out.println("Cookie added to response: jwtToken=; Path=/; Domain=localhost; Max-Age=0; HttpOnly");
+        // Clear the JWT cookie
+        Cookie tokenCookie = new Cookie("jwtToken", null);
+        tokenCookie.setMaxAge(0); // Expire immediately
+        tokenCookie.setPath("/"); // Match the path used during login
+        tokenCookie.setHttpOnly(true); // Match login settings
+        tokenCookie.setSecure(true); // Match login settings (use true for production, false for local dev)
+        tokenCookie.setAttribute("SameSite", "None"); // Match login settings
+        response.addCookie(tokenCookie);
+        System.out.println("Cookie cleared: jwtToken=; Path=/; Max-Age=0; HttpOnly; SameSite=None");
 
-            return ResponseEntity.ok("User logged out successfully.");
-        } catch (Exception e) {
-            System.err.println("Logout failed: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
-        }
+        // Invalidate session (optional, if you're not relying on sessions)
+        request.getSession(false).invalidate();
+
+        return ResponseEntity.ok("User logged out successfully.");
+    } catch (Exception e) {
+        System.err.println("Logout failed: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
     }
+}
 
     static class LoginRequest {
         private String username;
