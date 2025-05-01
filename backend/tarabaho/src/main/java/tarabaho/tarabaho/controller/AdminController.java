@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.dto.WorkerUpdateDTO;
 import tarabaho.tarabaho.entity.Admin;
 import tarabaho.tarabaho.entity.Certificate;
@@ -125,21 +126,64 @@ public class AdminController {
     }
 
     @Operation(summary = "Admin login", description = "Authenticate an admin and return a JWT token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Login successful, token returned"),
+        @ApiResponse(responseCode = "401", description = "Invalid username or password")
+    })
     @PostMapping("/login")
-    public ResponseEntity<?> loginAdmin(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> loginAdmin(
+            @RequestBody LoginRequest loginRequest,
+            HttpServletResponse response
+    ) {
         try {
+            System.out.println("AdminController: Attempting login for username: " + loginRequest.getUsername());
             Admin admin = adminService.loginAdmin(loginRequest.getUsername(), loginRequest.getPassword());
-            String token = jwtUtil.generateToken(admin.getUsername());
-            Cookie tokenCookie = new Cookie("jwtToken", token);
+            String jwtToken = jwtUtil.generateToken(admin.getUsername());
+
+            Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
             tokenCookie.setHttpOnly(true);
-            tokenCookie.setSecure(false); // Set to true in production
+            tokenCookie.setSecure(true);
             tokenCookie.setPath("/");
-            tokenCookie.setDomain("localhost");
-            tokenCookie.setMaxAge(24 * 60 * 60); // 1 day
+            tokenCookie.setMaxAge(24 * 60 * 60);
+            tokenCookie.setAttribute("SameSite", "None");
             response.addCookie(tokenCookie);
-            return ResponseEntity.ok("Admin login successful");
+            System.out.println("AdminController: Token generated and cookie set for username: " + admin.getUsername());
+
+            AuthResponse body = new AuthResponse(jwtToken, admin.getId());
+            return ResponseEntity.ok(body);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid username or password");
+            System.out.println("AdminController: Login failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthResponse(null, null));
+        }
+    }
+
+    @Operation(summary = "Get JWT token from cookie", description = "Retrieve the JWT token from the HttpOnly cookie for WebSocket authentication")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "No valid token found")
+    })
+    @GetMapping("/get-token")
+    public ResponseEntity<?> getToken(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("AdminController: getToken failed: Not authenticated");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+            }
+            String username = authentication.getName();
+            System.out.println("AdminController: getToken for username: " + username);
+            
+            Admin admin = adminService.findByUsername(username);
+            if (admin == null) {
+                System.out.println("AdminController: Admin not found for username: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not found");
+            }
+            
+            String token = jwtUtil.generateToken(username);
+            System.out.println("AdminController: Generated token for admin: " + username);
+            return ResponseEntity.ok(new TokenResponse(token));
+        } catch (Exception e) {
+            System.err.println("AdminController: getToken failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
         }
     }
 
@@ -271,67 +315,72 @@ public class AdminController {
     }
 
     @Operation(summary = "Admin logout", description = "Log out an admin by clearing the JWT token")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Admin logged out successfully"),
+        @ApiResponse(responseCode = "500", description = "Logout failed")
+    })
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutAdmin(HttpServletResponse response) {
-        Cookie cookie = new Cookie("jwtToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set to true in production
-        cookie.setPath("/");
-        cookie.setDomain("localhost");
-        cookie.setMaxAge(0); // Expire immediately
-        response.addCookie(cookie);
-        return ResponseEntity.ok("Logged out successfully");
-    }
-
-    @Operation(summary = "Get current admin", description = "Retrieve the currently authenticated admin")
-    @GetMapping("/me")
-    public ResponseEntity<?> getCurrentAdmin(HttpServletRequest request) {
+    public ResponseEntity<?> logoutAdmin(HttpServletRequest request, HttpServletResponse response) {
         try {
-            String token = null;
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if ("jwtToken".equals(cookie.getName())) {
-                        token = cookie.getValue();
-                        break;
-                    }
-                }
-            }
-            if (token == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token found");
-            }
-            String username = jwtUtil.getUsernameFromToken(token);
-            Admin admin = adminService.findByUsername(username);
-            if (admin == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
-            }
-            return ResponseEntity.ok(admin);
+            System.out.println("AdminController: Entering /logout endpoint");
+
+            // Clear the JWT cookie
+            Cookie tokenCookie = new Cookie("jwtToken", null);
+            tokenCookie.setMaxAge(0);
+            tokenCookie.setPath("/");
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(true);
+            tokenCookie.setAttribute("SameSite", "None");
+            response.addCookie(tokenCookie);
+            System.out.println("AdminController: Cookie cleared: jwtToken=; Path=/; Max-Age=0; HttpOnly; SameSite=None");
+
+            // Invalidate session
+            request.getSession(false).invalidate();
+
+            return ResponseEntity.ok("Admin logged out successfully.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            System.err.println("AdminController: Logout failed: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Logout failed: " + e.getMessage());
         }
     }
 
+    @Operation(summary = "Get current admin", description = "Retrieve the currently authenticated admin")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Admin retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Admin not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Admin not found")
+    })
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentAdmin(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated");
+        }
+        String username = authentication.getName();
+        Admin admin = adminService.findByUsername(username);
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
+        }
+        return ResponseEntity.ok(admin);
+    }
+
     @Operation(summary = "Upload admin profile picture", description = "Upload a profile picture for the authenticated admin")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Profile picture uploaded successfully"),
+        @ApiResponse(responseCode = "401", description = "Admin not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Admin not found"),
+        @ApiResponse(responseCode = "500", description = "Failed to upload picture")
+    })
     @PostMapping("/upload-picture")
     public ResponseEntity<?> uploadProfilePicture(
             @RequestParam("file") MultipartFile file,
-            HttpServletRequest request
+            Authentication authentication
     ) {
         try {
-            String token = null;
-            Cookie[] cookies = request.getCookies();
-            if (cookies != null) {
-                for (Cookie cookie : cookies) {
-                    if ("jwtToken".equals(cookie.getName())) {
-                        token = cookie.getValue();
-                        break;
-                    }
-                }
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated");
             }
-            if (token == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No token found");
-            }
-            String username = jwtUtil.getUsernameFromToken(token);
+            String username = authentication.getName();
             Admin admin = adminService.findByUsername(username);
             if (admin == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
@@ -353,5 +402,12 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload picture: " + e.getMessage());
         }
+    }
+
+    static class TokenResponse {
+        private String token;
+        public TokenResponse(String token) { this.token = token; }
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
     }
 }
