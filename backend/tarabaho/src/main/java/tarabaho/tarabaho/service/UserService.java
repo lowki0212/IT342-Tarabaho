@@ -15,6 +15,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoderService passwordEncoderService;
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -28,6 +31,10 @@ public class UserService {
         if (user.getPreferredRadius() != null && user.getPreferredRadius() <= 0) {
             throw new IllegalArgumentException("Preferred radius must be greater than 0.");
         }
+        // Hash password
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoderService.encodePassword(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
@@ -37,7 +44,7 @@ public class UserService {
 
     public User loginUser(String username, String password) throws Exception {
         User user = userRepository.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
+        if (user != null && passwordEncoderService.matches(password, user.getPassword())) {
             return user;
         } else {
             throw new Exception("Invalid username or password");
@@ -60,6 +67,10 @@ public class UserService {
     }
 
     public User saveUser(User user) {
+        // Hash password if provided
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoderService.encodePassword(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
@@ -83,7 +94,10 @@ public class UserService {
         existingUser.setFirstname(updatedUser.getFirstname());
         existingUser.setLastname(updatedUser.getLastname());
         existingUser.setUsername(updatedUser.getUsername());
-        existingUser.setPassword(updatedUser.getPassword());
+        // Hash password if provided
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+            existingUser.setPassword(passwordEncoderService.encodePassword(updatedUser.getPassword()));
+        }
         existingUser.setEmail(updatedUser.getEmail());
         existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
         existingUser.setLocation(updatedUser.getLocation());

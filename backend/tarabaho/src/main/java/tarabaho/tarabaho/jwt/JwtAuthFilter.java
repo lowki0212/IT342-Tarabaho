@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,9 +21,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import tarabaho.tarabaho.service.AdminService;
-import tarabaho.tarabaho.service.UserService;
-import tarabaho.tarabaho.service.WorkerService;
+import tarabaho.tarabaho.repository.AdminRepository;
+import tarabaho.tarabaho.repository.UserRepository;
+import tarabaho.tarabaho.repository.WorkerRepository;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -31,13 +32,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Autowired
-    private AdminService adminService;
+    private AdminRepository adminRepository;
 
     @Autowired
-    private WorkerService workerService;
+    private WorkerRepository workerRepository;
 
     private static final List<String> SKIP_FILTER_PATHS = Arrays.asList(
             "/api/admin/login",
@@ -85,7 +86,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String jwtToken = null;
 
-        // ✅ Check Authorization header first (for Android app)
+        // Check Authorization header first (for Android app)
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwtToken = authHeader.substring(7);
@@ -93,7 +94,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     jwtToken.substring(0, Math.min(jwtToken.length(), 10)) + "...");
         }
 
-        // ✅ Fallback to cookie (for web clients)
+        // Fallback to cookie (for web clients)
         if (jwtToken == null) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
@@ -117,24 +118,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     System.out.println("JwtAuthFilter: Token valid, username: " + username);
 
                     // Check Admin first
-                    tarabaho.tarabaho.entity.Admin admin = adminService.findByUsername(username);
-                    if (admin != null) {
+                    Optional<tarabaho.tarabaho.entity.Admin> adminOptional = Optional.ofNullable(adminRepository.findByUsername(username));
+                    if (adminOptional.isPresent()) {
                         System.out.println("JwtAuthFilter: Authenticated as Admin: " + username);
-                        UserDetails userDetails = new User(admin.getUsername(), admin.getPassword(), Collections.emptyList());
+                        UserDetails userDetails = new User(adminOptional.get().getUsername(), adminOptional.get().getPassword(), Collections.emptyList());
                         setAuthentication(request, userDetails);
                     } else {
                         // Check User
-                        tarabaho.tarabaho.entity.User user = userService.findByUsername(username).orElse(null);
-                        if (user != null) {
+                        Optional<tarabaho.tarabaho.entity.User> userOptional = Optional.ofNullable(userRepository.findByUsername(username));
+                        if (userOptional.isPresent()) {
                             System.out.println("JwtAuthFilter: Authenticated as User: " + username);
-                            UserDetails userDetails = new User(user.getUsername(), user.getPassword(), Collections.emptyList());
+                            UserDetails userDetails = new User(userOptional.get().getUsername(), userOptional.get().getPassword(), Collections.emptyList());
                             setAuthentication(request, userDetails);
                         } else {
                             // Check Worker
-                            tarabaho.tarabaho.entity.Worker worker = workerService.findByUsername(username).orElse(null);
-                            if (worker != null) {
+                            Optional<tarabaho.tarabaho.entity.Worker> workerOptional = Optional.ofNullable(workerRepository.findByUsername(username));
+                            if (workerOptional.isPresent()) {
                                 System.out.println("JwtAuthFilter: Authenticated as Worker: " + username);
-                                UserDetails userDetails = new User(worker.getUsername(), worker.getPassword(), Collections.emptyList());
+                                UserDetails userDetails = new User(workerOptional.get().getUsername(), workerOptional.get().getPassword(), Collections.emptyList());
                                 setAuthentication(request, userDetails);
                             } else {
                                 System.out.println("JwtAuthFilter: No Admin, User, or Worker found for username: " + username);

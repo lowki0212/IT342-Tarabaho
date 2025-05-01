@@ -35,6 +35,9 @@ public class AdminService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PasswordEncoderService passwordEncoderService;
+
     public List<Admin> getAllAdmins() {
         return adminRepository.findAll();
     }
@@ -54,12 +57,16 @@ public class AdminService {
         if (adminRepository.findByEmail(admin.getEmail()) != null) {
             throw new Exception("Email already exists");
         }
+        // Hash password
+        if (admin.getPassword() != null && !admin.getPassword().isEmpty()) {
+            admin.setPassword(passwordEncoderService.encodePassword(admin.getPassword()));
+        }
         return adminRepository.save(admin);
     }
 
     public Admin loginAdmin(String username, String password) throws Exception {
         Admin admin = adminRepository.findByUsername(username);
-        if (admin != null && admin.getPassword().equals(password)) {
+        if (admin != null && passwordEncoderService.matches(password, admin.getPassword())) {
             return admin;
         } else {
             throw new Exception("Invalid username or password");
@@ -81,10 +88,13 @@ public class AdminService {
         existingAdmin.setFirstname(updatedAdmin.getFirstname());
         existingAdmin.setLastname(updatedAdmin.getLastname());
         existingAdmin.setUsername(updatedAdmin.getUsername());
-        existingAdmin.setPassword(updatedAdmin.getPassword());
+        // Hash password if provided
+        if (updatedAdmin.getPassword() != null && !updatedAdmin.getPassword().isEmpty()) {
+            existingAdmin.setPassword(passwordEncoderService.encodePassword(updatedAdmin.getPassword()));
+        }
         existingAdmin.setEmail(updatedAdmin.getEmail());
         existingAdmin.setAddress(updatedAdmin.getAddress());
-        existingAdmin.setProfilePicture(updatedAdmin.getProfilePicture()); // Update profile picture
+        existingAdmin.setProfilePicture(updatedAdmin.getProfilePicture());
 
         // Check for duplicates (excluding this admin)
         Admin byUsername = adminRepository.findByUsername(updatedAdmin.getUsername());
@@ -157,7 +167,7 @@ public class AdminService {
         }
 
         if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
-            existingWorker.setPassword(workerDTO.getPassword());
+            existingWorker.setPassword(passwordEncoderService.encodePassword(workerDTO.getPassword()));
         }
 
         if (workerDTO.getIsAvailable() != null) {
