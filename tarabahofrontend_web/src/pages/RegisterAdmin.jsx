@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import logo from "../assets/images/logowhite.png"
-import styles from "../styles/register-Admin.module.css"
+import styles from "../styles/register-admin.module.css"
 
 const RegisterAdmin = () => {
   const navigate = useNavigate()
