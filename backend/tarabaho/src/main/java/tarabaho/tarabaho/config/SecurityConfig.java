@@ -85,7 +85,7 @@ public class SecurityConfig {
 						tokenCookie.setMaxAge(0);
 						tokenCookie.setPath("/");
 						tokenCookie.setHttpOnly(true);
-						tokenCookie.setSecure(false); // Use false for local dev, true for production
+						tokenCookie.setSecure(true); // Use false for local dev, true for production
 						tokenCookie.setAttribute("SameSite", "None");
 						response.addCookie(tokenCookie);
 						System.out.println("Logout: Sent Set-Cookie - jwtToken=; Path=/; Max-Age=0; HttpOnly; SameSite=None");
