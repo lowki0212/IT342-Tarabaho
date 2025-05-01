@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     NavHost(navController = navController, startDestination = "login") {
+
                         composable("login") {
                             LoginScreen(navController)
                         }
@@ -126,8 +127,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewModel()) {
     // Email and password states—initialize with default values or empty strings as needed.
-    var email by remember { mutableStateOf("Paul.Binayo@Email.com") }
-    var password by remember { mutableStateOf("********") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberMe by remember { mutableStateOf(false) }
 
@@ -185,7 +186,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "TARAI TERABAHO",
+                    text = "Come and TRABAHO!",
                     color = Color.White,
                     fontSize = 12.sp
                 )
@@ -246,7 +247,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     value = email,
                     onValueChange = { email = it },
                     label = null,
-                    placeholder = { Text("Email") },
+                    placeholder = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(4.dp),
                     colors = OutlinedTextFieldDefaults.colors(

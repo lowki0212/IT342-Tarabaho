@@ -7,7 +7,8 @@ import androidx.navigation.compose.composable
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "signup") {
+    NavHost(navController = navController, startDestination = "splash") {
+        
         composable(route = "signup") {
             SignUpScreen(
                 onSignUpSuccess = {
@@ -93,6 +94,7 @@ fun AppNavigation(navController: NavHostController) {
             val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: return@composable
             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
         }
+
         // Add more screens here later, like:
         // composable("home") { HomeScreen() }
     }
