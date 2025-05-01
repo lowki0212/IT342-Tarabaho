@@ -54,13 +54,13 @@ const UserBrowseCategory = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 })
   const [ratingFilter, setRatingFilter] = useState(0)
   const [favorites, setFavorites] = useState([])
-  const BACKEND_URL = "http://localhost:8080"
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   useEffect(() => {
     const fetchCategoryAndWorkers = async () => {
       setIsLoading(true)
       try {
-        const categoryResponse = await axios.get(`${BACKEND_URL}/api/categories`, {
+        const categoryResponse = await axios.get(`${backendUrl}/api/categories`, {
           withCredentials: true,
         })
         const data = Array.isArray(categoryResponse.data) ? categoryResponse.data : []
@@ -76,7 +76,7 @@ const UserBrowseCategory = () => {
 
         const formattedCategoryName = categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
         const workersResponse = await axios.get(
-          `${BACKEND_URL}/api/worker/category/${formattedCategoryName}/available`,
+          `${backendUrl}/api/worker/category/${formattedCategoryName}/available`,
           {
             withCredentials: true,
           },
@@ -105,7 +105,7 @@ const UserBrowseCategory = () => {
     }
 
     fetchCategoryAndWorkers()
-  }, [categoryName, navigate])
+  }, [categoryName, navigate, backendUrl])
 
   useEffect(() => {
     let updatedWorkers = [...workers]

@@ -15,11 +15,12 @@ const AdminManageUsers = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/admin/me", {
+        const response = await axios.get(`${BACKEND_URL}/api/admin/me`, {
           withCredentials: true,
         });
         setIsAdmin(true);
@@ -39,7 +40,7 @@ const AdminManageUsers = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/admin/users", {
+        const res = await axios.get(`${BACKEND_URL}/api/admin/users`, {
           withCredentials: true,
         });
         setUsers(res.data);
@@ -77,7 +78,7 @@ const AdminManageUsers = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:8080/api/admin/logout", {}, { withCredentials: true });
+      await axios.post(`${BACKEND_URL}/api/admin/logout`, {}, { withCredentials: true });
       Cookies.remove("jwtToken", { path: "/", domain: "localhost" });
       navigate("/admin-login");
     } catch (err) {

@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -12,7 +14,7 @@ const BookingRequest = () => {
   const [bookingStatus, setBookingStatus] = useState("PENDING");
   const [bookingId, setBookingId] = useState(null);
   const [error, setError] = useState("");
-  const BACKEND_URL = "http://localhost:8080";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
   const hasRun = useRef(false);
 
   // Check if booking was already created (from online payment flow)

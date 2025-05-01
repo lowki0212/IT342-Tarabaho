@@ -24,8 +24,7 @@ const AdminProfile = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [error, setError] = useState("")
   const fileInputRef = useRef(null)
-
-  const BACKEND_URL = "http://localhost:8080"
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"
 
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -137,7 +136,7 @@ const AdminProfile = () => {
   const confirmLogout = async () => {
     try {
       await axios.post(
-        `${BACKEND_URL}/api/admin/logout`, // Fixed endpoint to admin logout
+        `${BACKEND_URL}/api/admin/logout`,
         {},
         { withCredentials: true }
       )
@@ -316,7 +315,7 @@ const AdminProfile = () => {
       {showLogoutModal && (
         <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />
       )}
-            <Footer />
+      <Footer />
     </div>
   )
 }

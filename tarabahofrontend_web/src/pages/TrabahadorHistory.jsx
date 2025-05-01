@@ -16,14 +16,14 @@ const TrabahadorHistory = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("active")
   const navigate = useNavigate()
-  const BACKEND_URL = "http://localhost:8080"
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"
 
   useEffect(() => {
     const fetchBookings = async () => {
       setIsLoading(true)
       try {
         const response = await axios.get(`${BACKEND_URL}/api/booking/worker`, {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         })
         setBookings(response.data)
         setError("")
@@ -51,7 +51,7 @@ const TrabahadorHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/accept`,
         {},
         {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         },
       )
       setBookings((prevBookings) =>
@@ -79,7 +79,7 @@ const TrabahadorHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/reject`,
         {},
         {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         },
       )
       setBookings((prevBookings) =>
@@ -107,7 +107,7 @@ const TrabahadorHistory = () => {
         `${BACKEND_URL}/api/booking/${bookingId}/complete`,
         {},
         {
-          withCredentials: true, // Send cookies
+          withCredentials: true,
         },
       )
       setBookings((prevBookings) =>

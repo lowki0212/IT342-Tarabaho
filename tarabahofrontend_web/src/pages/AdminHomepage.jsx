@@ -12,13 +12,14 @@ const AdminHomepage = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   // Fetch data when component mounts
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         // Fetch users
-        const usersResponse = await fetch("http://localhost:8080/api/admin/users", {
+        const usersResponse = await fetch(`${BACKEND_URL}/api/admin/users`, {
           method: "GET",
           credentials: "include", // Include cookies (for JWT token)
         });
@@ -28,7 +29,7 @@ const AdminHomepage = () => {
         const users = await usersResponse.json();
 
         // Fetch workers
-        const workersResponse = await fetch("http://localhost:8080/api/admin/workers", {
+        const workersResponse = await fetch(`${BACKEND_URL}/api/admin/workers`, {
           method: "GET",
           credentials: "include", // Include cookies (for JWT token)
         });

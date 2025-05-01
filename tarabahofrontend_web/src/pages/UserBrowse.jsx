@@ -43,7 +43,7 @@ const getImageUrl = (iconUrl) => {
 const Browse = () => {
   const [categories, setCategories] = useState([])
   const [error, setError] = useState("")
-  const BACKEND_URL = "http://localhost:8080"
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   // Taglines for categories
   const categoryTaglines = {
@@ -57,7 +57,7 @@ const Browse = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/categories`, {
+        const response = await axios.get(`${backendUrl}/api/categories`, {
           withCredentials: true,
         })
         // Normalize response data
@@ -77,7 +77,7 @@ const Browse = () => {
       }
     }
     fetchCategories()
-  }, [])
+  }, [backendUrl])
 
   // Normalize category name for consistency
   const normalizeCategoryName = (name) => {

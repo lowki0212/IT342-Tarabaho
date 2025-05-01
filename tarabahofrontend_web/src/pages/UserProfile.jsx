@@ -44,7 +44,8 @@ const UserProfile = () => {
   const [error, setError] = useState("")
   const fileInputRef = useRef(null)
 
-  const BACKEND_URL = "http://localhost:8080"
+  // Use environment variable for backend URL
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
   useEffect(() => {
     const fetchUser = async () => {

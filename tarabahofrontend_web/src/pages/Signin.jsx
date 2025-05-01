@@ -48,6 +48,7 @@ const SignIn = () => {
   const [showTrabahadorPassword, setShowTrabahadorPassword] = useState(false)
 
   const navigate = useNavigate()
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   const handleUserLogin = async (e) => {
     e.preventDefault()
@@ -58,7 +59,7 @@ const SignIn = () => {
     console.log("User Login Payload:", payload)
 
     try {
-      const res = await axios.post("http://localhost:8080/api/user/token", payload, {
+      const res = await axios.post(`${backendUrl}/api/user/token`, payload, {
         withCredentials: true,
       })
 
@@ -70,7 +71,7 @@ const SignIn = () => {
       localStorage.setItem("username", userCredentials.username)
 
       // Simulate a delay to show loading state (e.g., 1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // Redirect to user dashboard
       navigate("/user-browse")
@@ -92,7 +93,7 @@ const SignIn = () => {
     console.log("Trabahador Login Payload:", payload)
 
     try {
-      const res = await axios.post("http://localhost:8080/api/worker/token", payload, {
+      const res = await axios.post(`${backendUrl}/api/worker/token`, payload, {
         withCredentials: true,
       })
 
@@ -104,7 +105,7 @@ const SignIn = () => {
       localStorage.setItem("username", trabahadorCredentials.username)
 
       // Simulate a delay to show loading state (e.g., 1.5 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // Redirect to trabahador dashboard
       navigate("/trabahador-homepage")
@@ -118,7 +119,7 @@ const SignIn = () => {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/google"
+    window.location.href = `${backendUrl}/oauth2/authorization/google`
   }
 
   const handleBack = () => {
@@ -145,11 +146,11 @@ const SignIn = () => {
     <ErrorBoundary>
       <div className={styles.signinPage}>
         {/* Full-screen loading overlay */}
-      {isLoading && (
-        <div className={`${styles.loadingOverlay} ${isLoading ? styles.active : ""}`}>
-          <span className={styles.loadingSpinner}></span>
-        </div>
-      )}
+        {isLoading && (
+          <div className={`${styles.loadingOverlay} ${isLoading ? styles.active : ""}`}>
+            <span className={styles.loadingSpinner}></span>
+          </div>
+        )}
         <div className={styles.signinOverlay}></div>
 
         <button className={styles.backButton} onClick={handleBack} aria-label="Go back">
@@ -298,13 +299,13 @@ const SignIn = () => {
                         <input
                           id="password"
                           type={showUserPassword ? "text" : "password"}
-                          name="password" 
+                          name="password"
                           placeholder="Enter your password"
                           value={userCredentials.password}
                           onChange={handleUserInputChange}
                           required
                           disabled={isLoading}
-                          className={styles.formInput} 
+                          className={styles.formInput}
                         />
                         <button
                           type="button"
@@ -408,7 +409,6 @@ const SignIn = () => {
                         >
                           {showTrabahadorPassword ? "Hide" : "Show"}
                         </button>
-
                       </div>
                     </div>
 

@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
@@ -23,13 +25,13 @@ const PaymentPages = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173";
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/user/me`,
-          { withCredentials: true }
-        );
+        const response = await axios.get(`${BACKEND_URL}/api/user/me`, { withCredentials: true });
         console.log("Fetched user details:", response.data);
         setUserDetails({
           fullName: response.data.firstname && response.data.lastname
@@ -110,7 +112,7 @@ const PaymentPages = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/payments/intent`,
+        `${BACKEND_URL}/api/payments/intent`,
         {
           amount: 10000,
           description: `Booking for worker ${workerId}`,
@@ -138,7 +140,7 @@ const PaymentPages = () => {
   const createPaymentMethod = async (paymentIntentId) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/payments/method`,
+        `${BACKEND_URL}/api/payments/method`,
         {
           name: userDetails.fullName,
           email: userDetails.email,
@@ -171,11 +173,11 @@ const PaymentPages = () => {
     }
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/payments/intent/attach/${paymentIntentId}`,
+        `${BACKEND_URL}/api/payments/intent/attach/${paymentIntentId}`,
         {
           payment_method: paymentMethodId,
           client_key: import.meta.env.VITE_PAYMONGO_CLIENT_KEY,
-          return_url: `http://localhost:5173/booking/${workerId}/success`, // Use ngrok URL for testing
+          return_url: `${FRONTEND_URL}/booking/${workerId}/success`, // Use Vite environment variable
         },
         { withCredentials: true }
       );

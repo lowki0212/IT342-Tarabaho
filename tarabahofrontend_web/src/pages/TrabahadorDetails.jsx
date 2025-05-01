@@ -27,7 +27,7 @@ const TrabahadorDetails = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const BACKEND_URL = "http://localhost:8080";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   useEffect(() => {
     const fetchWorkerData = async () => {

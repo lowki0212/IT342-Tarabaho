@@ -20,7 +20,7 @@ const ChatPage = () => {
   const chatBoxRef = useRef(null);
   const stompClientRef = useRef(null);
   const navigate = useNavigate();
-  const BACKEND_URL = "http://localhost:8080";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   // useEffect 1: Fetch token and determine entity type
   useEffect(() => {

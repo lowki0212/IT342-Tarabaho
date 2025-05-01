@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import logo from "../assets/images/logowhite.png"
-import styles from "../styles/register-admin.module.css"
+import styles from "../styles/register-Admin.module.css"
 
 const RegisterAdmin = () => {
   const navigate = useNavigate()
@@ -17,6 +17,7 @@ const RegisterAdmin = () => {
     address: "",
   })
   const [error, setError] = useState(null)
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -29,7 +30,7 @@ const RegisterAdmin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post("http://localhost:8080/api/admin/register", formData, {
+      const res = await axios.post(`${BACKEND_URL}/api/admin/register`, formData, {
         headers: { "Content-Type": "application/json" },
       })
       console.log("Registration response:", res.data)

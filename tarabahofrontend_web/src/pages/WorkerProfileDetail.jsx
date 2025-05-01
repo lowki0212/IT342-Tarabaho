@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -20,7 +22,7 @@ const WorkerProfileDetail = () => {
   const [similarWorkers, setSimilarWorkers] = useState([]);
   const [error, setError] = useState("");
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const BACKEND_URL = "http://localhost:8080";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Use Vite environment variable
 
   useEffect(() => {
     const fetchWorkerData = async () => {

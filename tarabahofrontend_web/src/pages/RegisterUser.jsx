@@ -25,12 +25,13 @@ const RegisterUser = () => {
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   // Check if user is admin on mount
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/admin/me", {
+        const response = await axios.get(`${backendUrl}/api/admin/me`, {
           withCredentials: true,
         })
         if (response.status === 200 && response.data.username) {
@@ -42,7 +43,7 @@ const RegisterUser = () => {
       }
     }
     checkAdminStatus()
-  }, [])
+  }, [backendUrl])
 
   // Initialize progress bar
   useEffect(() => {
@@ -141,8 +142,8 @@ const RegisterUser = () => {
 
     try {
       const registerUrl = isAdmin
-        ? "http://localhost:8080/api/admin/users/register"
-        : "http://localhost:8080/api/user/register"
+        ? `${backendUrl}/api/admin/users/register`
+        : `${backendUrl}/api/user/register`
       const res = await axios.post(registerUrl, payload, {
         withCredentials: true,
       })

@@ -13,6 +13,7 @@ const AdminLogin = () => {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ const AdminLogin = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/admin/login",
+        `${BACKEND_URL}/api/admin/login`,
         { username, password },
         { withCredentials: true }
       );

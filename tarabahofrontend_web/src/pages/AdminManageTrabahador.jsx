@@ -14,11 +14,12 @@ const AdminManageTrabahador = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   useEffect(() => {
     const fetchTrabahadors = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/admin/workers", {
+        const res = await axios.get(`${BACKEND_URL}/api/admin/workers`, {
           withCredentials: true,
         });
         // Map response to include fullName
@@ -54,7 +55,7 @@ const AdminManageTrabahador = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:8080/api/admin/logout", {}, { withCredentials: true });
+      await axios.post(`${BACKEND_URL}/api/admin/logout`, {}, { withCredentials: true });
       Cookies.remove("jwtToken", { path: "/", domain: "localhost" });
       navigate("/admin-login");
     } catch (err) {
