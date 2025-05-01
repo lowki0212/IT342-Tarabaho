@@ -111,7 +111,7 @@ const AdminHomepage = () => {
                 className="admin-action-button"
                 aria-label="Manage Users"
               >
-                MANAGE USERS
+                MANAGE CLIENT
               </Link>
               <Link
                 to="/admin/manage-trabahador"

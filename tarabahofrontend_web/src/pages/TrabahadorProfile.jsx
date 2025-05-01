@@ -731,11 +731,6 @@ const TrabahadorProfile = () => {
             </div>
           </div>
         </div>
-
-        <div className="tarabaho-watermark">
-          <span className="watermark-text">TARABAHO</span>
-          <span className="watermark-subtext">TARA! TRABAHO</span>
-        </div>
       </div>
 
       {showLogoutModal && <TrabahadorLogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />}

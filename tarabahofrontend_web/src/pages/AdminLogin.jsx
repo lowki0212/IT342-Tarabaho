@@ -11,22 +11,34 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
     try {
-      await axios.post(
+      const res = await axios.post(
         "http://localhost:8080/api/admin/login",
         { username, password },
         { withCredentials: true }
       );
-      console.log("Admin login successful!");
-      setError("");
+      console.log("Admin login successful!", res.data);
+
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userType", "admin");
+      localStorage.setItem("username", username);
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       navigate("/admin/homepage");
     } catch (err) {
       console.log("Admin login failed:", err.response?.data || err.message);
-      setError("Invalid username or password");
+      setError(err.response?.data?.message || "Invalid username or password");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -36,10 +48,27 @@ const AdminLogin = () => {
 
   return (
     <div className="admin-login-page">
+      {isLoading && (
+        <div className={`loading-overlay ${isLoading ? "active" : ""}`}>
+          <span className="loading-spinner"></span>
+          <span className="loading-text">Logging in...</span>
+        </div>
+      )}
       <div className="admin-login-container">
-        <button className="back-button" onClick={handleBack}>
+        <button
+          className="back-button"
+          onClick={handleBack}
+          disabled={isLoading}
+          aria-label="Go back"
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M15 19L8 12L15 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M15 19L8 12L15 5"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
 
@@ -52,9 +81,30 @@ const AdminLogin = () => {
 
           <div className="form-overlay">
             <form onSubmit={handleLogin} className="login-form">
-              {error && <div className="error-message">{error}</div>}
+              {error && (
+                <div className="error-message" aria-live="polite">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  {error}
+                </div>
+              )}
 
               <div className="input-group">
+                <label htmlFor="username" className="input-label">
+                  Username
+                </label>
                 <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
@@ -72,15 +122,20 @@ const AdminLogin = () => {
                   />
                 </svg>
                 <input
+                  id="username"
                   type="text"
                   placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
 
               <div className="input-group">
+                <label htmlFor="password" className="input-label">
+                  Password
+                </label>
                 <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <rect
                     x="3"
@@ -103,11 +158,13 @@ const AdminLogin = () => {
                   <circle cx="12" cy="16" r="1" fill="white" />
                 </svg>
                 <input
+                  id="password"
                   type={showAdminPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -120,11 +177,22 @@ const AdminLogin = () => {
               </div>
 
               <div className="links-container">
-                <Link to="/register" className="auth-link">No account yet?</Link>
-                <Link to="/forgot-password" className="auth-link">Forgot Password?</Link>
+                <Link to="/register" className="auth-link">
+                  No account yet?
+                </Link>
+                <Link to="/forgot-password" className="auth-link">
+                  Forgot Password?
+                </Link>
               </div>
 
-              <button type="submit" className="login-button">Login</button>
+              <button
+                type="submit"
+                className="login-button"
+                disabled={isLoading}
+                aria-busy={isLoading}
+              >
+                {isLoading ? <span className="loading-spinner"></span> : "Login"}
+              </button>
             </form>
           </div>
         </div>

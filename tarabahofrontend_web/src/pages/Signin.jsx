@@ -69,6 +69,9 @@ const SignIn = () => {
       localStorage.setItem("userType", "user")
       localStorage.setItem("username", userCredentials.username)
 
+      // Simulate a delay to show loading state (e.g., 1.5 seconds)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       // Redirect to user dashboard
       navigate("/user-browse")
     } catch (err) {
@@ -99,6 +102,9 @@ const SignIn = () => {
       localStorage.setItem("isLoggedIn", "true")
       localStorage.setItem("userType", "trabahador")
       localStorage.setItem("username", trabahadorCredentials.username)
+
+      // Simulate a delay to show loading state (e.g., 1.5 seconds)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Redirect to trabahador dashboard
       navigate("/trabahador-homepage")
@@ -138,6 +144,12 @@ const SignIn = () => {
   return (
     <ErrorBoundary>
       <div className={styles.signinPage}>
+        {/* Full-screen loading overlay */}
+      {isLoading && (
+        <div className={`${styles.loadingOverlay} ${isLoading ? styles.active : ""}`}>
+          <span className={styles.loadingSpinner}></span>
+        </div>
+      )}
         <div className={styles.signinOverlay}></div>
 
         <button className={styles.backButton} onClick={handleBack} aria-label="Go back">
@@ -227,7 +239,7 @@ const SignIn = () => {
                       className={`${styles.tabButton} ${loginType === "user" ? styles.active : ""}`}
                       onClick={() => setLoginType("user")}
                     >
-                      User
+                      Client
                     </button>
                     <button
                       className={`${styles.tabButton} ${loginType === "trabahador" ? styles.active : ""}`}
@@ -349,7 +361,7 @@ const SignIn = () => {
                     <div className={styles.registerPrompt}>
                       <span>Don't have an account?</span>
                       <Link to="/register-user" className={styles.registerLink}>
-                        Register as User
+                        Register as Client
                       </Link>
                     </div>
                   </form>

@@ -6,11 +6,6 @@ import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import "../styles/User-browse.css"
 import Footer from "../components/Footer"
-import cleaningImg from "../assets/images/cleaning.png"
-import errandsImg from "../assets/images/errands.png"
-import tutoringImg from "../assets/images/tutoring.png"
-import babysittingImg from "../assets/images/babysitting.png"
-import gardeningImg from "../assets/images/gardening.png"
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -33,20 +28,24 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Function to construct Supabase image URL
+const getImageUrl = (iconUrl) => {
+  const SUPABASE_STORAGE_URL = "https://your-supabase-project.supabase.co/storage/v1/object/public/images"
+  if (!iconUrl) {
+    return "https://via.placeholder.com/150?text=No+Image"
+  }
+  if (iconUrl.startsWith("http")) {
+    return iconUrl
+  }
+  return `${SUPABASE_STORAGE_URL}${iconUrl.startsWith("/") ? "" : "/"}${iconUrl}`
+}
+
 const Browse = () => {
   const [categories, setCategories] = useState([])
   const [error, setError] = useState("")
   const BACKEND_URL = "http://localhost:8080"
 
-  // Fallback icons and taglines
-  const categoryIcons = {
-    Cleaning: cleaningImg,
-    Errands: errandsImg,
-    Tutoring: tutoringImg,
-    Babysitting: babysittingImg,
-    Gardening: gardeningImg,
-  }
-
+  // Taglines for categories
   const categoryTaglines = {
     Cleaning: "Keep your space spotless",
     Errands: "Get your tasks done",
@@ -62,7 +61,8 @@ const Browse = () => {
           withCredentials: true,
         })
         // Normalize response data
-        const data = Array.isArray(response.data) ? response.data : [];
+        const data = Array.isArray(response.data) ? response.data : []
+        console.log("Fetched categories:", data) // Debugging log
         setCategories(data)
         if (data.length === 0) {
           setError("No categories available.")
@@ -78,6 +78,12 @@ const Browse = () => {
     }
     fetchCategories()
   }, [])
+
+  // Normalize category name for consistency
+  const normalizeCategoryName = (name) => {
+    if (!name) return ""
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()
+  }
 
   return (
     <ErrorBoundary>
@@ -112,6 +118,11 @@ const Browse = () => {
                   console.warn("Invalid category:", category)
                   return null
                 }
+                const normalizedName = normalizeCategoryName(category.name)
+                const imageSrc = getImageUrl(category.iconUrl)
+
+                console.log(`Category: ${normalizedName}, Image Src: ${imageSrc}`) // Debugging log
+
                 return (
                   <Link
                     key={category.id || category.name}
@@ -121,18 +132,19 @@ const Browse = () => {
                   >
                     <div className={`service-icon ${category.name.toLowerCase()}-icon`}>
                       <img
-                        src={
-                          category.iconUrl
-                            ? `${BACKEND_URL}${category.iconUrl}`
-                            : categoryIcons[category.name] || "/placeholder.svg"
-                        }
+                        src={imageSrc}
                         alt={category.name}
                         className="service-img"
+                        onError={(e) => {
+                          console.error(`Failed to load image for ${category.name}: ${imageSrc}`)
+                          e.target.src = "https://via.placeholder.com/150?text=No+Image"
+                        }}
+                        onLoad={() => console.log(`Loaded image for ${category.name}: ${imageSrc}`)}
                       />
                     </div>
                     <div className="service-name">{category.name}</div>
                     <p className="service-tagline">
-                      {category.tagline || categoryTaglines[category.name] || "Explore this service"}
+                      {category.tagline || categoryTaglines[normalizedName] || "Explore this service"}
                     </p>
                   </Link>
                 )

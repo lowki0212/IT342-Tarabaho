@@ -97,7 +97,7 @@ const AdminManageUsers = () => {
       <AdminNavbar activePage="manage-users" />
 
       <div className="manage-users-container">
-        <h1 className="manage-users-title">MANAGE USERS</h1>
+        <h1 className="manage-users-title">MANAGE CLIENTS</h1>
 
         <div className="search-bar-container">
           <div className="search-bar">

@@ -144,12 +144,6 @@ const UserBookmarks = () => {
             )}
           </div>
         </div>
-
-        {/* Tarabaho Watermark */}
-        <div className="tarabaho-watermark">
-          <span className="watermark-text">TARABAHO</span>
-          <span className="watermark-subtext">TARA! TRABAHO</span>
-        </div>
       </div>
       {/* Logout Confirmation Modal */}
       {showLogoutModal && <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />}
