@@ -3,7 +3,7 @@
 import { useNavigate } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
 import Footer from "../components/Footer"
-import "../styles/register.css"
+import "../styles/Register.css"
 
 const Register = () => {
   const navigate = useNavigate()

@@ -7,7 +7,7 @@ import Cookies from "js-cookie"
 import AdminNavbar from "../components/AdminNavbar"
 import LogoutConfirmation from "../components/Admin-LogoutConfirmation"
 import profilePlaceholder from "../assets/images/profile-placeholder.png"
-import "../styles/admin-profile.css"
+import "../styles/Admin-profile.css"
 import Footer from "../components/Footer"
 
 const AdminProfile = () => {

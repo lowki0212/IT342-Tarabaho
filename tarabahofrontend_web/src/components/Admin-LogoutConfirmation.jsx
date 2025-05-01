@@ -1,6 +1,6 @@
 "use client"
 
-import "../styles/admin-logout-confirmation.css"
+import "../styles/Admin-logout-confirmation.css"
 
 const LogoutConfirmation = ({ onConfirm, onCancel }) => {
   return (

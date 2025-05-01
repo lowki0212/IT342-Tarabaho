@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
-import "../styles/user-navbar.css"
+import "../styles/User-navbar.css"
 
 const UserNavbar = () => {
   const location = useLocation()

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
-import "../styles/User-browse.css"
+import "../styles/User-Browse.css"
 import Footer from "../components/Footer"
 
 // Error Boundary Component

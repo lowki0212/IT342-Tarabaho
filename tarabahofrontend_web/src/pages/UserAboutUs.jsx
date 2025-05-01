@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
-import "../styles/about-us.css"
+import "../styles/About-us.css"
 
 // Import team images
 import aboutUsBanner from "../assets/images/about-us-banner.png"

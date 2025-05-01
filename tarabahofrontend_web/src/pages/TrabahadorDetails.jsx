@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AdminNavbar from "../components/AdminNavbar";
 import Footer from "../components/Footer";
-import "../styles/trabahador-details.css";
+import "../styles/Trabahador-details.css";
 
 const TrabahadorDetails = () => {
   const { id } = useParams();

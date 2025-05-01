@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import "../styles/admin-contact-us.css"
+import "../styles/Admin-contact-us.css"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
 

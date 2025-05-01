@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import logo from "../assets/images/logowhite.png"
-import "../styles/admin-navbar.css"
+import "../styles/Admin-navbar.css"
 
 const AdminNavbar = () => {
   const location = useLocation()

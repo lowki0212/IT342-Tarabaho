@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/images/logowhite.png";
-import "../styles/admin-login.css";
+import "../styles/Admin-login.css";
 
 const AdminLogin = () => {
   const [username, setUsername] = useState("");

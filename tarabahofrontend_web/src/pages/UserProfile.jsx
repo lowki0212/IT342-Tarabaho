@@ -6,7 +6,7 @@ import axios from "axios"
 import UserNavbar from "../components/UserNavbar"
 import Footer from "../components/Footer"
 import LogoutConfirmation from "../components/User-LogoutConfirmation"
-import "../styles/User-Profile.css"
+import "../styles/User-profile.css"
 import {
   FaFacebook,
   FaInstagram,

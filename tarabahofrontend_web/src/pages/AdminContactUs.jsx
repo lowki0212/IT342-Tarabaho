@@ -3,7 +3,7 @@
 import { useState } from "react"
 import AdminNavbar from "../components/AdminNavbar"
 import Footer from "../components/Footer"
-import "../styles/admin-contact-us.css"
+import "../styles/Admin-contact-us.css"
 
 const AdminContactUs = () => {
   const [formData, setFormData] = useState({

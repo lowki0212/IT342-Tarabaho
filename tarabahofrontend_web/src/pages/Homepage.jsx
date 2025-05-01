@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import backgroundImage from "../assets/images/homepage.png"
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
-import "../styles/homepage.css"
+import "../styles/Homepage.css"
 
 const Homepage = () => {
   const navigate = useNavigate()

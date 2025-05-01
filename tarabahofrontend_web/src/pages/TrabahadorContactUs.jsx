@@ -3,7 +3,7 @@
 import { useState } from "react"
 import TrabahadorNavbar from "../components/TrabahadorNavbar"
 import Footer from "../components/Footer"
-import "../styles/admin-contact-us.css"
+import "../styles/Admin-contact-us.css"
 
 const TrabahadorContactUs = () => {
   const [formData, setFormData] = useState({

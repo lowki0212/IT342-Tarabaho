@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Cookies from "js-cookie";
 import AdminNavbar from "../components/AdminNavbar";
-import "../styles/admin-manage-users.css";
+import "../styles/Admin-manage-users.css";
 
 const AdminManageUsers = () => {
   const [users, setUsers] = useState([]);

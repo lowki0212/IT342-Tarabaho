@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AdminNavbar from "../components/AdminNavbar";
 import Footer from "../components/Footer";
-import "../styles/admin-homepage.css";
+import "../styles/Admin-homepage.css";
 
 const AdminHomepage = () => {
   // State to hold dynamic data
