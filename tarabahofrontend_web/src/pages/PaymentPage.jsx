@@ -154,6 +154,7 @@ const PaymentPages = () => {
       if (!paymentMethodId) {
         throw new Error("Payment Method ID not returned from server");
       }
+      console.log("Payment Method ID:", paymentMethodId);
       await attachPaymentMethod(paymentMethodId, paymentIntentId);
     } catch (err) {
       console.error("Error creating payment method:", {
@@ -171,18 +172,53 @@ const PaymentPages = () => {
       setLoading(false);
       return;
     }
+
+    // Log client key and return URL for debugging
+    console.log("Client Key:", import.meta.env.VITE_PAYMONGO_CLIENT_KEY);
+    console.log("Return URL:", `${FRONTEND_URL}/booking/${workerId}/success`);
+
+    // Check payment intent status before attaching
     try {
+      const statusResponse = await axios.get(
+        `${BACKEND_URL}/api/payments/intent/${paymentIntentId}/status`,
+        { withCredentials: true }
+      );
+      console.log("Payment Intent Status:", statusResponse.data);
+      const status = statusResponse.data.data.attributes.status;
+      if (status !== "awaiting_payment_method") {
+        setError(`Cannot attach payment method: Payment intent is in '${status}' state.`);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error("Error checking payment intent status:", {
+        message: err.message,
+        response: err.response?.data,
+      });
+      setError("Failed to verify payment intent status: " + (err.response?.data?.error || err.message));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        payment_method: paymentMethodId,
+        client_key: import.meta.env.VITE_PAYMONGO_CLIENT_KEY,
+        return_url: `${FRONTEND_URL}/booking/${workerId}/success`,
+      };
+      console.log("Attach Payment Method Payload:", payload);
+
       const response = await axios.post(
         `${BACKEND_URL}/api/payments/intent/attach/${paymentIntentId}`,
-        {
-          payment_method: paymentMethodId,
-          client_key: import.meta.env.VITE_PAYMONGO_CLIENT_KEY,
-          return_url: `${FRONTEND_URL}/booking/${workerId}/success`, // Use Vite environment variable
-        },
+        payload,
         { withCredentials: true }
       );
       console.log("Attach Intent Response:", response.data);
-      const redirectUrl = response.data.data.attributes.next_action.redirect.url;
+
+      const redirectUrl = response.data.data.attributes.next_action?.redirect?.url;
+      if (!redirectUrl) {
+        throw new Error("No redirect URL provided in response");
+      }
       console.log("Redirecting to:", redirectUrl);
       window.location.href = redirectUrl;
     } catch (err) {
@@ -191,7 +227,10 @@ const PaymentPages = () => {
         status: err.response?.status,
         data: err.response?.data,
       });
-      setError("Failed to process payment: " + (err.response?.data?.error || err.message));
+      const errorMessage = err.response?.data?.paymongo_response
+        ? `Failed to process payment: ${err.response.data.paymongo_response}`
+        : `Failed to process payment: ${err.response?.data?.error || err.message}`;
+      setError(errorMessage);
       setLoading(false);
     }
   };
