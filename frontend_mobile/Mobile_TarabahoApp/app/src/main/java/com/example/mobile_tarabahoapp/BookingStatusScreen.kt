@@ -1,4 +1,6 @@
 package com.example.mobile_tarabahoapp
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +47,8 @@ fun BookingStatusScreen(
     bookingId: String = "BK12345",
     initialStatus: BookingStatusState = BookingStatusState.PENDING // Added parameter for testing different states
 ) {
+    val context = LocalContext.current
+
     // ✅ Add ViewModel here
     val viewModel: BookingViewModel = viewModel()
 
@@ -73,13 +78,25 @@ fun BookingStatusScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // Function to handle booking cancellation
-    fun cancelBooking() {
+    fun cancelBooking(context: Context) {
         coroutineScope.launch {
-            bookingStatus = BookingStatusState.CANCELLED
-            delay(1500) // Show cancelled state briefly
-            navController.popBackStack() // Navigate back
+            viewModel.cancelBooking(bookingId.toLong()) { success, message ->
+                if (success) {
+                    bookingStatus = BookingStatusState.CANCELLED
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+                    // Delay must be inside another coroutine or removed
+                    coroutineScope.launch {
+                        delay(1500)
+                        navController.popBackStack()
+                    }
+                } else {
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
+
     LaunchedEffect(bookingId) {
         viewModel.getBookingById(bookingId.toLong())
 
@@ -466,7 +483,7 @@ fun BookingStatusScreen(
 
                         // Find another worker button
                         OutlinedButton(
-                            onClick = { navController.navigate("worker_list") },
+                            onClick = { navController.navigate("home") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -561,7 +578,7 @@ fun BookingStatusScreen(
                 TextButton(
                     onClick = {
                         showCancelDialog = false
-                        cancelBooking()
+                        cancelBooking(context)
                     }
                 ) {
                     Text(

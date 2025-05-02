@@ -199,6 +199,22 @@ class BookingViewModel : ViewModel() {
             }
         }
     }
+    fun cancelBooking(bookingId: Long, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.cancelBooking(bookingId)
+                if (response.isSuccessful) {
+                    onResult(true, "Booking cancelled successfully.")
+                    fetchWorkerBookings() // Optional reload
+                } else {
+                    onResult(false, "Failed to cancel booking: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                onResult(false, "Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
 
 }
 
