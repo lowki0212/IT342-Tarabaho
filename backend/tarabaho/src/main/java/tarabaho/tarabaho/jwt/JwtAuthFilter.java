@@ -56,7 +56,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/oauth2/**",
             "/login/**",
             "/oauth2-success",
-            "/profiles/**"
+            "/profiles/**",
+            "/swagger-ui/**",  // Added for Swagger UI
+            "/v3/api-docs/**"  // Added for OpenAPI docs
     );
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
