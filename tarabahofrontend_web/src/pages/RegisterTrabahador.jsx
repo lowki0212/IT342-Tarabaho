@@ -39,12 +39,13 @@ const RegisterTrabahador = () => {
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false) // Track admin status
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"
 
   // Check for admin token on mount
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/admin/me", {
+        const response = await fetch(`${BACKEND_URL}/api/admin/me`, {
           method: "GET",
           credentials: "include",
         })
@@ -200,7 +201,7 @@ const RegisterTrabahador = () => {
         phoneNumber: formData.contactNo,
       }
 
-      const response = await fetch("http://localhost:8080/api/worker/check-duplicates", {
+      const response = await fetch(`${BACKEND_URL}/api/worker/check-duplicates`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -325,7 +326,7 @@ const RegisterTrabahador = () => {
 
       console.log("Sending registration request with data:", workerData)
 
-      const workerResponse = await fetch("http://localhost:8080/api/worker/register", {
+      const workerResponse = await fetch(`${BACKEND_URL}/api/worker/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -356,7 +357,7 @@ const RegisterTrabahador = () => {
         const pictureFormData = new FormData()
         pictureFormData.append("file", formData.picture)
 
-        const pictureResponse = await fetch(`http://localhost:8080/api/worker/${workerId}/upload-initial-picture`, {
+        const pictureResponse = await fetch(`${BACKEND_URL}/api/worker/${workerId}/upload-initial-picture`, {
           method: "POST",
           body: pictureFormData,
           credentials: "include",
@@ -387,7 +388,7 @@ const RegisterTrabahador = () => {
           certFormData.append("certificateFile", cert.certificateFile)
         }
 
-        const certResponse = await fetch(`http://localhost:8080/api/certificate/worker/${workerId}`, {
+        const certResponse = await fetch(`${BACKEND_URL}/api/certificate/worker/${workerId}`, {
           method: "POST",
           body: certFormData,
           credentials: "include",
