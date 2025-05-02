@@ -47,9 +47,6 @@ const ClientDetails = () => {
           biography: fetchedClient.biography ?? "No biography available.",
           profilePicture: fetchedClient.profilePicture ?? "/placeholder.svg?height=300&width=300",
           isVerified: fetchedClient.isVerified ?? false,
-          firstname: fetchedClient.firstname ?? "Unknown",
-          lastname: fetchedClient.lastname ?? "Client",
-          username: fetchedClient.username ?? fetchedClient.email ?? "N/A",
         };
         setClient(clientData);
         setEditForm({
@@ -104,9 +101,6 @@ const ClientDetails = () => {
         location: editForm.address,
         biography: editForm.biography,
         isVerified: editForm.isVerified,
-        firstname: client.firstname,
-        lastname: client.lastname,
-        username: client.username,
       };
       console.log("Submitting update for client ID:", client.id, updatedClient);
       const response = await axios.put(
@@ -124,9 +118,6 @@ const ClientDetails = () => {
         address: updatedData.location ?? "N/A",
         biography: updatedData.biography ?? "No biography available.",
         isVerified: updatedData.isVerified ?? false,
-        firstname: updatedData.firstname ?? client.firstname,
-        lastname: updatedData.lastname ?? client.lastname,
-        username: updatedData.username ?? client.username,
       });
       setIsEditing(false);
       setError("");
