@@ -55,7 +55,9 @@ public class SecurityConfig {
 						"/api/worker/token",
 						"/api/worker/login",
 						"/api/worker/{workerId}/upload-initial-picture",
-						"/swagger-ui/**", "/v3/api-docs/**"
+						"/swagger-ui/**", 
+						"/v3/api-docs/**",
+						"/api/worker/test-worker"
 					).permitAll()
 					.requestMatchers("/api/certificate/worker/**").permitAll()
 					.requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
