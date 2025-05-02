@@ -55,7 +55,7 @@ public class SecurityConfig {
 						"/api/worker/token",
 						"/api/worker/login",
 						"/api/worker/{workerId}/upload-initial-picture",
-						"/swagger-ui/index.html"
+						"/swagger-ui/**", "/v3/api-docs/**"
 					).permitAll()
 					.requestMatchers("/api/certificate/worker/**").permitAll()
 					.requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
@@ -113,7 +113,7 @@ public class SecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		System.out.println("Configuring CORS...");
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://it-342-tarabaho-8q1h-89v462nt1-jilus-projects.vercel.app","https://it-342-tarabaho-8q1h-1mdxu5490-jilus-projects.vercel.app","https://it-342-tarabaho-8q1h-djrh871n9-jilus-projects.vercel.app")); // Update for production
+		config.setAllowedOrigins(Arrays.asList("http://localhost:5173", "https://it-342-tarabaho-8q1h-89v462nt1-jilus-projects.vercel.app","https://it-342-tarabaho-8q1h-1mdxu5490-jilus-projects.vercel.app","https://it-342-tarabaho-8q1h.vercel.app/")); // Update for production
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		config.setAllowCredentials(true);
 		config.setAllowedHeaders(List.of("*"));
