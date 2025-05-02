@@ -647,7 +647,14 @@ public class WorkerController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
         }
     }
-
+            @GetMapping("/test-worker")
+        public ResponseEntity<?> testWorker(@RequestParam String username) {
+            Worker worker = workerRepository.findByUsername(username);
+            if (worker == null) {
+                return ResponseEntity.ok("Worker not found for username: " + username);
+            }
+            return ResponseEntity.ok("Worker found: ID=" + worker.getId() + ", Username=" + worker.getUsername() + ", Password=" + worker.getPassword());
+        }
     @Operation(summary = "Get worker by username", description = "Find a worker by their username")
     @GetMapping("/username/{username}")
     public ResponseEntity<?> getWorkerByUsername(@PathVariable String username) {

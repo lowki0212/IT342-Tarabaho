@@ -52,12 +52,19 @@ public class WorkerService {
     }
 
     public Worker loginWorker(String username, String password) throws Exception {
+        System.out.println("WorkerService: Attempting login for username: " + username);
         Worker worker = workerRepository.findByUsername(username);
-        if (worker != null && passwordEncoderService.matches(password, worker.getPassword())) {
-            return worker;
-        } else {
+        if (worker == null) {
+            System.out.println("WorkerService: Worker not found for username: " + username);
             throw new Exception("Invalid username or password");
         }
+        System.out.println("WorkerService: Found worker with ID: " + worker.getId() + ", Stored password: " + worker.getPassword());
+        boolean passwordMatch = passwordEncoderService.matches(password, worker.getPassword());
+        System.out.println("WorkerService: Password match: " + passwordMatch);
+        if (passwordMatch) {
+            return worker;
+        }
+        throw new Exception("Invalid username or password");
     }
 
     public List<Worker> getAllWorkers() {
