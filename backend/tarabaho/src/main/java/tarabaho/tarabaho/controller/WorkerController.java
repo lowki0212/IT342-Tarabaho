@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.repository.WorkerRepository;
+import tarabaho.tarabaho.service.PasswordEncoderService;
 import tarabaho.tarabaho.service.SupabaseRestStorageService;
 import tarabaho.tarabaho.service.UserService;
 import tarabaho.tarabaho.service.WorkerService;
@@ -61,6 +63,9 @@ public class WorkerController {
 
     @Autowired
     private SupabaseRestStorageService storageService;
+
+    @Autowired
+    private PasswordEncoderService passwordEncoderService;
 
     @Operation(summary = "Get worker by ID", description = "Retrieve a worker by their ID")
     @ApiResponses({
@@ -114,17 +119,26 @@ public class WorkerController {
         return ResponseEntity.ok().build();
     }
 
-    @Operation(summary = "Register new worker", description = "Registers a new worker in the system after checking for uniqueness")
+    @Operation(summary = "Register new worker", description = "Registers a new worker in the system after checking for uniqueness and resets password to avoid double hashing")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Worker registered successfully"),
-        @ApiResponse(responseCode = "400", description = "Username, email, phone, or invalid input")
+        @ApiResponse(responseCode = "400", description = "Username, email, phone, or invalid input"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerWorker(@RequestBody WorkerRegisterDTO workerDTO, HttpServletResponse response) {
         System.out.println("WorkerController: Received registration request for username: " + workerDTO.getUsername());
+        System.out.println("WorkerController: Received raw password: " + workerDTO.getPassword());
 
+        // Validate input
+        if (workerDTO.getUsername() == null || workerDTO.getUsername().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("⚠️ Username is required.");
+        }
         if (workerService.findByUsername(workerDTO.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Username already exists.");
+        }
+        if (workerDTO.getEmail() == null || workerDTO.getEmail().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("⚠️ Email is required.");
         }
         if (workerService.findByEmail(workerDTO.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Email already exists.");
@@ -133,28 +147,116 @@ public class WorkerController {
                 workerService.findByPhoneNumber(workerDTO.getPhoneNumber()).isPresent()) {
             return ResponseEntity.badRequest().body("⚠️ Phone number already exists.");
         }
-
+        if (workerDTO.getFirstName() == null || workerDTO.getFirstName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("⚠️ First name is required.");
+        }
+        if (workerDTO.getLastName() == null || workerDTO.getLastName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("⚠️ Last name is required.");
+        }
         if (workerDTO.getHourly() <= 0) {
             return ResponseEntity.badRequest().body("⚠️ Hourly rate must be provided and greater than 0.");
         }
-
-        Worker worker = new Worker();
-        worker.setUsername(workerDTO.getUsername());
-        worker.setPassword(workerDTO.getPassword());
-        worker.setFirstName(workerDTO.getFirstName());
-        worker.setLastName(workerDTO.getLastName());
-        worker.setEmail(workerDTO.getEmail());
-        worker.setPhoneNumber(workerDTO.getPhoneNumber());
-        worker.setAddress(workerDTO.getAddress());
-        worker.setHourly(workerDTO.getHourly());
-
-        if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
-            worker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+        if (workerDTO.getPassword() == null || workerDTO.getPassword().isEmpty()) {
+            return ResponseEntity.badRequest().body("⚠️ Password is required.");
         }
 
-        Worker registeredWorker = workerService.registerWorker(worker);
-        System.out.println("WorkerController: Worker registered successfully, ID: " + registeredWorker.getId());
-        return ResponseEntity.ok(registeredWorker);
+        try {
+            // Create worker entity
+            Worker worker = new Worker();
+            worker.setUsername(workerDTO.getUsername());
+            // Set initial hashed password
+            String hashedPassword = passwordEncoderService.encodePassword(workerDTO.getPassword());
+            System.out.println("WorkerController: Initial hashed password: " + hashedPassword);
+            worker.setPassword(hashedPassword);
+            worker.setFirstName(workerDTO.getFirstName());
+            worker.setLastName(workerDTO.getLastName());
+            worker.setEmail(workerDTO.getEmail());
+            worker.setPhoneNumber(workerDTO.getPhoneNumber());
+            worker.setAddress(workerDTO.getAddress());
+            worker.setHourly(workerDTO.getHourly());
+
+            if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
+                worker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+            }
+
+            // Register worker
+            Worker registeredWorker = workerService.registerWorker(worker);
+            System.out.println("WorkerController: Worker registered successfully, ID: " + registeredWorker.getId());
+
+            // Immediately reset password to ensure single hashing
+            System.out.println("WorkerController: Resetting password for username: " + workerDTO.getUsername());
+            Worker savedWorker = workerRepository.findByUsername(workerDTO.getUsername());
+            if (savedWorker == null) {
+                System.out.println("WorkerController: Worker not found for username: " + workerDTO.getUsername() + " after registration");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Worker not found after registration");
+            }
+            String newHashedPassword = passwordEncoderService.encodePassword(workerDTO.getPassword());
+            System.out.println("WorkerController: New hashed password after reset: " + newHashedPassword);
+            savedWorker.setPassword(newHashedPassword);
+            workerRepository.save(savedWorker);
+            System.out.println("WorkerController: Password reset successfully for username: " + workerDTO.getUsername());
+
+            return ResponseEntity.ok(registeredWorker);
+        } catch (Exception e) {
+            System.out.println("WorkerController: Registration failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to register worker: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Reset worker password", description = "Resets the password for a worker")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Password reset successfully"),
+        @ApiResponse(responseCode = "400", description = "Worker not found or invalid input"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetWorkerPassword(@RequestBody LoginRequest loginData) {
+        try {
+            System.out.println("WorkerController: Resetting password for username: " + loginData.getUsername());
+            Worker worker = workerRepository.findByUsername(loginData.getUsername());
+            if (worker == null) {
+                System.out.println("WorkerController: Worker not found for username: " + loginData.getUsername());
+                return ResponseEntity.badRequest().body("Worker not found");
+            }
+            if (loginData.getPassword() == null || loginData.getPassword().isEmpty()) {
+                System.out.println("WorkerController: Invalid password provided for reset");
+                return ResponseEntity.badRequest().body("Password is required");
+            }
+            String hashedPassword = passwordEncoderService.encodePassword(loginData.getPassword());
+            System.out.println("WorkerController: New hashed password: " + hashedPassword);
+            worker.setPassword(hashedPassword);
+            workerRepository.save(worker);
+            System.out.println("WorkerController: Password reset successfully for username: " + loginData.getUsername());
+            return ResponseEntity.ok("Password reset successfully");
+        } catch (Exception e) {
+            System.out.println("WorkerController: Password reset failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to reset password: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Test raw JSON input", description = "Logs raw JSON payload to debug deserialization")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Raw JSON received and logged"),
+        @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @PostMapping("/test-raw")
+    public ResponseEntity<?> testRawJson(@RequestBody Map<String, String> rawData) {
+        System.out.println("WorkerController: Raw JSON password: " + rawData.get("password"));
+        return ResponseEntity.ok("Received password: " + rawData.get("password"));
+    }
+
+    @Operation(summary = "Test password hash", description = "Tests if a password matches a given hash")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Password match result returned"),
+        @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    @GetMapping("/test-password")
+    public ResponseEntity<?> testPassword(@RequestParam String password, @RequestParam String hashed) {
+        boolean matches = passwordEncoderService.matches(password, hashed);
+        System.out.println("WorkerController: Testing password: " + password + ", Hash: " + hashed + ", Matches: " + matches);
+        return ResponseEntity.ok("Matches: " + matches);
     }
 
     @Operation(summary = "Upload initial profile picture during registration", description = "Allows uploading a 2x2 profile picture for a newly registered worker without authentication, only if no picture exists")
@@ -277,7 +379,7 @@ public class WorkerController {
         try {
             System.out.println("WorkerController: Entering /logout endpoint");
 
-            // Clear the JWT cookie
+            // Clear theていJWT cookie
             Cookie tokenCookie = new Cookie("jwtToken", null);
             tokenCookie.setMaxAge(0);
             tokenCookie.setPath("/");
@@ -378,11 +480,11 @@ public class WorkerController {
         } catch (IOException e) {
             System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload file: " + e.getMessage());
+                .body("Failed to upload file: " + e.getMessage());
         } catch (Exception e) {
             System.out.println("WorkerController: Upload picture failed for workerId: " + workerId + ", error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload file: " + e.getMessage());
+                .body("Failed to upload file: " + e.getMessage());
         }
     }
 
@@ -572,7 +674,8 @@ public class WorkerController {
                 existingWorker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
             }
             if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
-                existingWorker.setPassword(workerDTO.getPassword());
+                String hashedPassword = passwordEncoderService.encodePassword(workerDTO.getPassword());
+                existingWorker.setPassword(hashedPassword);
             }
 
             Worker updatedWorker = workerService.updateWorker(existingWorker);
@@ -647,14 +750,7 @@ public class WorkerController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
         }
     }
-            @GetMapping("/test-worker")
-        public ResponseEntity<?> testWorker(@RequestParam String username) {
-            Worker worker = workerRepository.findByUsername(username);
-            if (worker == null) {
-                return ResponseEntity.ok("Worker not found for username: " + username);
-            }
-            return ResponseEntity.ok("Worker found: ID=" + worker.getId() + ", Username=" + worker.getUsername() + ", Password=" + worker.getPassword());
-        }
+
     @Operation(summary = "Get worker by username", description = "Find a worker by their username")
     @GetMapping("/username/{username}")
     public ResponseEntity<?> getWorkerByUsername(@PathVariable String username) {

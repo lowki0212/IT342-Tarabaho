@@ -31,6 +31,7 @@ public class WorkerService {
     }
 
     public Worker registerWorker(Worker worker) {
+        System.out.println("WorkerService: Registering worker with username: " + worker.getUsername());
         // Validate new fields
         if (worker.getHourly() == null || worker.getHourly() <= 0) {
             throw new IllegalArgumentException("Hourly rate must be provided and greater than 0.");
@@ -38,12 +39,6 @@ public class WorkerService {
         if (worker.getStars() != null && (worker.getStars() < 0 || worker.getStars() > 5)) {
             throw new IllegalArgumentException("Initial stars must be between 0 and 5.");
         }
-
-        // Hash password
-        if (worker.getPassword() != null && !worker.getPassword().isEmpty()) {
-            worker.setPassword(passwordEncoderService.encodePassword(worker.getPassword()));
-        }
-
         // Ensure certificates are properly linked to the worker
         if (worker.getCertificates() != null) {
             worker.getCertificates().forEach(certificate -> certificate.setWorker(worker));
@@ -81,23 +76,15 @@ public class WorkerService {
     public Worker editWorker(Long id, Worker updatedWorker) throws Exception {
         Worker existingWorker = workerRepository.findById(id)
             .orElseThrow(() -> new Exception("Worker not found"));
-
-        // Update existing fields
         existingWorker.setFirstName(updatedWorker.getFirstName());
         existingWorker.setLastName(updatedWorker.getLastName());
         existingWorker.setUsername(updatedWorker.getUsername());
-        // Hash password if provided
-        if (updatedWorker.getPassword() != null && !updatedWorker.getPassword().isEmpty()) {
-            existingWorker.setPassword(passwordEncoderService.encodePassword(updatedWorker.getPassword()));
-        }
         existingWorker.setEmail(updatedWorker.getEmail());
         existingWorker.setPhoneNumber(updatedWorker.getPhoneNumber());
         existingWorker.setAddress(updatedWorker.getAddress());
         existingWorker.setBiography(updatedWorker.getBiography());
         existingWorker.setBirthday(updatedWorker.getBirthday());
         existingWorker.setProfilePicture(updatedWorker.getProfilePicture());
-
-        // Update new fields
         if (updatedWorker.getHourly() != null) {
             if (updatedWorker.getHourly() <= 0) {
                 throw new IllegalArgumentException("Hourly rate must be greater than 0.");
@@ -119,8 +106,6 @@ public class WorkerService {
         if (updatedWorker.getAverageResponseTime() != null) {
             existingWorker.setAverageResponseTime(updatedWorker.getAverageResponseTime());
         }
-
-        // Stars and ratingCount are updated via updateRating
         return workerRepository.save(existingWorker);
     }
 
@@ -158,7 +143,7 @@ public class WorkerService {
     public Optional<Worker> findByEmail(String email) {
         List<Worker> workers = workerRepository.findAllByEmail(email);
         if (workers.size() > 1) {
-            return Optional.empty(); // Treat multiple results as duplicate
+            return Optional.empty();
         }
         return workers.isEmpty() ? Optional.empty() : Optional.of(workers.get(0));
     }
@@ -166,7 +151,7 @@ public class WorkerService {
     public Optional<Worker> findByPhoneNumber(String phoneNumber) {
         List<Worker> workers = workerRepository.findAllByPhoneNumber(phoneNumber);
         if (workers.size() > 1) {
-            return Optional.empty(); // Treat multiple results as duplicate
+            return Optional.empty();
         }
         return workers.isEmpty() ? Optional.empty() : Optional.of(workers.get(0));
     }
@@ -178,10 +163,7 @@ public class WorkerService {
     }
 
     public Worker updateWorker(Worker worker) {
-        // Hash password if provided
-        if (worker.getPassword() != null && !worker.getPassword().isEmpty()) {
-            worker.setPassword(passwordEncoderService.encodePassword(worker.getPassword()));
-        }
+        // Avoid re-hashing password unless explicitly provided
         return workerRepository.save(worker);
     }
 

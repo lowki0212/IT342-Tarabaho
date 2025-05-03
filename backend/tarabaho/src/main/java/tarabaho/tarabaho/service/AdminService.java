@@ -120,12 +120,15 @@ public class AdminService {
         Worker existingWorker = workerRepository.findById(id)
             .orElseThrow(() -> new Exception("Worker not found with id: " + id));
 
+        System.out.println("AdminService: Editing worker ID: " + id);
+
         // Update only the fields provided in the DTO
         if (workerDTO.getEmail() != null && !workerDTO.getEmail().equals(existingWorker.getEmail())) {
             if (workerRepository.findAllByEmail(workerDTO.getEmail()).size() > 0) {
                 throw new IllegalArgumentException("Email already exists.");
             }
             existingWorker.setEmail(workerDTO.getEmail());
+            System.out.println("AdminService: Updated email to: " + workerDTO.getEmail());
         }
 
         if (workerDTO.getPhoneNumber() != null && !workerDTO.getPhoneNumber().equals(existingWorker.getPhoneNumber())) {
@@ -133,22 +136,27 @@ public class AdminService {
                 throw new IllegalArgumentException("Phone number already exists.");
             }
             existingWorker.setPhoneNumber(workerDTO.getPhoneNumber());
+            System.out.println("AdminService: Updated phone number to: " + workerDTO.getPhoneNumber());
         }
 
         if (workerDTO.getAddress() != null) {
             existingWorker.setAddress(workerDTO.getAddress());
+            System.out.println("AdminService: Updated address to: " + workerDTO.getAddress());
         }
 
         if (workerDTO.getBiography() != null) {
             existingWorker.setBiography(workerDTO.getBiography());
+            System.out.println("AdminService: Updated biography to: " + workerDTO.getBiography());
         }
 
         if (workerDTO.getFirstName() != null) {
             existingWorker.setFirstName(workerDTO.getFirstName());
+            System.out.println("AdminService: Updated first name to: " + workerDTO.getFirstName());
         }
 
         if (workerDTO.getLastName() != null) {
             existingWorker.setLastName(workerDTO.getLastName());
+            System.out.println("AdminService: Updated last name to: " + workerDTO.getLastName());
         }
 
         if (workerDTO.getHourly() != null) {
@@ -156,41 +164,55 @@ public class AdminService {
                 throw new IllegalArgumentException("Hourly rate must be greater than 0.");
             }
             existingWorker.setHourly(workerDTO.getHourly());
+            System.out.println("AdminService: Updated hourly rate to: " + workerDTO.getHourly());
         }
 
         if (workerDTO.getBirthday() != null && !workerDTO.getBirthday().isEmpty()) {
             try {
                 existingWorker.setBirthday(LocalDate.parse(workerDTO.getBirthday()));
+                System.out.println("AdminService: Updated birthday to: " + workerDTO.getBirthday());
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid birthday format. Use YYYY-MM-DD.");
             }
         }
 
-        if (workerDTO.getPassword() != null && !workerDTO.getPassword().isEmpty()) {
-            existingWorker.setPassword(passwordEncoderService.encodePassword(workerDTO.getPassword()));
+        // Only update password if explicitly provided and non-empty
+        if (workerDTO.getPassword() != null && !workerDTO.getPassword().trim().isEmpty()) {
+            String newHashedPassword = passwordEncoderService.encodePassword(workerDTO.getPassword());
+            existingWorker.setPassword(newHashedPassword);
+            System.out.println("AdminService: Updated password for worker ID: " + id + " to new hash: " + newHashedPassword);
+        } else {
+            System.out.println("AdminService: Password not updated for worker ID: " + id);
         }
 
         if (workerDTO.getIsAvailable() != null) {
             existingWorker.setIsAvailable(workerDTO.getIsAvailable());
+            System.out.println("AdminService: Updated isAvailable to: " + workerDTO.getIsAvailable());
         }
 
         if (workerDTO.getIsVerified() != null) {
             existingWorker.setIsVerified(workerDTO.getIsVerified());
+            System.out.println("AdminService: Updated isVerified to: " + workerDTO.getIsVerified());
         }
 
         if (workerDTO.getLatitude() != null) {
             existingWorker.setLatitude(workerDTO.getLatitude());
+            System.out.println("AdminService: Updated latitude to: " + workerDTO.getLatitude());
         }
 
         if (workerDTO.getLongitude() != null) {
             existingWorker.setLongitude(workerDTO.getLongitude());
+            System.out.println("AdminService: Updated longitude to: " + workerDTO.getLongitude());
         }
 
         if (workerDTO.getAverageResponseTime() != null) {
             existingWorker.setAverageResponseTime(workerDTO.getAverageResponseTime());
+            System.out.println("AdminService: Updated averageResponseTime to: " + workerDTO.getAverageResponseTime());
         }
 
-        return workerRepository.save(existingWorker);
+        Worker updatedWorker = workerRepository.save(existingWorker);
+        System.out.println("AdminService: Worker ID: " + id + " saved successfully");
+        return updatedWorker;
     }
 
     public Worker addCategoriesToWorker(Long workerId, List<Long> categoryIds) throws Exception {
