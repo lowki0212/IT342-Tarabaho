@@ -94,13 +94,13 @@ public class OAuth2Controller {
         // Set cookie and log it
         Cookie tokenCookie = new Cookie("jwtToken", jwtToken);
         tokenCookie.setHttpOnly(true);
-        tokenCookie.setSecure(false); // Local dev
+        tokenCookie.setSecure(true); 
         tokenCookie.setPath("/");
         tokenCookie.setMaxAge(24 * 60 * 60);
-        tokenCookie.setDomain("localhost");
+        tokenCookie.setAttribute("SameSite", "None");
         response.addCookie(tokenCookie);
         System.out.println("Cookie set: jwtToken=" + jwtToken + "; HttpOnly=true; Path=/; MaxAge=86400");
 
-        response.sendRedirect("http://localhost:5173/user-browse");
+        response.sendRedirect("https://it-342-tarabaho-8q1h.vercel.app/user-browse");
     }
 }
