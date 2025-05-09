@@ -126,9 +126,6 @@ const SignIn = () => {
     navigate("/")
   }
 
-  const handleAdminLogin = () => {
-    navigate("/admin-login")
-  }
 
   const handleUserInputChange = (e) => {
     const { name, value } = e.target
@@ -435,11 +432,7 @@ const SignIn = () => {
                   </form>
                 )}
 
-                <div className={styles.adminLogin}>
-                  <button onClick={handleAdminLogin} className={styles.adminButton} disabled={isLoading}>
-                    Admin Login
-                  </button>
-                </div>
+          
               </div>
             </div>
           </div>
