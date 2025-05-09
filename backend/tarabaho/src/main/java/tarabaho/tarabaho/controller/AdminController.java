@@ -1,9 +1,7 @@
 package tarabaho.tarabaho.controller;
 
-import java.io.File;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,14 +27,18 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tarabaho.tarabaho.dto.AuthResponse;
+import tarabaho.tarabaho.dto.UserUpdateDTO;
 import tarabaho.tarabaho.dto.WorkerUpdateDTO;
 import tarabaho.tarabaho.entity.Admin;
+import tarabaho.tarabaho.entity.CategoryRequest;
 import tarabaho.tarabaho.entity.Certificate;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.jwt.JwtUtil;
 import tarabaho.tarabaho.payload.LoginRequest;
+import tarabaho.tarabaho.repository.CategoryRequestRepository;
 import tarabaho.tarabaho.service.AdminService;
+import tarabaho.tarabaho.service.SupabaseRestStorageService;
 import tarabaho.tarabaho.service.UserService;
 import tarabaho.tarabaho.service.WorkerService;
 
@@ -57,6 +59,12 @@ public class AdminController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CategoryRequestRepository categoryRequestRepository;
+
+    @Autowired
+    private SupabaseRestStorageService storageService;
 
     @Operation(summary = "Get all admins", description = "Retrieve a list of all admin accounts")
     @GetMapping("/all")
@@ -221,13 +229,29 @@ public class AdminController {
     }
 
     @Operation(summary = "Edit a user", description = "Update a user account by ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "User updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input"),
+        @ApiResponse(responseCode = "401", description = "Admin not authenticated"),
+        @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @PutMapping("/users/edit/{id}")
-    public ResponseEntity<?> editUser(@PathVariable Long id, @RequestBody User updatedUser) {
+    public ResponseEntity<?> editUser(
+            @PathVariable Long id,
+            @RequestBody UserUpdateDTO userDTO,
+            Authentication authentication
+    ) {
+        System.out.println("AdminController: editUser - Authentication: " + (authentication != null ? authentication.getName() : "null"));
         try {
-            User user = userService.editUser(id, updatedUser);
+            if (authentication == null || !authentication.isAuthenticated()) {
+                System.out.println("AdminController: editUser - Authentication failed");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated.");
+            }
+            User user = adminService.editUser(id, userDTO);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            System.out.println("AdminController: editUser - Failed to update user: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Failed to update user: " + e.getMessage());
         }
     }
 
@@ -385,24 +409,107 @@ public class AdminController {
             if (admin == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Admin not found");
             }
-
-            String projectRoot = System.getProperty("user.dir");
-            String uploadDir = projectRoot + File.separator + "uploads" + File.separator + "profiles" + File.separator;
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("No file uploaded");
             }
-            String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            File serverFile = new File(uploadDir + fileName);
-            file.transferTo(serverFile);
 
-            String filePath = "/profiles/" + fileName;
-            Admin updatedAdmin = adminService.updateProfilePicture(admin.getId(), filePath);
+            // Delete existing profile picture if it exists
+            if (admin.getProfilePicture() != null && !admin.getProfilePicture().isEmpty()) {
+                String existingFileName = admin.getProfilePicture().substring(admin.getProfilePicture().lastIndexOf("/") + 1);
+                try {
+                    storageService.deleteFile("profile-picture", existingFileName);
+                } catch (Exception e) {
+                    System.err.println("Failed to delete old profile picture: " + e.getMessage());
+                }
+            }
+
+            // Upload to Supabase
+            String publicUrl = storageService.uploadFile(file, "profile-picture");
+            Admin updatedAdmin = adminService.updateProfilePicture(admin.getId(), publicUrl);
             return ResponseEntity.ok(updatedAdmin);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload picture: " + e.getMessage());
         }
     }
+
+    @GetMapping("/category-requests/pending")
+public ResponseEntity<?> getPendingCategoryRequests(
+        @RequestParam(required = false) Long workerId,
+        Authentication authentication
+) {
+    try {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated.");
+        }
+        List<CategoryRequest> pendingRequests;
+        if (workerId != null) {
+            pendingRequests = categoryRequestRepository.findByWorkerIdAndStatus(workerId, "PENDING");
+        } else {
+            pendingRequests = categoryRequestRepository.findByStatus("PENDING");
+        }
+        return ResponseEntity.ok(pendingRequests);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body("Failed to fetch pending category requests: " + e.getMessage());
+    }
+}
+
+@Operation(summary = "Approve a category request", description = "Approve a pending category request and add the category to the worker")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Category request approved successfully"),
+        @ApiResponse(responseCode = "401", description = "Admin not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Category request not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request status"),
+        @ApiResponse(responseCode = "500", description = "Failed to approve category request")
+    })
+    @PostMapping("/category-requests/{requestId}/approve")
+    public ResponseEntity<?> approveCategoryRequest(
+            @PathVariable Long requestId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated.");
+            }
+            adminService.approveCategoryRequest(requestId);
+            return ResponseEntity.ok("Category request approved successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to approve category request: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Deny a category request", description = "Deny a pending category request")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Category request denied successfully"),
+        @ApiResponse(responseCode = "401", description = "Admin not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Category request not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid request status"),
+        @ApiResponse(responseCode = "500", description = "Failed to deny category request")
+    })
+    @PostMapping("/category-requests/{requestId}/deny")
+    public ResponseEntity<?> denyCategoryRequest(
+            @PathVariable Long requestId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Admin not authenticated.");
+            }
+            adminService.denyCategoryRequest(requestId);
+            return ResponseEntity.ok("Category request denied successfully.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to deny category request: " + e.getMessage());
+        }
+    }
+   
+    
+
 
     static class TokenResponse {
         private String token;

@@ -39,16 +39,12 @@ const AdminProfile = () => {
             address: response.data.address || "",
             password: "",
           })
-          setProfileImage(
-            response.data.profilePicture
-              ? `${BACKEND_URL}${response.data.profilePicture}`
-              : profilePlaceholder
-          )
+          setProfileImage(response.data.profilePicture || profilePlaceholder)
         }
       } catch (err) {
         console.error("Failed to fetch admin:", err)
         setError("Failed to load profile. Please try again.")
-        navigate("/admin-login") // Redirect to login if fetch fails
+        navigate("/admin-login")
       }
     }
     fetchAdmin()
@@ -81,11 +77,7 @@ const AdminProfile = () => {
         }
       )
       setAdmin(response.data)
-      setProfileImage(
-        response.data.profilePicture
-          ? `${BACKEND_URL}${response.data.profilePicture}`
-          : profilePlaceholder
-      )
+      setProfileImage(response.data.profilePicture || profilePlaceholder)
       setSelectedFile(null)
       setError("")
       console.log("Upload successful:", response.data)
@@ -105,7 +97,7 @@ const AdminProfile = () => {
     setError("")
   }
 
-  const handleSaveChanges = async () => {
+  const handleEditSubmit = async () => {
     try {
       const updatedAdmin = {
         ...admin,
@@ -156,6 +148,18 @@ const AdminProfile = () => {
     setShowLogoutModal(false)
   }
 
+  if (!admin) {
+    return (
+      <div className="admin-profile-page">
+        <AdminNavbar />
+        <div className="admin-profile-content">
+          <div>Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="admin-profile-page">
       <AdminNavbar />
@@ -163,7 +167,6 @@ const AdminProfile = () => {
       <div className="admin-profile-content">
         <div className="admin-profile-header">
           <h1 className="admin-profile-heading">ADMIN PROFILE</h1>
-
           <button className="logout-button" onClick={handleLogout}>
             <svg
               width="20"
@@ -200,121 +203,125 @@ const AdminProfile = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="profile-container">
-          <div className="profile-card">
-            <div className="profile-top-section">
-              <div className="profile-image-section">
-                <img
-                  src={profileImage}
-                  alt="Profile"
-                  className="profile-image"
-                  onClick={handleImageClick}
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
-                  style={{ display: "none" }}
-                />
-              </div>
+        <div className="profile-section">
+          <div className="profile-image-container">
+            <img
+              src={profileImage}
+              alt="Profile"
+              className="profile-image"
+              onClick={handleImageClick}
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              style={{ display: "none" }}
+            />
+          </div>
 
-              <div className="profile-credentials-section">
-                <div className="credential-row">
-                  <div className="credential-label">Username:</div>
-                  <div className="credential-value">
-                    {admin?.username || "Loading..."}
-                  </div>
-                </div>
+          <div className="profile-info">
+            <h2 className="profile-name">{admin.firstname} {admin.lastname}</h2>
+            <p className="profile-description">Username: {admin.username}</p>
+          </div>
+        </div>
 
-                <div className="credential-row">
-                  <div className="credential-label">Password:</div>
-                  <div className="credential-value">
-                    {isEditing ? (
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder="Enter new password"
-                      />
-                    ) : (
-                      "********"
-                    )}
-                  </div>
-                  {!isEditing && (
-                    <a href="#" className="change-password-link" onClick={handleEditToggle}>
-                      Change password
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="edit-profile-container">
-              {isEditing ? (
-                <>
-                  <button className="edit-profile-btn" onClick={handleSaveChanges}>
-                    SAVE CHANGES
-                  </button>
-                  <button
-                    className="edit-profile-btn cancel-btn"
-                    onClick={handleEditToggle}
-                    style={{ backgroundColor: "#ff3b30", marginLeft: "1rem" }}
-                  >
-                    CANCEL
-                  </button>
-                </>
-              ) : (
-                <button className="edit-profile-btn" onClick={handleEditToggle}>
-                  EDIT PROFILE
-                </button>
-              )}
-            </div>
-
-            <div className="profile-details-section">
-              <div className="detail-row">
-                <div className="detail-label">Name:</div>
-                <div className="detail-value">
-                  {admin ? `${admin.firstname} ${admin.lastname}` : "Loading..."}
-                </div>
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Email:</div>
-                {isEditing ? (
+        <div className="details-section">
+          <div className="personal-details">
+            {isEditing ? (
+              <div className="edit-form">
+                <div className="detail-item">
+                  <span className="detail-label">Email:</span>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="detail-input"
+                    className="edit-input"
                   />
-                ) : (
-                  <div className="detail-value">{admin?.email || "N/A"}</div>
-                )}
-              </div>
-              <div className="detail-row">
-                <div className="detail-label">Address:</div>
-                {isEditing ? (
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Address:</span>
                   <input
                     type="text"
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className="detail-input"
+                    className="edit-input"
                   />
-                ) : (
-                  <div className="detail-value">{admin?.address || "N/A"}</div>
-                )}
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Password:</span>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Enter new password"
+                    className="edit-input"
+                  />
+                </div>
+                <div className="action-buttons">
+                  <button className="save-button" onClick={handleEditSubmit}>
+                    Save
+                  </button>
+                  <button className="cancel-button" onClick={handleEditToggle}>
+                    Cancel
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="detail-item">
+                  <span className="detail-label">Full Name:</span>
+                  <span className="detail-value">{admin.firstname} {admin.lastname}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Username:</span>
+                  <span className="detail-value">{admin.username}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Email:</span>
+                  <span className="detail-value">{admin.email || "N/A"}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Address:</span>
+                  <span className="detail-value">{admin.address || "N/A"}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Password:</span>
+                  <span className="detail-value">********</span>
+                  <a href="#" className="change-password-link" onClick={handleEditToggle}>
+                    Change password
+                  </a>
+                </div>
+                <div className="action-buttons">
+                  <button className="edit-button" onClick={handleEditToggle}>
+                    EDIT
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {showLogoutModal && (
-        <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />
+        <div className="modal-overlay">
+          <div className="logout-modal">
+            <h2 className="logout-modal-title">Are you sure you want to log out?</h2>
+            <div className="logout-modal-actions">
+              <button className="save-button" onClick={confirmLogout}>
+                Yes, Log Out
+              </button>
+              <button className="cancel-button" onClick={cancelLogout}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+
       <Footer />
     </div>
   )

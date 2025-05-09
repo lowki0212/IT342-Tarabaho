@@ -34,6 +34,7 @@ import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.dto.WorkerDuplicateCheckDTO;
 import tarabaho.tarabaho.dto.WorkerRegisterDTO;
 import tarabaho.tarabaho.dto.WorkerUpdateDTO;
+import tarabaho.tarabaho.entity.CategoryRequest;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.jwt.JwtUtil;
@@ -760,6 +761,85 @@ public class WorkerController {
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found with username: " + username);
         }
+    }
+    // NEW: Endpoint for workers to submit a single category request
+    @Operation(summary = "Request to add category", description = "Allows a worker to request to be added to a category")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Category request submitted successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid category or request already exists"),
+        @ApiResponse(responseCode = "401", description = "Worker not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Worker not found")
+    })
+    @PostMapping("/{workerId}/request-category")
+    public ResponseEntity<?> requestCategory(
+            @PathVariable Long workerId,
+            @RequestBody CategoryRequestDTO categoryRequestDTO,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
+            }
+            String username = authentication.getName();
+            Optional<Worker> workerOpt = workerService.findByUsername(username);
+            if (!workerOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found.");
+            }
+            Worker worker = workerOpt.get();
+            if (!worker.getId().equals(workerId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Unauthorized: Cannot request category for another worker.");
+            }
+            CategoryRequest request = workerService.requestCategory(workerId, categoryRequestDTO.getCategoryName());
+            return ResponseEntity.ok(request);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("⚠️ " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to submit category request: " + e.getMessage());
+        }
+    }
+
+    // NEW: Endpoint to retrieve all category requests for a specific worker
+    @Operation(summary = "Get category requests for a worker", description = "Retrieve all category requests for a specific worker")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of category requests returned successfully"),
+        @ApiResponse(responseCode = "401", description = "Worker not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Worker not found")
+    })
+    @GetMapping("/{workerId}/category-requests")
+    public ResponseEntity<?> getCategoryRequests(
+            @PathVariable Long workerId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Worker not authenticated.");
+            }
+            String username = authentication.getName();
+            Optional<Worker> workerOpt = workerService.findByUsername(username);
+            if (!workerOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Worker not found.");
+            }
+            Worker worker = workerOpt.get();
+            if (!worker.getId().equals(workerId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Unauthorized: Cannot view category requests for another worker.");
+            }
+            List<CategoryRequest> requests = workerService.getCategoryRequestsByWorkerId(workerId);
+            return ResponseEntity.ok(requests);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to retrieve category requests: " + e.getMessage());
+        }
+    }
+
+
+    // NEW: DTO class for handling single category request payload
+    static class CategoryRequestDTO {
+        private String categoryName;
+        public String getCategoryName() { return categoryName; }
+        public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
     }
 
     static class LoginRequest {

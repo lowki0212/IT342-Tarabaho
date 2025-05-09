@@ -1,20 +1,26 @@
 package tarabaho.tarabaho.service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
+import tarabaho.tarabaho.dto.UserUpdateDTO;
 import tarabaho.tarabaho.dto.WorkerUpdateDTO;
 import tarabaho.tarabaho.entity.Admin;
 import tarabaho.tarabaho.entity.Category;
+import tarabaho.tarabaho.entity.CategoryRequest;
 import tarabaho.tarabaho.entity.Certificate;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.repository.AdminRepository;
 import tarabaho.tarabaho.repository.CategoryRepository;
+import tarabaho.tarabaho.repository.CategoryRequestRepository;
+import tarabaho.tarabaho.repository.UserRepository;
 import tarabaho.tarabaho.repository.WorkerRepository;
 
 @Service
@@ -30,10 +36,16 @@ public class AdminService {
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private CategoryRequestRepository categoryRequestRepository;
+
+    @Autowired
     private CertificateService certificateService;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private PasswordEncoderService passwordEncoderService;
@@ -109,10 +121,10 @@ public class AdminService {
         return adminRepository.save(existingAdmin);
     }
 
-    public Admin updateProfilePicture(Long id, String filePath) throws Exception {
+    public Admin updateProfilePicture(Long id, String publicUrl) throws Exception {
         Admin admin = adminRepository.findById(id)
             .orElseThrow(() -> new Exception("Admin not found"));
-        admin.setProfilePicture(filePath);
+        admin.setProfilePicture(publicUrl);
         return adminRepository.save(admin);
     }
 
@@ -246,4 +258,134 @@ public class AdminService {
         }
         workerRepository.deleteById(id);
     }
+    // NEW: Method to retrieve all pending category requests
+    public List<CategoryRequest> getPendingCategoryRequests() {
+        return categoryRequestRepository.findByStatus("PENDING");
+    }
+
+    // NEW: Method to approve a category request, adding the category to the worker's profile
+    @Transactional
+    public void approveCategoryRequest(Long requestId) {
+        CategoryRequest request = categoryRequestRepository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException("Category request not found with ID: " + requestId));
+        if (!request.getStatus().equals("PENDING")) {
+            throw new IllegalArgumentException("Request is not in PENDING status.");
+        }
+        Worker worker = request.getWorker();
+        Category category = request.getCategory();
+        if (worker.getCategories() == null) {
+            worker.setCategories(new ArrayList<>());
+        }
+        worker.getCategories().add(category);
+        workerRepository.save(worker);
+        request.setStatus("APPROVED");
+        categoryRequestRepository.save(request);
+    }
+
+    // NEW: Method to deny a category request
+    @Transactional
+    public void denyCategoryRequest(Long requestId) {
+        CategoryRequest request = categoryRequestRepository.findById(requestId)
+            .orElseThrow(() -> new IllegalArgumentException("Category request not found with ID: " + requestId));
+        if (!request.getStatus().equals("PENDING")) {
+            throw new IllegalArgumentException("Request is not in PENDING status.");
+        }
+        request.setStatus("DENIED");
+        categoryRequestRepository.save(request);
+    }
+    public User editUser(Long id, UserUpdateDTO userDTO) throws Exception {
+        User existingUser = userRepository.findById(id)
+            .orElseThrow(() -> new Exception("User not found with id: " + id));
+
+        System.out.println("AdminService: Editing user ID: " + id);
+
+        if (userDTO.getFirstname() != null) {
+            existingUser.setFirstname(userDTO.getFirstname());
+            System.out.println("AdminService: Updated firstname to: " + userDTO.getFirstname());
+        }
+
+        if (userDTO.getLastname() != null) {
+            existingUser.setLastname(userDTO.getLastname());
+            System.out.println("AdminService: Updated lastname to: " + userDTO.getLastname());
+        }
+
+        if (userDTO.getUsername() != null && !userDTO.getUsername().equals(existingUser.getUsername())) {
+            if (userRepository.findByUsername(userDTO.getUsername()) != null) {
+                throw new IllegalArgumentException("Username already exists.");
+            }
+            existingUser.setUsername(userDTO.getUsername());
+            System.out.println("AdminService: Updated username to: " + userDTO.getUsername());
+        }
+
+        if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
+            String newHashedPassword = passwordEncoderService.encodePassword(userDTO.getPassword());
+            existingUser.setPassword(newHashedPassword);
+            System.out.println("AdminService: Updated password for user ID: " + id + " to new hash: " + newHashedPassword);
+        } else {
+            System.out.println("AdminService: Password not updated for user ID: " + id);
+        }
+
+        if (userDTO.getEmail() != null && !userDTO.getEmail().equals(existingUser.getEmail())) {
+            if (userRepository.findAllByEmail(userDTO.getEmail()).size() > 0) {
+                throw new IllegalArgumentException("Email already exists.");
+            }
+            existingUser.setEmail(userDTO.getEmail());
+            System.out.println("AdminService: Updated email to: " + userDTO.getEmail());
+        }
+
+        if (userDTO.getPhoneNumber() != null && !userDTO.getPhoneNumber().equals(existingUser.getPhoneNumber())) {
+            if (!userDTO.getPhoneNumber().isEmpty() && userRepository.findAllByPhoneNumber(userDTO.getPhoneNumber()).size() > 0) {
+                throw new IllegalArgumentException("Phone number already exists.");
+            }
+            existingUser.setPhoneNumber(userDTO.getPhoneNumber());
+            System.out.println("AdminService: Updated phone number to: " + userDTO.getPhoneNumber());
+        }
+
+        if (userDTO.getLocation() != null) {
+            existingUser.setLocation(userDTO.getLocation());
+            System.out.println("AdminService: Updated location to: " + userDTO.getLocation());
+        }
+
+        if (userDTO.getBirthday() != null && !userDTO.getBirthday().isEmpty()) {
+            try {
+                existingUser.setBirthday(LocalDate.parse(userDTO.getBirthday()));
+                System.out.println("AdminService: Updated birthday to: " + userDTO.getBirthday());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid birthday format. Use YYYY-MM-DD.");
+            }
+        }
+
+        if (userDTO.getProfilePicture() != null) {
+            existingUser.setProfilePicture(userDTO.getProfilePicture());
+            System.out.println("AdminService: Updated profile picture to: " + userDTO.getProfilePicture());
+        }
+
+        if (userDTO.getLatitude() != null) {
+            existingUser.setLatitude(userDTO.getLatitude());
+            System.out.println("AdminService: Updated latitude to: " + userDTO.getLatitude());
+        }
+
+        if (userDTO.getLongitude() != null) {
+            existingUser.setLongitude(userDTO.getLongitude());
+            System.out.println("AdminService: Updated longitude to: " + userDTO.getLongitude());
+        }
+
+        if (userDTO.getPreferredRadius() != null) {
+            if (userDTO.getPreferredRadius() <= 0) {
+                throw new IllegalArgumentException("Preferred radius must be greater than 0.");
+            }
+            existingUser.setPreferredRadius(userDTO.getPreferredRadius());
+            System.out.println("AdminService: Updated preferred radius to: " + userDTO.getPreferredRadius());
+        }
+
+        if (userDTO.getIsVerified() != null) {
+            existingUser.setIsVerified(userDTO.getIsVerified());
+            System.out.println("AdminService: Updated isVerified to: " + userDTO.getIsVerified());
+        }
+
+        User updatedUser = userRepository.save(existingUser);
+        System.out.println("AdminService: User ID: " + id + " saved successfully");
+        return updatedUser;
+    }
+
 }

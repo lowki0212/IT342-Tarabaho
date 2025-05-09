@@ -20,6 +20,7 @@ import {
   FaPhone,
   FaBirthdayCake,
   FaEdit,
+  FaCheck,
 } from "react-icons/fa"
 
 const UserProfile = () => {
@@ -164,6 +165,16 @@ const UserProfile = () => {
     navigate("/booking-history")
   }
 
+  // Determine verification status
+  const getVerificationStatus = () => {
+    if (user?.isVerified) {
+      return { text: "Verified", className: "verified-status" }
+    }
+    return { text: "Not Verified", className: "not-verified-status" }
+  }
+
+  const verificationStatus = getVerificationStatus()
+
   return (
     <div className="profile-page">
       <UserNavbar activePage="user-profile" />
@@ -208,6 +219,7 @@ const UserProfile = () => {
                   className="profile-image"
                   onClick={handleImageClick}
                 />
+                
                 <input
                   type="file"
                   accept="image/*"
@@ -285,7 +297,15 @@ const UserProfile = () => {
                       <span className="detail-label">
                         <FaUser className="detail-icon" /> Name:
                       </span>
-                      <span className="detail-value">{user ? `${user.firstname} ${user.lastname}` : "Loading..."}</span>
+                      <span className="detail-value">
+                        {user ? `${user.firstname} ${user.lastname}` : "Loading..."}
+                        <span
+                          className={verificationStatus.className}
+                          title={`User is ${verificationStatus.text.toLowerCase()}`}
+                        >
+                          {verificationStatus.text}
+                        </span>
+                      </span>
                     </div>
                     <div className="profile-detail-item">
                       <span className="detail-label">

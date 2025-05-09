@@ -10,8 +10,12 @@ import org.springframework.stereotype.Service;
 
 import tarabaho.tarabaho.entity.Booking;
 import tarabaho.tarabaho.entity.BookingStatus;
+import tarabaho.tarabaho.entity.Category;
+import tarabaho.tarabaho.entity.CategoryRequest;
 import tarabaho.tarabaho.entity.Worker;
 import tarabaho.tarabaho.repository.BookingRepository;
+import tarabaho.tarabaho.repository.CategoryRepository;
+import tarabaho.tarabaho.repository.CategoryRequestRepository;
 import tarabaho.tarabaho.repository.WorkerRepository;
 
 @Service
@@ -25,6 +29,12 @@ public class WorkerService {
 
     @Autowired
     private PasswordEncoderService passwordEncoderService;
+
+    @Autowired
+    private CategoryRequestRepository categoryRequestRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public List<Worker> getWorkersByCategory(String categoryName) {
         return workerRepository.findByCategoryName(categoryName);
@@ -220,4 +230,30 @@ public class WorkerService {
         System.out.println("WorkerService: Found " + similarWorkers.size() + " similar workers for worker ID: " + workerId);
         return similarWorkers;
     }
+    // NEW: Method to handle submitting a single category request
+    public CategoryRequest requestCategory(Long workerId, String categoryName) {
+        Worker worker = workerRepository.findById(workerId)
+            .orElseThrow(() -> new IllegalArgumentException("Worker not found with ID: " + workerId));
+        Category category = categoryRepository.findByName(categoryName);
+        if (category == null) {
+            throw new IllegalArgumentException("Category not found: " + categoryName);
+        }
+        if (worker.getCategories().contains(category)) {
+            throw new IllegalArgumentException("Worker is already associated with category: " + categoryName);
+        }
+        List<CategoryRequest> existingRequests = categoryRequestRepository.findByWorkerIdAndCategoryId(workerId, category.getId());
+        if (!existingRequests.isEmpty()) {
+            throw new IllegalArgumentException("A request for this category is already pending or processed.");
+        }
+        CategoryRequest request = new CategoryRequest();
+        request.setWorker(worker);
+        request.setCategory(category);
+        request.setStatus("PENDING");
+        return categoryRequestRepository.save(request);
+    }
+
+    // NEW: Method to retrieve all category requests for a worker
+    public List<CategoryRequest> getCategoryRequestsByWorkerId(Long workerId) {
+        return categoryRequestRepository.findByWorkerId(workerId);
+    }   
 }

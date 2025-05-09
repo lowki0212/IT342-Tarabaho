@@ -24,9 +24,10 @@ const TrabahadorDetails = () => {
     isVerified: false,
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCategoryRequestModal, setShowCategoryRequestModal] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
   useEffect(() => {
@@ -71,6 +72,27 @@ const TrabahadorDetails = () => {
           console.error("Failed to fetch categories:", catErr);
         }
 
+        // Fetch pending category requests for this worker
+        let workerPendingRequests = [];
+        try {
+          const pendingRequestsResponse = await axios.get(
+            `${BACKEND_URL}/api/admin/category-requests/pending`,
+            { withCredentials: true }
+          );
+          console.log("Pending requests response:", pendingRequestsResponse.data);
+          workerPendingRequests = pendingRequestsResponse.data.filter(
+            request => request.worker.id === parseInt(id)
+          );
+          setPendingRequests(workerPendingRequests);
+        } catch (reqErr) {
+          console.error("Failed to fetch pending requests:", reqErr);
+          if (reqErr.response) {
+            console.error("Response data:", reqErr.response.data);
+            console.error("Response status:", reqErr.response.status);
+            console.error("Response headers:", reqErr.response.headers);
+          }
+        }
+
         const workerData = {
           id: fetchedWorker.id ?? 0,
           name: `${fetchedWorker.firstName ?? "Unknown"} ${fetchedWorker.lastName ?? "Worker"}`,
@@ -98,6 +120,11 @@ const TrabahadorDetails = () => {
         });
       } catch (workerErr) {
         console.error("Failed to fetch worker:", workerErr);
+        if (workerErr.response) {
+          console.error("Response data:", workerErr.response.data);
+          console.error("Response status:", workerErr.response.status);
+          console.error("Response headers:", workerErr.response.headers);
+        }
         setError(
           workerErr.response?.status === 401
             ? "Your session has expired. Please log in again."
@@ -174,8 +201,8 @@ const TrabahadorDetails = () => {
     }
   };
 
-  const handleAddCategoryClick = () => {
-    setShowCategoryModal(true);
+  const handleRequestCategoryClick = () => {
+    setShowCategoryRequestModal(true);
     setSelectedCategories([]);
     setError("");
   };
@@ -185,33 +212,98 @@ const TrabahadorDetails = () => {
     setSelectedCategories(selectedOptions);
   };
 
-  const handleAddCategorySubmit = async () => {
+  const handleRequestCategorySubmit = async () => {
     try {
       if (selectedCategories.length === 0) {
-        setError("Please select at least one category.");
+        setError("Please select at least one category to request.");
         return;
       }
-      const response = await axios.post(
-        `${BACKEND_URL}/api/admin/workers/${worker.id}/categories`,
-        selectedCategories,
+      // For each selected category, send a request to the worker's endpoint
+      for (const categoryId of selectedCategories) {
+        const category = categories.find(cat => cat.id === categoryId);
+        if (!category) continue;
+        const requestData = { categoryName: category.name };
+        await axios.post(
+          `${BACKEND_URL}/api/worker/${worker.id}/request-category`,
+          requestData,
+          { withCredentials: true }
+        );
+      }
+      // Refresh pending requests
+      const pendingRequestsResponse = await axios.get(
+        `${BACKEND_URL}/api/admin/category-requests/pending`,
         { withCredentials: true }
       );
-      const updatedWorker = response.data;
+      const workerPendingRequests = pendingRequestsResponse.data.filter(
+        request => request.worker.id === parseInt(id)
+      );
+      setPendingRequests(workerPendingRequests);
+      setShowCategoryRequestModal(false);
+      setError("");
+    } catch (err) {
+      console.error("Failed to request categories:", err);
+      setError(err.response?.data?.replace("⚠️ ", "") || "Failed to request categories. Please try again.");
+    }
+  };
+
+  const handleCategoryRequestModalClose = () => {
+    setShowCategoryRequestModal(false);
+    setError("");
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    try {
+      await axios.post(
+        `${BACKEND_URL}/api/admin/category-requests/${requestId}/approve`,
+        {},
+        { withCredentials: true }
+      );
+      // Refresh worker data to update categories
+      const workerResponse = await axios.get(`${BACKEND_URL}/api/worker/${id}`, {
+        withCredentials: true,
+      });
+      const updatedWorker = workerResponse.data;
       setWorker({
         ...worker,
         services: updatedWorker.categories?.map(category => category.name) ?? [],
       });
-      setShowCategoryModal(false);
+      // Refresh pending requests
+      const pendingRequestsResponse = await axios.get(
+        `${BACKEND_URL}/api/admin/category-requests/pending`,
+        { withCredentials: true }
+      );
+      const workerPendingRequests = pendingRequestsResponse.data.filter(
+        request => request.worker.id === parseInt(id)
+      );
+      setPendingRequests(workerPendingRequests);
       setError("");
     } catch (err) {
-      console.error("Failed to add categories:", err);
-      setError(err.response?.data?.replace("⚠️ ", "") || "Failed to add categories. Please try again.");
+      console.error("Failed to approve request:", err);
+      setError(err.response?.data?.replace("⚠️ ", "") || "Failed to approve request. Please try again.");
     }
   };
 
-  const handleCategoryModalClose = () => {
-    setShowCategoryModal(false);
-    setError("");
+  const handleDenyRequest = async (requestId) => {
+    try {
+      await axios.post(
+        `${BACKEND_URL}/api/admin/category-requests/${requestId}/deny`,
+        {},
+        { withCredentials: true }
+      );
+      // Refresh pending requests
+      const pendingRequestsResponse = await axios.get(
+        `${BACKEND_URL}/api/admin/category-requests/pending`,
+        { withCredentials: true }
+      );
+      const workerPendingRequests = pendingRequestsResponse.data.filter(
+        request => request.worker.id === parseInt(id)
+      );
+      setPendingRequests(workerPendingRequests);
+      setError("");
+    } catch (err) {
+      console.error("Failed to deny request:", err);
+      setError(err.response?.data?.replace("⚠️ ", "") || "Failed to deny request. Please try again.");
+    }
   };
 
   const handleDeleteClick = () => {
@@ -248,7 +340,7 @@ const TrabahadorDetails = () => {
     );
   }
 
-  if (error && !showCategoryModal) {
+  if (error && !showCategoryRequestModal) {
     return (
       <div className="trabahador-details-page">
         <AdminNavbar />
@@ -422,10 +514,9 @@ const TrabahadorDetails = () => {
                   <button className="edit-button" onClick={handleEditToggle}>
                     EDIT
                   </button>
-                  {/* Only show Add Category button if worker is verified */}
                   {worker.isVerified && (
-                    <button className="add-category-button" onClick={handleAddCategoryClick}>
-                      ADD CATEGORY
+                    <button className="add-category-button" onClick={handleRequestCategoryClick}>
+                      REQUEST CATEGORY
                     </button>
                   )}
                   <button className="delete-button" onClick={handleDeleteClick}>
@@ -437,11 +528,37 @@ const TrabahadorDetails = () => {
           </div>
 
           <div className="documents-section">
-            <h3 className="documents-title">CERTIFICATES:</h3>
+            <h3 className="documents-title">PENDING CATEGORY REQUESTS:</h3>
+            {pendingRequests.length > 0 ? (
+              pendingRequests.map((request) => (
+                <div key={request.id} className="document-item">
+                  <div className="document-name">
+                    {request.category.name} (Status: {request.status})
+                  </div>
+                  <div className="category-request-actions">
+                    <button
+                      className="approve-button"
+                      onClick={() => handleApproveRequest(request.id)}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="deny-button"
+                      onClick={() => handleDenyRequest(request.id)}
+                    >
+                      Deny
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p>No pending category requests.</p>
+            )}
 
+            <h3 className="documents-title">CERTIFICATES:</h3>
             <div className="documents-list">
               {worker.certificates.length > 0 ? (
-                worker.certificates.map((certificate, index) => (
+                worker.certificates.map((certificate) => (
                   <div key={certificate.id} className="document-item">
                     <div
                       className="document-name"
@@ -504,10 +621,10 @@ const TrabahadorDetails = () => {
         </div>
       )}
 
-      {showCategoryModal && (
+      {showCategoryRequestModal && (
         <div className="modal-overlay">
           <div className="category-modal">
-            <h2 className="category-modal-title">Add Categories for {worker.name}</h2>
+            <h2 className="category-modal-title">Request Categories for {worker.name}</h2>
             {error && <div className="error-message">{error}</div>}
             <div className="category-modal-content">
               <select
@@ -516,18 +633,24 @@ const TrabahadorDetails = () => {
                 onChange={handleCategoryChange}
                 className="category-select"
               >
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
+                {categories
+                  .filter(
+                    (category) =>
+                      !worker.services.includes(category.name) &&
+                      !pendingRequests.some((req) => req.category.name === category.name)
+                  )
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
               </select>
             </div>
             <div className="category-modal-actions">
-              <button className="category-save-button" onClick={handleAddCategorySubmit}>
-                Save
+              <button className="category-save-button" onClick={handleRequestCategorySubmit}>
+                Request
               </button>
-              <button className="category-cancel-button" onClick={handleCategoryModalClose}>
+              <button className="category-cancel-button" onClick={handleCategoryRequestModalClose}>
                 Cancel
               </button>
             </div>

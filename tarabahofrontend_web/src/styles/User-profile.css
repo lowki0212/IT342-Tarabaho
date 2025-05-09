@@ -1,9 +1,9 @@
-/* UserProfile.css */
 .profile-page {
   width: 100vw;
   min-height: 100vh;
   background-color: #f5f5f5; /* Light background for contrast */
   overflow-y: auto;
+  font-family: "Arial", sans-serif;
 }
 
 .profile-content {
@@ -18,6 +18,16 @@
   margin-bottom: 30px;
   text-align: center;
   text-transform: uppercase;
+}
+
+.error-message {
+  background-color: #ffe6e6;
+  color: #d32f2f;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
 .profile-container {
@@ -118,6 +128,10 @@
   font-size: 0.9rem;
   font-weight: 500;
   transition: background-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 15px;
 }
 
 .edit-profile-btn:hover {
@@ -152,6 +166,117 @@
 
 .detail-value {
   color: #555;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.verified-status {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.not-verified-status {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  color: #616161;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.verified-icon {
+  margin-right: 4px;
+  font-size: 0.9rem;
+  color: #0066cc;
+}
+
+/* Edit Form Styles */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-group label {
+  width: 150px;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s;
+}
+
+.form-input:focus {
+  border-color: #0066cc;
+  outline: none;
+  background-color: white;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.save-btn:hover {
+  background-color: #0055aa;
+  transform: translateY(-2px);
+}
+
+.cancel-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #e63939;
+  transform: translateY(-2px);
 }
 
 /* Account Info Section */
@@ -182,22 +307,6 @@
   color: #555;
 }
 
-.change-password {
-  color: #0066cc;
-  margin-left: 15px;
-  text-decoration: none;
-  font-size: 0.9rem;
-  font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
-
-.change-password:hover {
-  background-color: rgba(0, 102, 204, 0.1);
-  text-decoration: none;
-}
-
 .connected-accounts {
   margin-top: 25px;
 }
@@ -225,15 +334,15 @@
   margin-right: 20px;
 }
 
-.facebook {
+.social-icon.facebook {
   color: #1877f2;
 }
 
-.instagram {
+.social-icon.instagram {
   color: #e1306c;
 }
 
-.tiktok {
+.social-icon.tiktok {
   color: #000000;
 }
 
@@ -291,148 +400,202 @@
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .profile-container {
-      flex-direction: column;
+    flex-direction: column;
   }
 
   .profile-sidebar {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 15px 0;
-      display: flex;
-      justify-content: space-around;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 15px 0;
+    display: flex;
+    justify-content: space-around;
   }
 
   .sidebar-item {
-      padding: 10px 15px;
+    padding: 10px 15px;
   }
 
   .profile-info-section {
-      flex-direction: column;
-      align-items: center;
+    flex-direction: column;
+    align-items: center;
   }
 
   .profile-image-container {
-      margin-right: 0;
-      margin-bottom: 30px;
+    margin-right: 0;
+    margin-bottom: 30px;
   }
 
   .profile-image {
-      width: 120px; /* Smaller fixed size for tablets */
-      height: 120px;
+    width: 120px; /* Smaller fixed size for tablets */
+    height: 120px;
+  }
+
+  .verified-status,
+  .not-verified-status {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+  }
+
+  .verified-icon {
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 768px) {
   .profile-title {
-      font-size: 2.2rem;
+    font-size: 2.2rem;
   }
 
   .profile-content {
-      padding: 20px;
+    padding: 20px;
   }
 
   .profile-container {
-      min-height: 400px;
+    min-height: 400px;
   }
 
   .profile-main {
-      padding: 20px;
+    padding: 20px;
   }
 
   .profile-info-section {
-      padding: 15px;
+    padding: 15px;
   }
 
   .profile-image {
-      width: 100px; /* Smaller fixed size for mobile */
-      height: 100px;
+    width: 100px; /* Smaller fixed size for mobile */
+    height: 100px;
   }
 
   .edit-profile-btn {
-      padding: 8px 15px;
-      font-size: 0.8rem;
+    padding: 8px 15px;
+    font-size: 0.8rem;
   }
 
   .profile-detail-item {
-      margin-bottom: 15px;
-      padding-bottom: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
   }
 
   .detail-label {
-      font-size: 0.9rem;
+    font-size: 0.9rem;
   }
 
   .detail-value {
-      font-size: 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .verified-status,
+  .not-verified-status {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .verified-icon {
+    font-size: 0.75rem;
+  }
+
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .form-group label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .form-input {
+    width: 100%;
+  }
+
+  .form-actions {
+    justify-content: center;
   }
 
   .account-info-section {
-      padding: 15px;
+    padding: 15px;
   }
 
   .tarabaho-watermark {
-      bottom: 20px;
-      right: 20px;
+    bottom: 20px;
+    right: 20px;
   }
 
   .watermark-text {
-      font-size: 1.8rem;
+    font-size: 1.8rem;
   }
 
   .watermark-subtext {
-      font-size: 0.7rem;
+    font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
   .profile-title {
-      font-size: 1.8rem;
+    font-size: 1.8rem;
   }
 
   .sidebar-item {
-      padding: 8px 10px;
-      font-size: 0.9rem;
+    padding: 8px 10px;
+    font-size: 0.9rem;
   }
 
   .sidebar-icon {
-      font-size: 1rem;
+    font-size: 1rem;
   }
 
   .profile-image {
-      width: 80px; /* Smallest fixed size for small screens */
-      height: 80px;
+    width: 80px; /* Smallest fixed size for small screens */
+    height: 80px;
   }
 
   .edit-profile-btn {
-      padding: 6px 12px;
-      font-size: 0.7rem;
+    padding: 6px 12px;
+    font-size: 0.7rem;
   }
 
   .detail-label,
   .detail-value {
-      font-size: 0.8rem;
+    font-size: 0.8rem;
+  }
+
+  .verified-status,
+  .not-verified-status {
+    font-size: 0.7rem;
+    padding: 2px 5px;
+  }
+
+  .verified-icon {
+    font-size: 0.7rem;
   }
 
   .credential-label,
   .credential-value {
-      font-size: 0.8rem;
-  }
-
-  .change-password {
-      font-size: 0.8rem;
+    font-size: 0.8rem;
   }
 
   .connected-accounts-title {
-      font-size: 1rem;
+    font-size: 1rem;
   }
 
   .social-icon {
-      font-size: 1.3rem;
+    font-size: 1.3rem;
   }
 
   .connect-btn {
-      padding: 6px 15px;
-      font-size: 0.8rem;
+    padding: 6px 15px;
+    font-size: 0.8rem;
+  }
+
+  .form-input {
+    font-size: 0.8rem;
+  }
+
+  .save-btn,
+  .cancel-btn {
+    padding: 8px 15px;
+    font-size: 0.8rem;
   }
 }

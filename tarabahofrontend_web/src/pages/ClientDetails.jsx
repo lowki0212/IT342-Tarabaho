@@ -18,9 +18,12 @@ const ClientDetails = () => {
     email: "",
     phoneNumber: "",
     birthday: "",
-    address: "",
+    location: "",
     biography: "",
     isVerified: false,
+    firstname: "",
+    lastname: "",
+    username: "",
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
@@ -56,9 +59,12 @@ const ClientDetails = () => {
           email: clientData.email,
           phoneNumber: clientData.phoneNumber,
           birthday: clientData.birthday,
-          address: clientData.address,
+          location: clientData.address,
           biography: clientData.biography,
           isVerified: clientData.isVerified,
+          firstname: clientData.firstname,
+          lastname: clientData.lastname,
+          username: clientData.username,
         });
       } catch (err) {
         console.error("Failed to fetch client:", err);
@@ -97,22 +103,43 @@ const ClientDetails = () => {
 
   const handleEditSubmit = async () => {
     try {
-      const updatedClient = {
+      // Prepare the DTO with all fields, similar to TrabahadorDetails.jsx
+      const updatedUser = {
         email: editForm.email,
         phoneNumber: editForm.phoneNumber,
         birthday: editForm.birthday,
-        location: editForm.address,
+        location: editForm.location,
         biography: editForm.biography,
         isVerified: editForm.isVerified,
-        firstname: client.firstname,
-        lastname: client.lastname,
-        username: client.username,
+        firstname: editForm.firstname,
+        lastname: editForm.lastname,
+        username: editForm.username,
       };
-      console.log("Submitting update for client ID:", client.id, updatedClient);
+
+      console.log("Sending update request with payload:", updatedUser);
+
+      // Attempt to get a fresh token
+      try {
+        const tokenResponse = await axios.get(`${BACKEND_URL}/api/admin/get-token`, {
+          withCredentials: true,
+        });
+        console.log("Retrieved token:", tokenResponse.data.token);
+      } catch (tokenErr) {
+        console.error("Failed to refresh token:", tokenErr);
+        if (tokenErr.response?.status === 401) {
+          setError("Your session has expired. Please log in again.");
+          navigate("/admin-login");
+          return;
+        }
+      }
+
       const response = await axios.put(
         `${BACKEND_URL}/api/admin/users/edit/${client.id}`,
-        updatedClient,
-        { withCredentials: true }
+        updatedUser,
+        {
+          withCredentials: true,
+          headers: { "Content-Type": "application/json" },
+        }
       );
       console.log("Update response:", response.status, response.data);
       const updatedData = response.data;
@@ -123,16 +150,23 @@ const ClientDetails = () => {
         birthday: updatedData.birthday ?? "N/A",
         address: updatedData.location ?? "N/A",
         biography: updatedData.biography ?? "No biography available.",
-        isVerified: updatedData.isVerified ?? false,
+        isVerified: updatedData.isVerified ?? client.isVerified,
         firstname: updatedData.firstname ?? client.firstname,
         lastname: updatedData.lastname ?? client.lastname,
         username: updatedData.username ?? client.username,
+        name: `${updatedData.firstname ?? client.firstname} ${updatedData.lastname ?? client.lastname}`,
+        fullName: `${updatedData.firstname ?? client.firstname} ${updatedData.lastname ?? client.lastname}`,
       });
       setIsEditing(false);
       setError("");
     } catch (err) {
       console.error("Failed to update client:", err);
-      setError(err.response?.data?.message || "Failed to update client. Please try again.");
+      if (err.response?.status === 401) {
+        setError("Your session has expired. Please log in again.");
+        navigate("/admin-login");
+      } else {
+        setError(err.response?.data || "Failed to update client. Please try again.");
+      }
     }
   };
 
@@ -218,6 +252,18 @@ const ClientDetails = () => {
             {isEditing ? (
               <div className="edit-form">
                 <div className="detail-item">
+                  <span className="detail-label">First Name:</span>
+                  <input type="text" name="firstname" value={editForm.firstname} onChange={handleEditChange} className="edit-input" />
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Last Name:</span>
+                  <input type="text" name="lastname" value={editForm.lastname} onChange={handleEditChange} className="edit-input" />
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Username:</span>
+                  <input type="text" name="username" value={editForm.username} onChange={handleEditChange} className="edit-input" />
+                </div>
+                <div className="detail-item">
                   <span className="detail-label">Email:</span>
                   <input type="email" name="email" value={editForm.email} onChange={handleEditChange} className="edit-input" />
                 </div>
@@ -231,7 +277,7 @@ const ClientDetails = () => {
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Address:</span>
-                  <input type="text" name="address" value={editForm.address} onChange={handleEditChange} className="edit-input" />
+                  <input type="text" name="location" value={editForm.location} onChange={handleEditChange} className="edit-input" />
                 </div>
                 <div className="detail-item">
                   <span className="detail-label">Biography:</span>
