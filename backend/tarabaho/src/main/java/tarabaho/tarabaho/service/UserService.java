@@ -67,10 +67,6 @@ public class UserService {
     }
 
     public User saveUser(User user) {
-        // Hash password if provided
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoderService.encodePassword(user.getPassword()));
-        }
         return userRepository.save(user);
     }
 

@@ -19,16 +19,17 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaBirthdayCake,
-  FaEdit,
+  FaPen,
   FaCheck,
+  FaTimes,
 } from "react-icons/fa";
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [editingField, setEditingField] = useState(null);
+  const [editValues, setEditValues] = useState({
     email: "",
     location: "",
     birthday: "",
@@ -45,7 +46,6 @@ const UserProfile = () => {
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
-  // Use environment variable for backend URL
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -56,15 +56,13 @@ const UserProfile = () => {
         });
         if (response.data) {
           setUser(response.data);
-          setFormData({
+          setEditValues({
             email: response.data.email || "",
             location: response.data.location || "",
             birthday: response.data.birthday || "",
             password: "",
           });
-          setProfileImage(
-            response.data.profilePicture || "/placeholder.svg" // Use Supabase URL directly
-          );
+          setProfileImage(response.data.profilePicture || "/placeholder.svg");
         }
       } catch (err) {
         console.error("Failed to fetch user:", err);
@@ -88,22 +86,19 @@ const UserProfile = () => {
       return;
     }
     setSelectedFile(file);
-    console.log("Selected file:", file.name);
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      console.log("Uploading file:", file.name);
       const response = await axios.post(`${BACKEND_URL}/api/user/upload-picture`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });
       setUser(response.data);
-      setProfileImage(response.data.profilePicture || profileImage); // Use Supabase URL
+      setProfileImage(response.data.profilePicture || profileImage);
       setSelectedFile(null);
       setError("");
-      console.log("Upload successful:", response.data);
     } catch (err) {
       console.error("Failed to upload picture:", err);
       setError(err.response?.data || "Failed to upload picture. Please try again.");
@@ -116,44 +111,60 @@ const UserProfile = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setEditValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
+  const handleEditField = (field) => {
+    setEditingField(field);
     setError("");
   };
 
-  const handleSaveChanges = async () => {
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    if (user) {
+      setEditValues({
+        email: user.email || "",
+        location: user.location || "",
+        birthday: user.birthday || "",
+        password: "",
+      });
+    }
+  };
+
+  const handleSaveField = async (field) => {
     try {
-      // Validate password length if provided
-      if (formData.password && formData.password.length < 8) {
-        setError("Password must be at least 8 characters long.");
-        return;
+      // Validate password if editing password
+      if (field === "password") {
+        if (!editValues.password) {
+          setError("Password cannot be empty.");
+          return;
+        }
+        if (editValues.password.length < 8) {
+          setError("Password must be at least 8 characters long.");
+          return;
+        }
       }
 
-      // Create updateData with only the fields to be updated
+      // Create updateData with only the edited field
       const updateData = {
-        email: formData.email,
-        location: formData.location,
-        birthday: formData.birthday,
+        [field]: editValues[field],
       };
 
-      // Only include password if it's non-empty
-      if (formData.password.trim() !== "") {
-        updateData.password = formData.password;
+      // Explicitly exclude password if it's empty
+      if (field === "password" && !editValues.password) {
+        delete updateData.password;
       }
 
       const response = await axios.put(`${BACKEND_URL}/api/user/update-profile`, updateData, {
         withCredentials: true,
       });
       setUser(response.data);
-      setIsEditing(false);
-      setFormData((prev) => ({ ...prev, password: "" })); // Reset password field
+      setEditingField(null);
+      setEditValues((prev) => ({ ...prev, password: "" })); // Reset password field
       setError("");
     } catch (err) {
-      console.error("Failed to update profile:", err);
-      setError(err.response?.data || "Failed to update profile. Please try again.");
+      console.error(`Failed to update ${field}:`, err);
+      setError(err.response?.data || `Failed to update ${field}. Please try again.`);
     }
   };
 
@@ -184,7 +195,6 @@ const UserProfile = () => {
     navigate("/booking-history");
   };
 
-  // Determine verification status
   const getVerificationStatus = () => {
     if (user?.isVerified) {
       return { text: "Verified", className: "verified-status" };
@@ -238,7 +248,6 @@ const UserProfile = () => {
                   className="profile-image"
                   onClick={handleImageClick}
                 />
-                
                 <input
                   type="file"
                   accept="image/*"
@@ -250,111 +259,163 @@ const UserProfile = () => {
               </div>
 
               <div className="profile-details">
-                {isEditing ? (
-                  <div className="edit-form">
-                    <div className="form-group">
-                      <label>
-                        <FaEnvelope className="detail-icon" /> Email:
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>
-                        <FaMapMarkerAlt className="detail-icon" /> Address:
-                      </label>
-                      <input
-                        type="text"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>
-                        <FaBirthdayCake className="detail-icon" /> Birthdate:
-                      </label>
-                      <input
-                        type="date"
-                        name="birthday"
-                        value={formData.birthday}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>
-                        <FaUser className="detail-icon" /> Password:
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        placeholder="Enter new password"
-                      />
-                    </div>
-                    <div className="form-actions">
-                      <button className="save-btn" onClick={handleSaveChanges}>
-                        Save Changes
-                      </button>
-                      <button className="cancel-btn" onClick={handleEditToggle}>
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="profile-detail-item">
-                      <span className="detail-label">
-                        <FaUser className="detail-icon" /> Name:
-                      </span>
-                      <span className="detail-value">
-                        {user ? `${user.firstname} ${user.lastname}` : "Loading..."}
-                        <span
-                          className={verificationStatus.className}
-                          title={`User is ${verificationStatus.text.toLowerCase()}`}
-                        >
-                          {verificationStatus.text}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="detail-label">
-                        <FaEnvelope className="detail-icon" /> Email:
-                      </span>
-                      <span className="detail-value">{user?.email || "N/A"}</span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="detail-label">
-                        <FaMapMarkerAlt className="detail-icon" /> Address:
-                      </span>
-                      <span className="detail-value">{user?.location || "N/A"}</span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="detail-label">
-                        <FaPhone className="detail-icon" /> Contact no.:
-                      </span>
-                      <span className="detail-value">{user?.phoneNumber || "N/A"}</span>
-                    </div>
-                    <div className="profile-detail-item">
-                      <span className="detail-label">
-                        <FaBirthdayCake className="detail-icon" /> Birthdate:
-                      </span>
-                      <span className="detail-value">{user?.birthday || "N/A"}</span>
-                    </div>
-                    <button className="edit-profile-btn" onClick={handleEditToggle}>
-                      <FaEdit /> Edit Profile
-                    </button>
-                  </>
-                )}
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaUser className="detail-icon" /> Name:
+                  </span>
+                  <span className="detail-value">
+                    {user ? `${user.firstname} ${user.lastname}` : "Loading..."}
+                    <span
+                      className={verificationStatus.className}
+                      title={`User is ${verificationStatus.text.toLowerCase()}`}
+                    >
+                      {verificationStatus.text}
+                    </span>
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaEnvelope className="detail-icon" /> Email:
+                  </span>
+                  <span className="detail-value">
+                    {editingField === "email" ? (
+                      <>
+                        <input
+                          type="email"
+                          name="email"
+                          value={editValues.email}
+                          onChange={handleInputChange}
+                          className="detail-input"
+                          autoFocus
+                        />
+                        <div className="edit-actions">
+                          <button className="save-btn" onClick={() => handleSaveField("email")}>
+                            <FaCheck />
+                          </button>
+                          <button className="cancel-btn" onClick={handleCancelEdit}>
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {user?.email || "N/A"}
+                        <button className="edit-btn" onClick={() => handleEditField("email")}>
+                          <FaPen />
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaMapMarkerAlt className="detail-icon" /> Address:
+                  </span>
+                  <span className="detail-value">
+                    {editingField === "location" ? (
+                      <>
+                        <input
+                          type="text"
+                          name="location"
+                          value={editValues.location}
+                          onChange={handleInputChange}
+                          className="detail-input"
+                          autoFocus
+                        />
+                        <div className="edit-actions">
+                          <button className="save-btn" onClick={() => handleSaveField("location")}>
+                            <FaCheck />
+                          </button>
+                          <button className="cancel-btn" onClick={handleCancelEdit}>
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {user?.location || "N/A"}
+                        <button className="edit-btn" onClick={() => handleEditField("location")}>
+                          <FaPen />
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaPhone className="detail-icon" /> Contact no.:
+                  </span>
+                  <span className="detail-value">{user?.phoneNumber || "N/A"}</span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaBirthdayCake className="detail-icon" /> Birthdate:
+                  </span>
+                  <span className="detail-value">
+                    {editingField === "birthday" ? (
+                      <>
+                        <input
+                          type="date"
+                          name="birthday"
+                          value={editValues.birthday}
+                          onChange={handleInputChange}
+                          className="detail-input"
+                          autoFocus
+                        />
+                        <div className="edit-actions">
+                          <button className="save-btn" onClick={() => handleSaveField("birthday")}>
+                            <FaCheck />
+                          </button>
+                          <button className="cancel-btn" onClick={handleCancelEdit}>
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {user?.birthday || "N/A"}
+                        <button className="edit-btn" onClick={() => handleEditField("birthday")}>
+                          <FaPen />
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="profile-detail-item">
+                  <span className="detail-label">
+                    <FaUser className="detail-icon" /> Password:
+                  </span>
+                  <span className="detail-value">
+                    {editingField === "password" ? (
+                      <>
+                        <input
+                          type="password"
+                          name="password"
+                          value={editValues.password}
+                          onChange={handleInputChange}
+                          className="detail-input"
+                          placeholder="Enter new password"
+                          autoFocus
+                        />
+                        <div className="edit-actions">
+                          <button className="save-btn" onClick={() => handleSaveField("password")}>
+                            <FaCheck />
+                          </button>
+                          <button className="cancel-btn" onClick={handleCancelEdit}>
+                            <FaTimes />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        ••••••••
+                        <button className="edit-btn" onClick={() => handleEditField("password")}>
+                          <FaPen />
+                        </button>
+                      </>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
 

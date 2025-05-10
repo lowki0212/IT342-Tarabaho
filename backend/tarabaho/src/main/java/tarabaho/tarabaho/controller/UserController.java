@@ -31,6 +31,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import tarabaho.tarabaho.dto.AuthResponse;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.jwt.JwtUtil;
+import tarabaho.tarabaho.service.PasswordEncoderService;
 import tarabaho.tarabaho.service.SupabaseRestStorageService;
 import tarabaho.tarabaho.service.UserService;
 
@@ -48,6 +49,9 @@ public class UserController {
 
     @Autowired
     private SupabaseRestStorageService storageService;
+
+    @Autowired
+    private PasswordEncoderService passwordEncoderService;
 
     @Operation(summary = "Get all users", description = "Retrieve a list of all registered users")
     @ApiResponse(responseCode = "200", description = "List of users returned successfully")
@@ -291,21 +295,22 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PutMapping("/update-profile")
-    public ResponseEntity<?> updateProfile(
-            Authentication authentication,
-            @RequestBody ProfileUpdateRequest request
-    ) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
-        }
+public ResponseEntity<?> updateProfile(
+    Authentication authentication,
+    @RequestBody ProfileUpdateRequest request
+) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+    }
 
-        String username = authentication.getName();
-        Optional<User> userOpt = userService.findByUsername(username);
-        if (!userOpt.isPresent()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
-        }
+    String username = authentication.getName();
+    Optional<User> userOpt = userService.findByUsername(username);
+    if (!userOpt.isPresent()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
+    }
 
-        User user = userOpt.get();
+    User user = userOpt.get();
+    try {
         if (request.getEmail() != null && !request.getEmail().isEmpty()) {
             if (userService.findByEmail(request.getEmail()).isPresent() && !request.getEmail().equals(user.getEmail())) {
                 return ResponseEntity.badRequest().body("⚠️ Email already exists.");
@@ -315,7 +320,7 @@ public class UserController {
         if (request.getLocation() != null) {
             user.setLocation(request.getLocation());
         }
-        if (request.getBirthday() != null) {
+        if (request.getBirthday() != null && !request.getBirthday().isEmpty()) {
             try {
                 LocalDate birthday = LocalDate.parse(request.getBirthday());
                 user.setBirthday(birthday);
@@ -324,7 +329,11 @@ public class UserController {
             }
         }
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            user.setPassword(request.getPassword());
+            if (request.getPassword().length() < 8) {
+                return ResponseEntity.badRequest().body("⚠️ Password must be at least 8 characters long.");
+            }
+            String hashedPassword = passwordEncoderService.encodePassword(request.getPassword());
+            user.setPassword(hashedPassword);
         }
         if (request.getLatitude() != null) {
             user.setLatitude(request.getLatitude());
@@ -339,9 +348,12 @@ public class UserController {
             user.setPreferredRadius(request.getPreferredRadius());
         }
 
-        userService.saveUser(user);
-        return ResponseEntity.ok(user);
+        User updatedUser = userService.saveUser(user);
+        return ResponseEntity.ok(updatedUser);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ Failed to update profile: " + e.getMessage());
     }
+}
 
     @Operation(summary = "Logout user", description = "Logs out the currently authenticated user")
     @ApiResponses({
