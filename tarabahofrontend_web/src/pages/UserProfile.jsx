@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
-import axios from "axios"
-import UserNavbar from "../components/UserNavbar"
-import Footer from "../components/Footer"
-import LogoutConfirmation from "../components/User-LogoutConfirmation"
-import "../styles/User-profile.css"
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
+import UserNavbar from "../components/UserNavbar";
+import Footer from "../components/Footer";
+import LogoutConfirmation from "../components/User-LogoutConfirmation";
+import "../styles/User-profile.css";
 import {
   FaFacebook,
   FaInstagram,
@@ -21,159 +21,178 @@ import {
   FaBirthdayCake,
   FaEdit,
   FaCheck,
-} from "react-icons/fa"
+} from "react-icons/fa";
 
 const UserProfile = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [user, setUser] = useState(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     location: "",
     birthday: "",
     password: "",
-  })
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [profileImage, setProfileImage] = useState("/placeholder.svg")
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [profileImage, setProfileImage] = useState("/placeholder.svg");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState({
     facebook: false,
     instagram: false,
     tiktok: false,
-  })
-  const [error, setError] = useState("")
-  const fileInputRef = useRef(null)
+  });
+  const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
 
   // Use environment variable for backend URL
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(`${BACKEND_URL}/api/user/me`, {
           withCredentials: true,
-        })
+        });
         if (response.data) {
-          setUser(response.data)
+          setUser(response.data);
           setFormData({
             email: response.data.email || "",
             location: response.data.location || "",
             birthday: response.data.birthday || "",
             password: "",
-          })
+          });
           setProfileImage(
             response.data.profilePicture || "/placeholder.svg" // Use Supabase URL directly
-          )
+          );
         }
       } catch (err) {
-        console.error("Failed to fetch user:", err)
-        setError("Failed to load profile. Please try again.")
+        console.error("Failed to fetch user:", err);
+        setError("Failed to load profile. Please try again.");
       }
-    }
-    fetchUser()
-  }, [])
+    };
+    fetchUser();
+  }, []);
 
   const handleConnectToggle = (platform) => {
     setConnectedAccounts((prev) => ({
       ...prev,
       [platform]: !prev[platform],
-    }))
-  }
+    }));
+  };
 
   const handleFileChange = async (e) => {
-    const file = e.target.files[0]
+    const file = e.target.files[0];
     if (!file) {
-      setError("No file selected.")
-      return
+      setError("No file selected.");
+      return;
     }
-    setSelectedFile(file)
-    console.log("Selected file:", file.name)
+    setSelectedFile(file);
+    console.log("Selected file:", file.name);
 
-    const formData = new FormData()
-    formData.append("file", file)
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      console.log("Uploading file:", file.name)
+      console.log("Uploading file:", file.name);
       const response = await axios.post(`${BACKEND_URL}/api/user/upload-picture`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
-      })
-      setUser(response.data)
-      setProfileImage(response.data.profilePicture || profileImage) // Use Supabase URL
-      setSelectedFile(null)
-      setError("")
-      console.log("Upload successful:", response.data)
+      });
+      setUser(response.data);
+      setProfileImage(response.data.profilePicture || profileImage); // Use Supabase URL
+      setSelectedFile(null);
+      setError("");
+      console.log("Upload successful:", response.data);
     } catch (err) {
-      console.error("Failed to upload picture:", err)
-      setError(err.response?.data || "Failed to upload picture. Please try again.")
+      console.error("Failed to upload picture:", err);
+      setError(err.response?.data || "Failed to upload picture. Please try again.");
     }
-  }
+  };
 
   const handleImageClick = () => {
-    fileInputRef.current.click()
-  }
+    fileInputRef.current.click();
+  };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleEditToggle = () => {
-    setIsEditing(!isEditing)
-    setError("")
-  }
+    setIsEditing(!isEditing);
+    setError("");
+  };
 
   const handleSaveChanges = async () => {
     try {
-      const response = await axios.put(`${BACKEND_URL}/api/user/update-profile`, formData, {
+      // Validate password length if provided
+      if (formData.password && formData.password.length < 8) {
+        setError("Password must be at least 8 characters long.");
+        return;
+      }
+
+      // Create updateData with only the fields to be updated
+      const updateData = {
+        email: formData.email,
+        location: formData.location,
+        birthday: formData.birthday,
+      };
+
+      // Only include password if it's non-empty
+      if (formData.password.trim() !== "") {
+        updateData.password = formData.password;
+      }
+
+      const response = await axios.put(`${BACKEND_URL}/api/user/update-profile`, updateData, {
         withCredentials: true,
-      })
-      setUser(response.data)
-      setIsEditing(false)
-      setError("")
+      });
+      setUser(response.data);
+      setIsEditing(false);
+      setFormData((prev) => ({ ...prev, password: "" })); // Reset password field
+      setError("");
     } catch (err) {
-      console.error("Failed to update profile:", err)
-      setError(err.response?.data || "Failed to update profile. Please try again.")
+      console.error("Failed to update profile:", err);
+      setError(err.response?.data || "Failed to update profile. Please try again.");
     }
-  }
+  };
 
   const handleLogout = () => {
-    setShowLogoutModal(true)
-  }
+    setShowLogoutModal(true);
+  };
 
   const confirmLogout = async () => {
     try {
-      await axios.post(`${BACKEND_URL}/api/user/logout`, {}, { withCredentials: true })
-      setShowLogoutModal(false)
-      navigate("/signin")
+      await axios.post(`${BACKEND_URL}/api/user/logout`, {}, { withCredentials: true });
+      setShowLogoutModal(false);
+      navigate("/signin");
     } catch (err) {
-      console.error("Logout failed:", err)
-      setError("Logout failed. Please try again.")
+      console.error("Logout failed:", err);
+      setError("Logout failed. Please try again.");
     }
-  }
+  };
 
   const cancelLogout = () => {
-    setShowLogoutModal(false)
-  }
+    setShowLogoutModal(false);
+  };
 
   const handleBookmarksClick = () => {
-    navigate("/user-bookmarks")
-  }
+    navigate("/user-bookmarks");
+  };
 
   const handleHistoryClick = () => {
-    navigate("/booking-history")
-  }
+    navigate("/booking-history");
+  };
 
   // Determine verification status
   const getVerificationStatus = () => {
     if (user?.isVerified) {
-      return { text: "Verified", className: "verified-status" }
+      return { text: "Verified", className: "verified-status" };
     }
-    return { text: "Not Verified", className: "not-verified-status" }
-  }
+    return { text: "Not Verified", className: "not-verified-status" };
+  };
 
-  const verificationStatus = getVerificationStatus()
+  const verificationStatus = getVerificationStatus();
 
   return (
     <div className="profile-page">
@@ -390,7 +409,7 @@ const UserProfile = () => {
       {showLogoutModal && <LogoutConfirmation onConfirm={confirmLogout} onCancel={cancelLogout} />}
       <Footer />
     </div>
-  )
-}
+  );
+};
 
-export default UserProfile
+export default UserProfile;
