@@ -34,48 +34,58 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.mobile_tarabahoapp.model.RegisterRequest
 import com.example.mobile_tarabahoapp.model.User
 import com.example.mobile_tarabahoapp.AuthRepository.SignUpViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import androidx.navigation.compose.rememberNavController
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             TarabahoTheme {
+                val navController = rememberNavController() // ✅ create this
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SignUpScreen(onSignUpSuccess = {
-                        // Navigate back to MainActivity (login)
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
-                    })
+                    SignUpScreen(
+                        navController = navController, // ✅ pass it here
+                        onSignUpSuccess = {
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true } // clear backstack
+                            }
+                        }
+                    )
                 }
             }
         }
+
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
+    navController: NavController, // ✅ required now
     onSignUpSuccess: () -> Unit,
     viewModel: SignUpViewModel = viewModel()
 ) {
     // Form state
-    var firstName by remember { mutableStateOf("Lois") }
-    var lastName by remember { mutableStateOf("Becket") }
-    var email by remember { mutableStateOf("Loisbecket@gmail.com") }
-    var city by remember { mutableStateOf("Cebu City") }
-    var date by remember { mutableStateOf("2024-03-18") }  // Backend format: YYYY-MM-DD
-    var displayDate by remember { mutableStateOf("18/03/2024") } // Display format: DD/MM/YYYY
-    var phone by remember { mutableStateOf("(454) 726-0592") }
-    var password by remember { mutableStateOf("********") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }  // Backend format: YYYY-MM-DD
+    var displayDate by remember { mutableStateOf("") } // Display format: DD/MM/YYYY
+    var phone by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-
+    var username by remember { mutableStateOf("") }
+    var usernameError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
     // Observe ViewModel LiveData
     val newUser by viewModel.newUser.observeAsState()
     val errorMsg by viewModel.signUpError.observeAsState()
@@ -102,7 +112,9 @@ fun SignUpScreen(
         ) {
             // Back button
             IconButton(
-                onClick = { (context as? Activity)?.finish() },
+                onClick = {
+                    navController.popBackStack() // this goes back to the login screen
+                },
                 modifier = Modifier
                     .padding(16.dp)
                     .align(Alignment.TopStart)
@@ -113,6 +125,7 @@ fun SignUpScreen(
                     tint = Color.White
                 )
             }
+
 
             // Sign Up title and login link
             Column(
@@ -194,6 +207,28 @@ fun SignUpScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = username,
+                onValueChange = {
+                    username = it
+                    usernameError = null
+                },
+                placeholder = { Text("Username") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(4.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedBorderColor = Color(0xFF2962FF)
+                ),
+                singleLine = true,
+                isError = usernameError != null
+            )
+
+            usernameError?.let {
+                Text(text = it, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Email field
             OutlinedTextField(
@@ -239,7 +274,7 @@ fun SignUpScreen(
                     // For simplicity, we're just updating the display value here
                 },
                 label = null,
-                placeholder = { Text("Date") },
+                placeholder = { Text("BirthDate") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(4.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -296,7 +331,10 @@ fun SignUpScreen(
             // Password field
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    passwordError = null // clear error when user types
+                },
                 label = null,
                 placeholder = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
@@ -316,39 +354,57 @@ fun SignUpScreen(
                             tint = Color.Gray
                         )
                     }
-                }
+                },
+                isError = passwordError != null
             )
 
-            // Error message
-            errorMsg?.let {
-                Spacer(modifier = Modifier.height(8.dp))
+            passwordError?.let {
                 Text(
                     text = it,
                     color = Color.Red,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 2.dp)
                 )
             }
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sign Up button
             Button(
                 onClick = {
-                    // Convert display date format to backend format if needed
-                    // For now, we'll use the original date variable which should be in YYYY-MM-DD format
-                    viewModel.register(
-                        RegisterRequest(
-                            firstname = firstName,
-                            lastname = lastName,
-                            username = email.substringBefore('@'),
-                            password = password,
-                            email = email,
-                            phoneNumber = phone,
-                            location = city,
-                            birthday = date
+                    // ✅ Validate
+                    val parsedDate = try {
+                        val parts = displayDate.split("/")
+                        if (parts.size == 3) "${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}" else ""
+                    } catch (e: Exception) {
+                        ""
+                    }
+
+                    var valid = true
+                    if (username.isBlank()) {
+                        usernameError = "Username is required"
+                        valid = false
+                    }
+                    if (password.length < 8) {
+                        passwordError = "Password must be at least 8 characters"
+                        valid = false
+                    }
+
+                    if (valid) {
+                        viewModel.register(
+                            RegisterRequest(
+                                firstname = firstName,
+                                lastname = lastName,
+                                username = username.trim(),
+                                password = password,
+                                email = email.trim(),
+                                phoneNumber = phone.trim(),
+                                location = city.trim(),
+                                birthday = parsedDate // ✅ correctly formatted
+                            )
                         )
-                    )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -364,7 +420,6 @@ fun SignUpScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
-
             // Add some bottom padding
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -373,7 +428,9 @@ fun SignUpScreen(
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
+    val navController = rememberNavController() // ✅ Add this
     TarabahoTheme {
-        SignUpScreen(onSignUpSuccess = {})
+        SignUpScreen(navController = navController, onSignUpSuccess = {})
     }
 }
+

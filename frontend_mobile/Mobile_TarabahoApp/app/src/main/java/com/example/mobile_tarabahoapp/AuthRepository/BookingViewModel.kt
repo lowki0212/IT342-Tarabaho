@@ -216,6 +216,31 @@ class BookingViewModel : ViewModel() {
     }
 
 
+
+    private val _userBookings = MutableLiveData<List<Booking>>()
+    val userBookings: LiveData<List<Booking>> = _userBookings
+
+    private val _userBookingError = MutableLiveData<String?>()
+    val userBookingError: LiveData<String?> = _userBookingError
+
+    fun fetchUserBookings() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getUserBookings()
+                if (response.isSuccessful) {
+                    _userBookings.postValue(response.body() ?: emptyList())
+                } else {
+                    val msg = response.errorBody()?.string() ?: "Failed to fetch bookings"
+                    _userBookingError.postValue(msg)
+                }
+            } catch (e: Exception) {
+                _userBookingError.postValue("Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
+
+
 }
 
 

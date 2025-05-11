@@ -35,8 +35,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.LoginViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
+import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModel
+import com.example.mobile_tarabahoapp.api.RetrofitClient
+import com.example.mobile_tarabahoapp.api.chat.ChatRepository
 
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import com.example.mobile_tarabahoapp.utils.TokenManager
 
 
 class MainActivity : ComponentActivity() {
@@ -55,10 +60,13 @@ class MainActivity : ComponentActivity() {
                             LoginScreen(navController)
                         }
                         composable("signup") {
-                            SignUpScreen(onSignUpSuccess = {
-                                navController.popBackStack()
-                                navController.navigate("login")
-                            })
+                            SignUpScreen(
+                                navController = navController,
+                                onSignUpSuccess = {
+                                    navController.popBackStack()
+                                    navController.navigate("login")
+                                }
+                            )
                         }
                         composable("home") {
                             HomeScreen(navController)
@@ -114,6 +122,21 @@ class MainActivity : ComponentActivity() {
                         composable("worker_booking_details/{bookingId}") { backStackEntry ->
                             val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: return@composable
                             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
+                        }
+
+                        composable("chat/{bookingId}") { backStackEntry ->
+                            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
+                            val token = TokenManager.getToken() ?: ""
+                            ChatScreen(bookingId = bookingId, token = token, navController = navController)
+                        }
+
+                        composable("worker_register") {
+                            WorkerRegisterScreen(navController)
+                        }
+
+                        composable("user_bookings") {
+                            val bookingViewModel: BookingViewModel = viewModel()
+                            UserBookingScreen(navController = navController, viewModel = bookingViewModel)
                         }
                     }
                 }
@@ -171,7 +194,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "T A R A B A H A",
+                        text = "T A R A B A H",
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -186,7 +209,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Come and TRABAHO!",
+                    text = "Tara Trabaho!",
                     color = Color.White,
                     fontSize = 12.sp
                 )

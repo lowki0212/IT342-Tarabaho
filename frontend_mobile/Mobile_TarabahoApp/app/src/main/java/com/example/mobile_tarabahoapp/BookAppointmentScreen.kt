@@ -48,20 +48,11 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("settings")  },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -71,7 +62,7 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = { /* Handle navigation */ },
+                    onClick = {  navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -81,17 +72,7 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Help, contentDescription = "Help") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),

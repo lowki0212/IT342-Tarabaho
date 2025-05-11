@@ -10,5 +10,6 @@ data class User(
     val phoneNumber: String?,
     val location: String?,
     val birthday: String,
-    val profilePicture: String?
+    val profilePicture: String?,
+    val isVerified: Boolean
 )

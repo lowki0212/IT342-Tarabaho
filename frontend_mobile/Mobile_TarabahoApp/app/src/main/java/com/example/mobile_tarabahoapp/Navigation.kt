@@ -1,19 +1,26 @@
 package com.example.mobile_tarabahoapp
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
+import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModel
+import com.example.mobile_tarabahoapp.api.RetrofitClient
+import com.example.mobile_tarabahoapp.api.chat.ChatRepository
+import com.example.mobile_tarabahoapp.utils.TokenManager
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "splash") {
-        
-        composable(route = "signup") {
+
+        composable("signup") {
             SignUpScreen(
+                navController = navController,
                 onSignUpSuccess = {
                     navController.popBackStack()
-                    navController.navigate("login") // or "home" if that's your next screen
+                    navController.navigate("login")
                 }
             )
         }
@@ -94,6 +101,22 @@ fun AppNavigation(navController: NavHostController) {
             val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: return@composable
             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
         }
+        composable("chat/{bookingId}") { backStackEntry ->
+            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
+            val token = TokenManager.getToken() ?: ""
+            ChatScreen(bookingId = bookingId, token = token, navController = navController)
+        }
+
+        composable("worker_register") {
+            WorkerRegisterScreen(navController)
+        }
+
+        composable("user_bookings") {
+            val bookingViewModel: BookingViewModel = viewModel()
+            UserBookingScreen(navController = navController, viewModel = bookingViewModel)
+        }
+
+
 
         // Add more screens here later, like:
         // composable("home") { HomeScreen() }

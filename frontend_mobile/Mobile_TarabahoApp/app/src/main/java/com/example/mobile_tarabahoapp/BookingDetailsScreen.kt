@@ -47,10 +47,7 @@ data class BookingDetail(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookingDetailsScreen(
-    navController: NavController,
-    bookingId: String = "61"
-) {
+fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
     val viewModel: BookingViewModel = viewModel()
     val booking by viewModel.selectedBooking.observeAsState()
@@ -108,20 +105,11 @@ fun BookingDetailsScreen(
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("settings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -131,7 +119,7 @@ fun BookingDetailsScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -141,23 +129,14 @@ fun BookingDetailsScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Help, contentDescription = "Help") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
             }
         }
     ) { paddingValues ->
@@ -432,34 +411,6 @@ fun BookingDetailsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Chat Button
-                OutlinedButton(
-                    onClick = { /* Navigate to chat screen */ },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF2962FF)
-                    ),
-                    border = BorderStroke(1.dp, Color(0xFF2962FF))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Chat,
-                        contentDescription = null
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = "Chat with Worker",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 // Accept Completion Button
                 Button(
                     onClick = { showCompletionDialog = true },
@@ -577,6 +528,9 @@ fun DetailRow(
 @Composable
 fun BookingDetailsScreenPreview() {
     TarabahoTheme {
-        BookingDetailsScreen(rememberNavController())
+        BookingDetailsScreen(
+            navController = rememberNavController(),
+            bookingId = "BK123"
+        )
     }
 }

@@ -42,19 +42,9 @@ fun SettingsScreen(navController: NavController) {
                 contentColor = Color(0xFF2962FF)
             ) {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
-                NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = {  navController.navigate("settings")  },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -64,7 +54,7 @@ fun SettingsScreen(navController: NavController) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -74,23 +64,14 @@ fun SettingsScreen(navController: NavController) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings")},
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
-                    selected = true,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
             }
         }
     ) { paddingValues ->
@@ -136,39 +117,6 @@ fun SettingsScreen(navController: NavController) {
             // Small spacer after header
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Settings options
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column {
-                    SettingsItem(
-                        icon = Icons.Default.CompareArrows,
-                        title = "Switch Worker Side",
-                        showArrow = true,
-                        onClick = { /* Handle switch worker side */ }
-                    )
-
-                    SettingsItem(
-                        icon = Icons.Default.Favorite,
-                        title = "Favorite",
-                        showArrow = true,
-                        onClick = { /* Handle favorites */ }
-                    )
-
-                    SettingsItem(
-                        icon = Icons.Default.Notifications,
-                        title = "Notifications",
-                        showArrow = true,
-                        onClick = { /* Handle notifications */ },
-                        showDivider = true
-                    )
-                }
-            }
-
             // Account settings group
             Card(
                 modifier = Modifier
@@ -191,17 +139,9 @@ fun SettingsScreen(navController: NavController) {
                         title = "Account Settings",
                         showArrow = true,
                         onClick = {
-
                             navController.navigate("profilesettings") {
-
-                            }}
-                    )
-
-                    SettingsItem(
-                        icon = Icons.Default.VerifiedUser,
-                        title = "Verification",
-                        showArrow = true,
-                        onClick = { /* Handle verification */ },
+                            }
+                        },
                         showDivider = true
                     )
                 }
@@ -228,14 +168,7 @@ fun SettingsScreen(navController: NavController) {
                         icon = Icons.Default.Description,
                         title = "Terms and Conditions",
                         showArrow = true,
-                        onClick = { /* Handle terms and conditions */ }
-                    )
-
-                    SettingsItem(
-                        icon = Icons.Default.Security,
-                        title = "Privacy Policy",
-                        showArrow = true,
-                        onClick = { /* Handle privacy policy */ },
+                        onClick = { /* Handle terms and conditions */ },
                         showDivider = true
                     )
                 }
@@ -262,7 +195,6 @@ fun SettingsScreen(navController: NavController) {
                     },
                     textColor = Color(0xFFE53935)
                 )
-
             }
         }
     }

@@ -308,7 +308,7 @@ fun WorkerSignInScreen(navController: NavController) {
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
-                TextButton(onClick = { navController.navigate("worker_signup") }) {
+                TextButton(onClick = { navController.navigate("worker_register") }) {
                     Text(
                         text = "Sign Up",
                         color = Color(0xFF2962FF),

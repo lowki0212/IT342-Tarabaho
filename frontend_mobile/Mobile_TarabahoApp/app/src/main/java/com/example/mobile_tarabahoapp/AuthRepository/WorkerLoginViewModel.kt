@@ -3,6 +3,7 @@ package com.example.mobile_tarabahoapp.AuthRepository
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.LoginRequest
@@ -48,6 +49,17 @@ class WorkerLoginViewModel : ViewModel() {
             } catch (e: Exception) {
                 loginError.value = "⚠️ An error occurred: ${e.localizedMessage}"
             }
+        }
+    }
+
+    fun logout(navController: NavController) {
+        // Clear the saved token and worker ID
+        TokenManager.clearToken()
+        TokenManager.saveWorkerId(-1)
+
+        // Navigate to worker_signin and clear backstack so user can't press back
+        navController.navigate("worker_signin") {
+            popUpTo(0) { inclusive = true }
         }
     }
 

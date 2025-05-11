@@ -1,6 +1,6 @@
 package com.example.mobile_tarabahoapp
 
-import androidx.compose.foundation.Image
+import com.example.mobile_tarabahoapp.model.PaymentMethod
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -30,6 +30,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
+import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,16 +52,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
@@ -74,7 +66,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigateUp()},
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -84,23 +76,14 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Help, contentDescription = "Help") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
             }
         }
     ) { paddingValues ->
@@ -433,35 +416,6 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
             }
 
             // Working time section
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = "Working Time",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = "Schedule",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Monday-Friday, 08:00 AM-18:00 PM",
-                        fontSize = 14.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
 
             // Action buttons
             Row(
@@ -493,28 +447,10 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-
                 // Message button
-                Button(
-                    onClick = { /* Handle messaging */ },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(48.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2962FF)
-                    )
-                ) {
-                    Text(
-                        text = "Message",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+
             }
 
-            // Add some bottom padding
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

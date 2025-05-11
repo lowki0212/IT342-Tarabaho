@@ -3,6 +3,10 @@ package com.example.mobile_tarabahoapp
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +24,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +46,7 @@ import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import java.text.SimpleDateFormat
 import java.util.*
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mobile_tarabahoapp.AuthRepository.EditProfileViewModel
@@ -49,7 +57,9 @@ import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
 fun EditProfileScreen(navController: NavController) {
     val viewModel: EditProfileViewModel = viewModel()
     val user by viewModel.currentUser.observeAsState()
+    val context = LocalContext.current
 
+    // Form state
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
@@ -59,9 +69,13 @@ fun EditProfileScreen(navController: NavController) {
     var birthday by remember { mutableStateOf("") }
     var displayBirthday by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
+
+    // UI state
     var passwordVisible by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showSuccessToast by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showSuccessMessage by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadCurrentUser()
@@ -72,7 +86,7 @@ fun EditProfileScreen(navController: NavController) {
             firstName = it.firstname
             lastName = it.lastname
             username = it.username
-            password = it.password
+            password = ""  //it.passowrd
             email = it.email
             phone = it.phoneNumber ?: ""
             birthday = it.birthday
@@ -80,17 +94,6 @@ fun EditProfileScreen(navController: NavController) {
             address = it.location ?: ""
         }
     }
-
-
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
-    val context = LocalContext.current
-
-    val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
-
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
@@ -126,128 +129,237 @@ fun EditProfileScreen(navController: NavController) {
         showSuccessToast = false
     }
 
-
-    Scaffold { paddingValues ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+    ) {
+        // Main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
                 .verticalScroll(rememberScrollState())
         ) {
-            // Header
+            // Header with gradient background
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2962FF))
-                    .padding(16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { navController.navigateUp() },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
+                    .height(180.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF1E88E5),
+                                Color(0xFF2962FF)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(Float.POSITIVE_INFINITY, 300f)
                         )
-                    }
+                    )
+            ) {
+                // Back button
+                IconButton(
+                    onClick = { navController.navigateUp() },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .align(Alignment.TopStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                // Title
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "TARABAHO!",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "TARABAHO !",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Edit Profile",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-
-                Text(
-                    text = "Edit Profile",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    modifier = Modifier.align(Alignment.Center)
-                )
             }
 
-            // Profile picture section
-            Column(
+            // Profile picture section with verification badge
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .offset(y = (-60).dp),
+                contentAlignment = Alignment.TopCenter
             ) {
-                // Profile image with edit button
-                Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .padding(8.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profile image
-                    Image(
-                        painter = if (imageUri != null) {
-                            rememberAsyncImagePainter(
-                                ImageRequest.Builder(context)
-                                    .data(data = imageUri)
-                                    .build()
-                            )
-                        } else {
-                            painterResource(id = R.drawable.profile_paul)
-                        },
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .border(2.dp, Color.White, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    // Edit button
+                    // Profile placeholder with worker icon
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.BottomEnd)
-                            .clip(CircleShape)
-                            .background(Color(0xFF2962FF))
-                            .clickable { imagePicker.launch("image/*") },
-                        contentAlignment = Alignment.Center
+                            .size(120.dp)
+                    ) {
+                        // Profile placeholder
+                        Box(
+                            modifier = Modifier
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .border(4.dp, Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Person icon as placeholder
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile Placeholder",
+                                tint = Color(0xFF2962FF),
+                                modifier = Modifier.size(64.dp)
+                            )
+
+                            // Worker icon overlay
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .align(Alignment.TopEnd)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF2962FF))
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Engineering,
+                                    contentDescription = "Worker",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Verification status
+                    user?.let {
+                        Card(
+                            modifier = Modifier
+                                .padding(top = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (it.isVerified) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (it.isVerified) Icons.Default.VerifiedUser else Icons.Default.ErrorOutline,
+                                    contentDescription = if (it.isVerified) "Verified" else "Not Verified",
+                                    tint = if (it.isVerified) Color(0xFF4CAF50) else Color(0xFFE53935),
+                                    modifier = Modifier.size(16.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                Text(
+                                    text = if (it.isVerified) "Verified Account" else "Not Verified",
+                                    color = if (it.isVerified) Color(0xFF4CAF50) else Color(0xFFE53935),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Profile Picture",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+
+            // Success message
+            AnimatedVisibility(
+                visible = showSuccessMessage,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300))
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Change Profile Picture",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Text(
+                            text = "Profile updated successfully!",
+                            color = Color(0xFF4CAF50),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
-
-                Text(
-                    text = "Change Profile Picture",
-                    fontSize = 14.sp,
-                    color = Color(0xFF2962FF),
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .clickable { imagePicker.launch("image/*") }
-                )
             }
 
             // Form fields
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .offset(y = (-40).dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 24.dp)
                 ) {
+                    // Section title
+                    Text(
+                        text = "Personal Information",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
                     // Name fields (First and Last name in a row)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -259,14 +371,23 @@ fun EditProfileScreen(navController: NavController) {
                             onValueChange = {}, // No-op so user cannot change it
                             label = { Text("First Name") },
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = Color.LightGray,
-                                focusedBorderColor = Color(0xFF2962FF)
+                                focusedBorderColor = Color(0xFF2962FF),
+                                disabledBorderColor = Color.LightGray,
+                                disabledTextColor = Color.DarkGray
                             ),
                             singleLine = true,
-                            readOnly = true, // 🔥 Make it non-editable
-                            enabled = true   // ✅ Keep it "enabled" to keep the normal color (set to false if you want it grayed out)
+                            readOnly = true,
+                            enabled = false,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Badge,
+                                    contentDescription = null,
+                                    tint = Color.Gray
+                                )
+                            }
                         )
 
                         // Last name
@@ -275,16 +396,24 @@ fun EditProfileScreen(navController: NavController) {
                             onValueChange = {}, // No-op so user cannot change it
                             label = { Text("Last Name") },
                             modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(4.dp),
+                            shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = Color.LightGray,
-                                focusedBorderColor = Color(0xFF2962FF)
+                                focusedBorderColor = Color(0xFF2962FF),
+                                disabledBorderColor = Color.LightGray,
+                                disabledTextColor = Color.DarkGray
                             ),
                             singleLine = true,
-                            readOnly = true, // 🔥 Make it non-editable
-                            enabled = true   // ✅ Keep it "enabled" to keep the normal color (set to false if you want it grayed out)
+                            readOnly = true,
+                            enabled = false,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Badge,
+                                    contentDescription = null,
+                                    tint = Color.Gray
+                                )
+                            }
                         )
-
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -295,14 +424,16 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = {}, // No-op, user can't edit
                         label = { Text("Username") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
-                            focusedBorderColor = Color(0xFF2962FF)
+                            focusedBorderColor = Color(0xFF2962FF),
+                            disabledBorderColor = Color.LightGray,
+                            disabledTextColor = Color.DarkGray
                         ),
                         singleLine = true,
-                        readOnly = true, // 🔥 Not editable
-                        enabled = true,  // ✅ Looks normal, not grayed out
+                        readOnly = true,
+                        enabled = false,
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,
@@ -312,7 +443,16 @@ fun EditProfileScreen(navController: NavController) {
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Section title
+                    Text(
+                        text = "Account Information",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
                     // Password
                     OutlinedTextField(
@@ -320,7 +460,7 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = { password = it },
                         label = { Text("Password") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
                             focusedBorderColor = Color(0xFF2962FF)
@@ -332,7 +472,7 @@ fun EditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = null,
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -354,7 +494,7 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = { email = it },
                         label = { Text("Email") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
                             focusedBorderColor = Color(0xFF2962FF)
@@ -365,12 +505,21 @@ fun EditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = null,
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Section title
+                    Text(
+                        text = "Contact Information",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
                     // Phone number with country code
                     OutlinedTextField(
@@ -378,7 +527,7 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = { phone = it },
                         label = { Text("Phone Number") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
                             focusedBorderColor = Color(0xFF2962FF)
@@ -423,7 +572,7 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = { /* Handled by date picker */ },
                         label = { Text("Birthday") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
                             focusedBorderColor = Color(0xFF2962FF)
@@ -434,7 +583,7 @@ fun EditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Cake,
                                 contentDescription = null,
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -456,7 +605,7 @@ fun EditProfileScreen(navController: NavController) {
                         onValueChange = { address = it },
                         label = { Text("Address") },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
                             focusedBorderColor = Color(0xFF2962FF)
@@ -465,44 +614,94 @@ fun EditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         minLines = 2
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Save button
+                    Button(
+                        onClick = {
+                            isLoading = true
+                            val request = ProfileUpdateRequest(
+                                firstName = firstName,
+                                lastName = lastName,
+                                username = username,
+                                email = email,
+                                phoneNumber = phone,
+                                birthday = birthday,
+                                location = address,
+                                password = password
+                            )
+
+                            viewModel.updateProfile(request)
+                            // Simulate API call
+                            showSuccessMessage = true
+                            isLoading = false
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2962FF)),
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Save Changes",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Cancel button
+                    OutlinedButton(
+                        onClick = { navController.navigateUp() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF2962FF)
+                        ),
+                        border = BorderStroke(1.dp, Color(0xFF2962FF))
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
-            // Save button
-            Button(
-                onClick = {
-                    val request = ProfileUpdateRequest(
-                        firstName = firstName,
-                        lastName = lastName,
-                        username = username,
-                        email = email,
-                        phoneNumber = phone,
-                        birthday = birthday,
-                        location = address,
-                        password = password
-                    )
 
-                    viewModel.updateProfile(request)
-                },
+            // Footer
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2962FF))
+                    .padding(bottom = 24.dp)
+                    .offset(y = (-24).dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Save Changes",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "© 2025 Tarabaho! All rights reserved.",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

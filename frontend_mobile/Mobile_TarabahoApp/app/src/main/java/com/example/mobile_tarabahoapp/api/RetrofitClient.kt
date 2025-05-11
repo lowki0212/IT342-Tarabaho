@@ -6,9 +6,10 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+
 object RetrofitClient {
     private const val BASE_URL = "https://tarabaho-backend.onrender.com"
-
+    // test
     // ✅ Use the custom AuthInterceptor class
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor()) // this is your actual interceptor class
@@ -25,4 +26,6 @@ object RetrofitClient {
     val apiService: ApiService by lazy {
         retrofit.create(ApiService::class.java)
     }
+
+
 }

@@ -44,7 +44,6 @@ fun HomeScreen(navController: NavController) {
     val workerViewModel: WorkerViewModel = viewModel() // 1️⃣ declare ViewModel FIRST
 
     val workers by workerViewModel.workers.observeAsState(emptyList())
-    var searchQuery by remember { mutableStateOf("Gardener") }
     var selectedCategoryIndex by remember { mutableStateOf(1) } // Gardener selected by default
 
 
@@ -67,16 +66,7 @@ fun HomeScreen(navController: NavController) {
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Settings") },
                     selected = false, // You can update this based on currentDestination if needed
@@ -105,23 +95,14 @@ fun HomeScreen(navController: NavController) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Help, contentDescription = "Help") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
             }
         }
     ) { paddingValues ->
@@ -136,58 +117,14 @@ fun HomeScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF2962FF))
-                    .padding(top = 16.dp, bottom = 24.dp)
+                    .padding(16.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text(
-                        text = "TARABAHO !",
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    // Search bar
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            disabledContainerColor = Color.White,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        placeholder = { Text("Search") },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                tint = Color.Gray
-                            )
-                        },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Clear,
-                                        contentDescription = "Clear search",
-                                        tint = Color.Gray
-                                    )
-                                }
-                            }
-                        },
-                        singleLine = true
-                    )
-                }
+                Text(
+                    text = "TARABAHO !",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             // Categories section
@@ -213,13 +150,13 @@ fun HomeScreen(navController: NavController) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         categories.forEachIndexed { index, (name, iconRes) ->
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier
-                                    .weight(1f)
+                                    .padding(horizontal = 4.dp)
                                     .clickable {
                                         selectedCategoryIndex = index
                                         if (name == "All") {
@@ -228,7 +165,6 @@ fun HomeScreen(navController: NavController) {
                                             workerViewModel.fetchWorkersByCategory(name)
                                         }
                                     }
-
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -250,7 +186,7 @@ fun HomeScreen(navController: NavController) {
                                     )
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
                                 Text(
                                     text = name,

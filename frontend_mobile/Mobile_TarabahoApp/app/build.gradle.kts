@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.navigation.runtime.android)
 
     testImplementation(libs.junit)
 
@@ -70,4 +71,10 @@ dependencies {
     implementation ("androidx.compose.runtime:runtime-livedata:<version>")
     implementation ("androidx.navigation:navigation-compose:<version>")
     implementation ("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+
+
+
 }

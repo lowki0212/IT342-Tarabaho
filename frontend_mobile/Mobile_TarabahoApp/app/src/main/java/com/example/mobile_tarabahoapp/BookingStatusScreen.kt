@@ -155,20 +155,11 @@ fun BookingStatusScreen(
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Notifications, contentDescription = "Notifications") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("settings")  },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -178,7 +169,7 @@ fun BookingStatusScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -188,23 +179,14 @@ fun BookingStatusScreen(
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = { navController.navigate("user_bookings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
                         unselectedIconColor = Color.Gray
                     )
                 )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Help, contentDescription = "Help") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
+
             }
         }
     ) { paddingValues ->
@@ -456,7 +438,7 @@ fun BookingStatusScreen(
                     ) {
                         // Try again button
                         Button(
-                            onClick = { navController.navigate("book_appointment") },
+                            onClick = { navController.navigate("booking_details/$bookingId") },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
@@ -473,39 +455,13 @@ fun BookingStatusScreen(
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Text(
-                                text = "Book Again",
+                                text = "Return",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
 
                         // Find another worker button
-                        OutlinedButton(
-                            onClick = { navController.navigate("home") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFF2962FF)
-                            ),
-                            border = BorderStroke(1.dp, Color(0xFF2962FF))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.People,
-                                contentDescription = "Find Workers"
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Text(
-                                text = "Find Another Worker",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
                     }
                 }
                 BookingStatusState.ACCEPTED -> {

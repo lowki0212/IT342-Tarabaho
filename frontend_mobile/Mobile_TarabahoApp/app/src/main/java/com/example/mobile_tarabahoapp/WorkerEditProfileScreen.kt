@@ -2,6 +2,11 @@ package com.example.mobile_tarabahoapp
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +26,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,8 +53,13 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerEditProfileScreen(navController: NavController) {
-
     val viewModel: WorkerViewModel = viewModel()
+    val context = LocalContext.current
+
+    // UI state
+    var isLoading by remember { mutableStateOf(false) }
+    var showSuccessMessage by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val workerId = TokenManager.getWorkerId()
@@ -58,20 +71,21 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-    val context = LocalContext.current
     val updateSuccess by viewModel.updateSuccess.observeAsState()
 
     // Handle Toast and Navigation
     LaunchedEffect(updateSuccess) {
         updateSuccess?.let {
+            isLoading = false
             if (it) {
+                showSuccessMessage = true
                 Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
-                navController.navigateUp()
             } else {
                 Toast.makeText(context, "Failed to update profile", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
     val worker by viewModel.selectedWorker.observeAsState()
     var email by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -105,7 +119,6 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-
     // Function to validate passwords
     fun validatePasswords(): Boolean {
         return if (newPassword.isNotEmpty() && newPassword != confirmPassword) {
@@ -129,6 +142,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
 
         if (isEmailValid && arePasswordsValid) {
+            isLoading = true
             val updateRequest = WorkerUpdateRequest(
                 email = email,
                 phoneNumber = null,
@@ -159,122 +173,286 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Edit Profile",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF2962FF)
-                ),
-                actions = {
-                    TextButton(
-                        onClick = { handleSave() }
-                    ) {
-                        Text(
-                            text = "Save",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
+    ) {
+        // Main content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF5F5F5))
                 .verticalScroll(rememberScrollState())
         ) {
-            // Profile Picture Section
+            // Header with gradient background
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+                    .height(200.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF1E88E5),
+                                Color(0xFF2962FF)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(Float.POSITIVE_INFINITY, 300f)
+                        )
+                    )
+            ) {
+                // Back button
+                IconButton(
+                    onClick = { navController.navigateUp() },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.2f))
+                        .align(Alignment.TopStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // More options menu
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    var expanded by remember { mutableStateOf(false) }
+
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More Options",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Logout,
+                                        contentDescription = "Logout",
+                                        tint = Color(0xFFE53935)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Logout",
+                                        color = Color(0xFFE53935)
+                                    )
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                showLogoutDialog = true
+                            }
+                        )
+                    }
+                }
+
+                // Title
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "TARABAHO!",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 2.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Worker Profile",
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // Profile picture section with verification badge
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-60).dp),
+                contentAlignment = Alignment.TopCenter
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Worker icon placeholder
                     Box(
                         modifier = Modifier
                             .size(120.dp)
-                            .clip(CircleShape)
-                            .background(Color.LightGray),
-                        contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.profile_angelo),
-                            contentDescription = "Profile Picture",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        // Camera icon overlay
+                        // Profile placeholder
                         Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.5f))
-                                .clickable { /* Handle profile picture change */ },
+                                .size(120.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                                .border(4.dp, Color.White, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
+                            // Engineering icon as placeholder
                             Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = "Change Profile Picture",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
+                                imageVector = Icons.Default.Engineering,
+                                contentDescription = "Worker Icon",
+                                tint = Color(0xFF2962FF),
+                                modifier = Modifier.size(64.dp)
                             )
+
+                            // Worker icon overlay
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .align(Alignment.TopEnd)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF2962FF))
+                                    .border(2.dp, Color.White, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Engineering,
+                                    contentDescription = "Worker",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // Verification status
+                    worker?.let {
+                        Card(
+                            modifier = Modifier
+                                .padding(top = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (it.isVerified == true) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (it.isVerified == true) Icons.Default.VerifiedUser else Icons.Default.ErrorOutline,
+                                    contentDescription = if (it.isVerified == true) "Verified" else "Not Verified",
+                                    tint = if (it.isVerified == true) Color(0xFF4CAF50) else Color(0xFFE53935),
+                                    modifier = Modifier.size(16.dp)
+                                )
+
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                Text(
+                                    text = if (it.isVerified == true) "Verified Worker" else "Not Verified",
+                                    color = if (it.isVerified == true) Color(0xFF4CAF50) else Color(0xFFE53935),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     Text(
-                        text = "Change Profile Picture",
-                        color = Color(0xFF2962FF),
-                        fontSize = 14.sp
+                        text = "Worker Profile",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Success message
+            AnimatedVisibility(
+                visible = showSuccessMessage,
+                enter = fadeIn(animationSpec = tween(300)),
+                exit = fadeOut(animationSpec = tween(300))
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Text(
+                            text = "Profile updated successfully!",
+                            color = Color(0xFF4CAF50),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
 
             // Personal Information Section
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .offset(y = (-40).dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 24.dp)
                 ) {
+                    // Section title
                     Text(
                         text = "Personal Information",
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -290,12 +468,17 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = "Email",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        ),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         isError = emailError != null,
                         supportingText = {
@@ -314,12 +497,17 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = "Address",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        )
                     )
 
                     // Birthday Field
@@ -331,7 +519,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Cake,
                                 contentDescription = "Birthday",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -346,7 +534,12 @@ fun WorkerEditProfileScreen(navController: NavController) {
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        )
                     )
 
                     // Biography Field
@@ -358,37 +551,43 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Description,
                                 contentDescription = "Biography",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp)
-                            .padding(bottom = 16.dp),
+                            .height(120.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        ),
                         maxLines = 5
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             // Change Password Section
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .offset(y = (-32).dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 24.dp)
                 ) {
+                    // Section title
                     Text(
                         text = "Change Password",
-                        fontSize = 16.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
@@ -401,7 +600,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Current Password",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -417,7 +616,12 @@ fun WorkerEditProfileScreen(navController: NavController) {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        )
                     )
 
                     // New Password Field
@@ -432,7 +636,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "New Password",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -448,7 +652,12 @@ fun WorkerEditProfileScreen(navController: NavController) {
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        )
                     )
 
                     // Confirm Password Field
@@ -463,7 +672,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Confirm New Password",
-                                tint = Color.Gray
+                                tint = Color(0xFF2962FF)
                             )
                         },
                         trailingIcon = {
@@ -484,13 +693,15 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             }
                         },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        )
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
 
             // Save Button
             Button(
@@ -498,20 +709,65 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(8.dp),
+                    .padding(horizontal = 16.dp)
+                    .offset(y = (-16).dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF2962FF)
-                )
+                ),
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Save Changes",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Cancel Button
+            OutlinedButton(
+                onClick = { navController.navigateUp() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp)
+                    .offset(y = (-8).dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF2962FF)
+                ),
+                border = BorderStroke(1.dp, Color(0xFF2962FF)),
+                enabled = !isLoading
             ) {
                 Text(
-                    text = "Save Changes",
+                    text = "Back",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Medium
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Footer
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "© 2025 Tarabaho! All rights reserved.",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 
@@ -548,7 +804,47 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-
+    // Logout Confirmation Dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text(
+                    "Logout",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Are you sure you want to logout from your worker account?")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        // LOGOUT HERE
+                        TokenManager.clearToken()
+                        TokenManager.saveWorkerId(-1)
+                        navController.navigate("worker_signin") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE53935)
+                    )
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showLogoutDialog = false },
+                    border = BorderStroke(1.dp, Color.Gray)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Preview(showBackground = true)

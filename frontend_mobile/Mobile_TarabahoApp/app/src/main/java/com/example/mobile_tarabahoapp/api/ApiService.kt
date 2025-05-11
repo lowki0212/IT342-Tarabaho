@@ -4,11 +4,14 @@ import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.Booking
 import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
 import com.example.mobile_tarabahoapp.model.LoginRequest
+import com.example.mobile_tarabahoapp.model.Message
 import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
 import com.example.mobile_tarabahoapp.model.RatingRequest
 import com.example.mobile_tarabahoapp.model.RegisterRequest
+import com.example.mobile_tarabahoapp.model.SendMessageRequest
 import com.example.mobile_tarabahoapp.model.User
 import com.example.mobile_tarabahoapp.model.Worker
+import com.example.mobile_tarabahoapp.model.WorkerRegisterRequest
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import retrofit2.Response
 import retrofit2.http.Body
@@ -92,6 +95,22 @@ interface ApiService {
     @POST("/api/booking/rating")
     suspend fun submitRating(@Body request: RatingRequest): Response<Void>
 
+    @GET("/api/message/booking/{bookingId}")
+    suspend fun getMessages(@Path("bookingId") bookingId: Long): Response<List<Message>>
+
+    @POST("/api/message/send")
+    suspend fun sendMessage(@Body request: SendMessageRequest): Response<Message>
+
+    @POST("/api/worker/register")
+    suspend fun registerWorker(@Body request: WorkerRegisterRequest): Response<Worker>
+
+    interface BookingApiService {
+        @GET("/api/booking/user")
+        suspend fun getUserBookings(): Response<List<Booking>>
+    }
+
+    @GET("/api/booking/user")
+    suspend fun getUserBookings(): Response<List<Booking>>
 
 
 }

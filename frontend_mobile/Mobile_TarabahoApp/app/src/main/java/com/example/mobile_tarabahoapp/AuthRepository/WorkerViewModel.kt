@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.*
 import com.example.mobile_tarabahoapp.api.RetrofitClient
+import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
 import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import kotlinx.coroutines.launch
@@ -87,4 +88,24 @@ class WorkerViewModel : ViewModel() {
             }
         }
     }
+
+    fun createChatBooking(
+        request: CategoryBookingRequest,
+        onResult: (Long) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.apiService.createCategoryBooking(request)
+                if (response.isSuccessful) {
+                    val booking = response.body()
+                    if (booking != null) {
+                        onResult(booking.id) // ✅ pass bookingId
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("WorkerViewModel", "Booking failed: ${e.message}")
+            }
+        }
+    }
+
 }
