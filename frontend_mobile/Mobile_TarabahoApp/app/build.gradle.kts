@@ -62,7 +62,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.material3:material3:1.3.0")
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
@@ -75,7 +75,7 @@ dependencies {
     implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
     implementation("io.reactivex.rxjava2:rxjava:2.2.21")
     implementation ("org.java-websocket:Java-WebSocket:1.5.2")
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // REMOVED the original NaikSoftware Stomp library dependencies:
     // implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")

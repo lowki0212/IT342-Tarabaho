@@ -13,6 +13,7 @@ import com.example.mobile_tarabahoapp.model.User
 import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.model.WorkerRegisterRequest
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
+import com.example.mobile_tarabahoapp.model.MessageDTO
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -96,10 +97,10 @@ interface ApiService {
     suspend fun submitRating(@Body request: RatingRequest): Response<Void>
 
     @GET("/api/message/booking/{bookingId}")
-    suspend fun getMessages(@Path("bookingId") bookingId: Long): Response<List<Message>>
+    suspend fun getMessages(@Path("bookingId") bookingId: Long): Response<List<MessageDTO>>
 
     @POST("/api/message/send")
-    suspend fun sendMessage(@Body request: SendMessageRequest): Response<Message>
+    suspend fun sendMessage(@Body request: SendMessageRequest): Response<MessageDTO>
 
     @POST("/api/worker/register")
     suspend fun registerWorker(@Body request: WorkerRegisterRequest): Response<Worker>

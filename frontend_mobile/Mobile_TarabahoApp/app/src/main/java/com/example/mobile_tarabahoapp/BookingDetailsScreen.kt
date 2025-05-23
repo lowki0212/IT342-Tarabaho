@@ -1,5 +1,3 @@
-package com.example.mobile_tarabahoapp
-
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -33,6 +31,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.utils.TokenManager
+import kotlinx.coroutines.delay
 
 data class BookingDetail(
     val id: String,
@@ -49,14 +48,26 @@ data class BookingDetail(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingDetailsScreen(navController: NavController, bookingId: String) {
-
     val viewModel: BookingViewModel = viewModel()
     val booking by viewModel.selectedBooking.observeAsState()
 
-    // Fetch booking from backend
+    // Fetch booking from backend initially
     LaunchedEffect(bookingId) {
         viewModel.getBookingById(bookingId.toLong())
     }
+
+    // Polling mechanism to check for status updates
+    LaunchedEffect(bookingId) {
+        while (true) {
+            viewModel.getBookingById(bookingId.toLong())
+            // Stop polling if the booking is in a terminal state
+            if (booking?.status in listOf("COMPLETED", "REJECTED", "CANCELLED")) {
+                break
+            }
+            delay(5000) // Check every 5 seconds
+        }
+    }
+
     // Sample booking data
     val bookingDetail = remember(booking) {
         BookingDetail(
@@ -71,11 +82,9 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
             worker = "${booking?.worker?.firstName ?: "Unknown"} ${booking?.worker?.lastName ?: ""}"
         )
     }
+
     // State for job completion dialog
     var showCompletionDialog by remember { mutableStateOf(false) }
-
-    // State for job started
-    var jobStarted by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -106,7 +115,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
@@ -137,7 +145,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         unselectedIconColor = Color.Gray
                     )
                 )
-
             }
         }
     ) { paddingValues ->
@@ -374,13 +381,14 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                // Chat Button - Only visible for IN_PROGRESS or COMPLETED status
-                if (bookingDetail.status == "IN_PROGRESS" || bookingDetail.status == "COMPLETED") {
+                // Chat Button - Only visible for ACCEPTED, IN_PROGRESS, WORKER_COMPLETED, or COMPLETED status
+                if (bookingDetail.status in listOf("ACCEPTED", "IN_PROGRESS", "WORKER_COMPLETED", "COMPLETED")) {
                     Button(
                         onClick = {
-                            navController.navigate("chat/$bookingId")
-
-
+                            val currentUserId = TokenManager.getUserId() ?: 0L // Adjust based on your auth
+                            val isWorker = false // Client perspective
+                            val chatTitle = bookingDetail.worker
+                            navController.navigate("chat/$bookingId?currentUserId=$currentUserId&isWorker=$isWorker&chatTitle=$chatTitle")
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -411,9 +419,10 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                 // Start Button
                 Button(
                     onClick = {
-                        viewModel.startBooking(bookingId.toLong(),
+                        viewModel.startBooking(
+                            bookingId.toLong(),
                             onSuccess = {
-                                jobStarted = true
+                                viewModel.getBookingById(bookingId.toLong()) // Refresh booking data
                             },
                             onError = { errorMessage ->
                                 Log.e("BookingDetailsScreen", "Failed to start job: $errorMessage")
@@ -425,10 +434,10 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         .height(56.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (jobStarted || bookingDetail.status == "IN_PROGRESS") Color.Gray else Color(0xFF2962FF),
+                        containerColor = if (bookingDetail.status == "IN_PROGRESS" || bookingDetail.status == "WORKER_COMPLETED" || bookingDetail.status == "COMPLETED") Color.Gray else Color(0xFF2962FF),
                         contentColor = Color.White
                     ),
-                    enabled = bookingDetail.status == "ACCEPTED" && !jobStarted
+                    enabled = bookingDetail.status == "ACCEPTED"
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
@@ -438,7 +447,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
-                        text = if (jobStarted || bookingDetail.status == "IN_PROGRESS") "Job Started" else "Start Job",
+                        text = if (bookingDetail.status == "IN_PROGRESS" || bookingDetail.status == "WORKER_COMPLETED" || bookingDetail.status == "COMPLETED") "Job Started" else "Start Job",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -454,10 +463,10 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         .height(56.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50),
+                        containerColor = if (bookingDetail.status == "WORKER_COMPLETED") Color(0xFF4CAF50) else Color.Gray,
                         contentColor = Color.White
                     ),
-                    enabled = jobStarted
+                    enabled = bookingDetail.status == "WORKER_COMPLETED"
                 ) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
@@ -496,7 +505,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         viewModel.acceptCompletion(
                             bookingId = bookingDetail.id.toLong(),
                             onSuccess = {
-                                // ✅ Booking marked as completed in backend → go to rate worker screen
+                                viewModel.getBookingById(bookingDetail.id.toLong()) // Refresh booking data
                                 navController.navigate("rate_worker/${bookingDetail.id}")
                             },
                             onError = { errorMessage ->

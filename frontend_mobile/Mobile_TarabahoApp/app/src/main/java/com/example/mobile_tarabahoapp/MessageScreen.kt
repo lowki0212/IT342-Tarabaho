@@ -1,3 +1,5 @@
+import ChatViewModel
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -22,22 +23,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mobile_tarabahoapp.model.MessageDTO
-import com.example.mobile_tarabahoapp.utils.TokenManager
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.navigation.NavController
+import com.example.mobile_tarabahoapp.utils.TokenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MessagesScreen(
     navController: NavController,
     chatViewModel: ChatViewModel,
-    currentUserId: Long, // User ID for determining if message is from current user
-    isWorker: Boolean, // Whether the current user is a worker or client
-    chatTitle: String = "Chat", // Title for the chat (e.g., worker name or client name)
     modifier: Modifier = Modifier
 ) {
+    // Extract arguments from the current back stack entry
+    val backStackEntry = navController.currentBackStackEntry
+    val currentUserId = backStackEntry?.arguments?.getLong("currentUserId") ?: TokenManager.getCurrentUserId()
+    val isWorker = backStackEntry?.arguments?.getBoolean("isWorker") ?: TokenManager.isWorker()
+    val chatTitle = backStackEntry?.arguments?.getString("chatTitle") ?: "Chat"
+
+    LaunchedEffect(Unit) {
+        Log.d("MessagesScreen", "currentUserId: $currentUserId, isWorker: $isWorker, chatTitle: $chatTitle")
+    }
+
     val messages by chatViewModel.messages.collectAsState()
     val connectionState by chatViewModel.connectionState.collectAsState()
     var inputText by remember { mutableStateOf("") }
@@ -139,15 +147,15 @@ fun MessagesScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     reverseLayout = true,
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(messages) { message ->
-                        // Determine if the message is from the current user based on whether they're a worker or client
+                        // Determine if the message is from the current user
                         val isCurrentUser = if (isWorker) {
-                            message.senderWorkerId == currentUserId
+                            message.senderWorkerId != null && message.senderWorkerId == currentUserId
                         } else {
-                            message.senderUserId == currentUserId
+                            message.senderUserId != null && message.senderUserId == currentUserId
                         }
 
                         MessageItem(
@@ -309,67 +317,105 @@ fun MessageItem(
     isCurrentUser: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
         horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
     ) {
+        // Messages from the other party (left side)
         if (!isCurrentUser) {
-            // Add some space on the right for received messages
-            Spacer(modifier = Modifier.width(48.dp))
-        }
-
-        Column(
-            horizontalAlignment = if (isCurrentUser) Alignment.End else Alignment.Start
-        ) {
-            // Message bubble - REMOVED fillMaxWidth() and widthIn max constraint
-            Card(
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = if (isCurrentUser) 16.dp else 4.dp,
-                    bottomEnd = if (isCurrentUser) 4.dp else 16.dp
-                ),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isCurrentUser) Color(0xFF2962FF) else Color.White
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(end = 16.dp),
+                horizontalAlignment = Alignment.Start
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .widthIn(min = 48.dp, max = 280.dp) // Set min and max width constraints here
-                ) {
-                    if (!isCurrentUser) {
-                        Text(
-                            text = message.senderName,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFF2962FF),
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
+                // Sender name for other party's messages
+                Text(
+                    text = message.senderName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF2962FF),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
 
+                // Message bubble (grey for other party)
+                Card(
+                    shape = RoundedCornerShape(
+                        topStart = 12.dp,
+                        topEnd = 12.dp,
+                        bottomStart = 4.dp,
+                        bottomEnd = 12.dp
+                    ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE0E0E0) // Grey for other party
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
                     Text(
                         text = message.content,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (isCurrentUser) Color.White else Color.Black,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .widthIn(max = 260.dp),
                         lineHeight = 20.sp
                     )
                 }
-            }
 
-            // Timestamp
-            Text(
-                text = formatTimestamp(message.sentAt),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                textAlign = if (isCurrentUser) TextAlign.End else TextAlign.Start
-            )
+                // Timestamp
+                Text(
+                    text = formatTimestamp(message.sentAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f)) // Push other party's messages to the left
         }
 
+        // Messages from the current user (right side)
         if (isCurrentUser) {
-            // Add some space on the left for sent messages
-            Spacer(modifier = Modifier.width(48.dp))
+            Spacer(modifier = Modifier.weight(1f)) // Push current user's messages to the right
+            Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .padding(start = 16.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                // Message bubble (blue for current user)
+                Card(
+                    shape = RoundedCornerShape(
+                        topStart = 12.dp,
+                        topEnd = 12.dp,
+                        bottomStart = 12.dp,
+                        bottomEnd = 4.dp
+                    ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF2962FF) // Blue for current user
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Text(
+                        text = message.content,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .widthIn(max = 260.dp),
+                        lineHeight = 20.sp
+                    )
+                }
+
+                // Timestamp
+                Text(
+                    text = formatTimestamp(message.sentAt),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(end = 8.dp, top = 2.dp),
+                    textAlign = TextAlign.End
+                )
+            }
         }
     }
 }

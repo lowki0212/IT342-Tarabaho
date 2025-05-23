@@ -1,5 +1,3 @@
-package com.example.mobile_tarabahoapp
-
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
@@ -27,9 +25,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
+import com.example.mobile_tarabahoapp.utils.TokenManager
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerBookingDetailsScreen(
@@ -76,8 +76,7 @@ fun WorkerBookingDetailsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF2962FF)),
-
-                )
+            )
         }
     ) { paddingValues ->
         if (booking == null) {
@@ -362,7 +361,10 @@ fun WorkerBookingDetailsScreen(
                         Button(
                             onClick = {
                                 // Navigate to chat with client
-                                navController.navigate("chat/$bookingId")
+                                val currentUserId = TokenManager.getUserId() ?: 0L // Adjust based on your auth
+                                val isWorker = true // Worker perspective
+                                val chatTitle = "${bookingDetail.user?.firstname} ${bookingDetail.user?.lastname}"
+                                navController.navigate("chat/$bookingId?currentUserId=$currentUserId&isWorker=$isWorker&chatTitle=$chatTitle")
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
