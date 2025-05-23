@@ -56,8 +56,6 @@ fun WorkerBookingDetailsScreen(
         viewModel.getBookingById(bookingId)
     }
 
-
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,7 +77,7 @@ fun WorkerBookingDetailsScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF2962FF)),
 
-            )
+                )
         }
     ) { paddingValues ->
         if (booking == null) {
@@ -110,6 +108,7 @@ fun WorkerBookingDetailsScreen(
             val canAcceptOrReject = status == "PENDING"
             val canStart = status == "ACCEPTED"
             val canComplete = status == "IN_PROGRESS"
+            val canChat = status == "ACCEPTED" || status == "IN_PROGRESS" || status == "COMPLETED"
 
             // Format dates
             val dateFormat = SimpleDateFormat("MMM dd, yyyy, hh:mm a", Locale.getDefault())
@@ -358,6 +357,38 @@ fun WorkerBookingDetailsScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
+                    // Chat button - Only visible for ACCEPTED, IN_PROGRESS, or COMPLETED status
+                    if (canChat) {
+                        Button(
+                            onClick = {
+                                // Navigate to chat with client
+                                navController.navigate("chat/$bookingId")
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2196F3)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Chat,
+                                contentDescription = "Chat"
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Text(
+                                text = "Chat with Client",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
                     if (canAcceptOrReject) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -438,6 +469,8 @@ fun WorkerBookingDetailsScreen(
                     }
 
                     if (canComplete) {
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         Button(
                             onClick = {
                                 confirmTitle = "Complete Job"
@@ -473,38 +506,8 @@ fun WorkerBookingDetailsScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Chat button (available for all statuses except REJECTED)
-                    if (status != "REJECTED") {
-                        OutlinedButton(
-                            onClick = { /* Navigate to chat with client */ },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Color(0xFF2962FF)
-                            ),
-                            border = BorderStroke(1.dp, Color(0xFF2962FF))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = null
-                            )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Text(
-                                text = "Chat with Client",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
-
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

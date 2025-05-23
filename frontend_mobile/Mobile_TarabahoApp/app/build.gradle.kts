@@ -71,10 +71,17 @@ dependencies {
     implementation ("androidx.compose.runtime:runtime-livedata:<version>")
     implementation ("androidx.navigation:navigation-compose:<version>")
     implementation ("io.coil-kt:coil-compose:2.4.0")
-    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+
     implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
     implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation ("org.java-websocket:Java-WebSocket:1.5.2")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
+    // REMOVED the original NaikSoftware Stomp library dependencies:
+    // implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
+    // implementation ("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
 
+    // ADDED the Forrest Hopkins fork with heartbeat support:
+    implementation("com.github.forresthopkinsa:stompprotocolandroid:17.11.0")
 
 }

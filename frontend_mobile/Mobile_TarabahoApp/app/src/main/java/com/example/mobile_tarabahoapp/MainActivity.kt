@@ -1,5 +1,7 @@
 package com.example.mobile_tarabahoapp
 
+import ChatViewModel
+import MessagesScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,7 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,10 +38,7 @@ import com.example.mobile_tarabahoapp.AuthRepository.LoginViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.livedata.observeAsState
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
-import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModel
-import com.example.mobile_tarabahoapp.api.RetrofitClient
-import com.example.mobile_tarabahoapp.api.chat.ChatRepository
-
+import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModelFactory
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.utils.TokenManager
 
@@ -124,12 +123,7 @@ class MainActivity : ComponentActivity() {
                             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
                         }
 
-                        composable("chat/{bookingId}") { backStackEntry ->
-                            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
-                            val token = TokenManager.getToken() ?: ""
-                            ChatScreen(bookingId = bookingId, token = token, navController = navController)
-                        }
-
+                        
                         composable("worker_register") {
                             WorkerRegisterScreen(navController)
                         }
@@ -138,6 +132,27 @@ class MainActivity : ComponentActivity() {
                             val bookingViewModel: BookingViewModel = viewModel()
                             UserBookingScreen(navController = navController, viewModel = bookingViewModel)
                         }
+
+                        composable(route = "chat/{bookingId}") { backStackEntry ->
+                            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
+                            val token = TokenManager.getToken() ?: ""
+
+                            val factory = ChatViewModelFactory(bookingId, token)
+                            val chatViewModel: ChatViewModel = viewModel(factory = factory)
+
+                            // These two parameters are required for MessagesScreen according to your implementation
+                            val currentUserId = TokenManager.getCurrentUserId()
+                            val isWorker = TokenManager.isWorker()
+
+                            MessagesScreen(
+                                navController = navController,
+                                chatViewModel = chatViewModel,
+                                currentUserId = currentUserId,
+                                isWorker = isWorker
+                            )
+                        }
+
+
                     }
                 }
             }

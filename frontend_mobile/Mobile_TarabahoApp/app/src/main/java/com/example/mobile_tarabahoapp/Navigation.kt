@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
-import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModel
+
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.api.chat.ChatRepository
 import com.example.mobile_tarabahoapp.utils.TokenManager
@@ -29,8 +29,6 @@ fun AppNavigation(navController: NavHostController) {
             val workerId = workerIdString.toLongOrNull() ?: return@composable
             WorkerDetailsScreen(navController = navController, workerId = workerId)
         }
-
-
         composable("login") {
             LoginScreen(navController)
         }
@@ -100,11 +98,6 @@ fun AppNavigation(navController: NavHostController) {
         composable("worker_booking_details/{bookingId}") { backStackEntry ->
             val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: return@composable
             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
-        }
-        composable("chat/{bookingId}") { backStackEntry ->
-            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
-            val token = TokenManager.getToken() ?: ""
-            ChatScreen(bookingId = bookingId, token = token, navController = navController)
         }
 
         composable("worker_register") {

@@ -62,6 +62,7 @@ public class SecurityConfig {
 					.requestMatchers("/api/certificate/worker/**").permitAll()
 					.requestMatchers("/oauth2/**", "/login/**", "/oauth2-success").permitAll()
 					.requestMatchers("/profiles/**").permitAll()
+					.requestMatchers("/chat").permitAll() 
 					// Authenticated endpoints
 					.requestMatchers("/api/admin/**").authenticated()
 					.requestMatchers("/api/user/me", "/api/user/update-phone").authenticated()

@@ -1,8 +1,8 @@
 package com.example.mobile_tarabahoapp.api.chat
 
+import android.os.Message
 import com.example.mobile_tarabahoapp.api.ApiService
 import com.example.mobile_tarabahoapp.api.RetrofitClient.apiService
-import com.example.mobile_tarabahoapp.model.Message
 import com.example.mobile_tarabahoapp.model.SendMessageRequest
 import retrofit2.Response
 

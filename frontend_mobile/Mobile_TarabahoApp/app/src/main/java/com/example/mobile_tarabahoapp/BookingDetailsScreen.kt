@@ -32,6 +32,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import com.example.mobile_tarabahoapp.utils.TokenManager
 
 data class BookingDetail(
     val id: String,
@@ -373,6 +374,40 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
+                // Chat Button - Only visible for IN_PROGRESS or COMPLETED status
+                if (bookingDetail.status == "IN_PROGRESS" || bookingDetail.status == "COMPLETED") {
+                    Button(
+                        onClick = {
+                            navController.navigate("chat/$bookingId")
+
+
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Chat,
+                            contentDescription = "Chat"
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = "Chat with Worker",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 // Start Button
                 Button(
                     onClick = {

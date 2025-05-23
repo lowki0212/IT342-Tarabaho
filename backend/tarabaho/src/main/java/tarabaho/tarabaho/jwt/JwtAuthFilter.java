@@ -41,6 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private WorkerRepository workerRepository;
 
     private static final List<String> SKIP_FILTER_PATHS = Arrays.asList(
+         "/chat",  //  <--- Skip the WebSocket endpoint
             "/api/admin/login",
             "/api/admin/register",
             "/api/admin/logout",
