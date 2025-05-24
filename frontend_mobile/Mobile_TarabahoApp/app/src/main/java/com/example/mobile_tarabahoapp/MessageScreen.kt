@@ -1,4 +1,3 @@
-import ChatViewModel
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -42,8 +41,22 @@ fun MessagesScreen(
     val isWorker = backStackEntry?.arguments?.getBoolean("isWorker") ?: TokenManager.isWorker()
     val chatTitle = backStackEntry?.arguments?.getString("chatTitle") ?: "Chat"
 
+    // Get the actual IDs from TokenManager for comparison
+    val actualWorkerId = TokenManager.getWorkerId()
+    val actualUserId = TokenManager.getUserId()
+
     LaunchedEffect(Unit) {
-        Log.d("MessagesScreen", "currentUserId: $currentUserId, isWorker: $isWorker, chatTitle: $chatTitle")
+        Log.d("MessagesScreen", """
+            === CLIENT-SIDE SETUP DEBUG ===
+            currentUserId: $currentUserId
+            isWorker: $isWorker (should be FALSE for client)
+            chatTitle: $chatTitle
+            TokenManager.getWorkerId(): $actualWorkerId
+            TokenManager.getUserId(): $actualUserId (this should match client messages)
+            TokenManager.isWorker(): ${TokenManager.isWorker()}
+            TokenManager.getCurrentUserId(): ${TokenManager.getCurrentUserId()}
+            ==============================
+        """.trimIndent())
     }
 
     val messages by chatViewModel.messages.collectAsState()
@@ -82,13 +95,14 @@ fun MessagesScreen(
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
+                        // Show user type in title for debugging
                         Text(
-                            text = when (connectionState) {
+                            text = "${if (isWorker) "Worker" else "Client"} - ${when (connectionState) {
                                 ChatViewModel.ConnectionState.CONNECTED -> "Online"
                                 ChatViewModel.ConnectionState.CONNECTING -> "Connecting..."
                                 ChatViewModel.ConnectionState.DISCONNECTED -> "Offline"
                                 ChatViewModel.ConnectionState.ERROR -> "Connection error"
-                            },
+                            }}",
                             color = Color.White.copy(alpha = 0.8f),
                             fontSize = 12.sp
                         )
@@ -151,16 +165,18 @@ fun MessagesScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(messages) { message ->
-                        // Determine if the message is from the current user
-                        val isCurrentUser = if (isWorker) {
-                            message.senderWorkerId != null && message.senderWorkerId == currentUserId
-                        } else {
-                            message.senderUserId != null && message.senderUserId == currentUserId
-                        }
+                        // SIMPLIFIED: Use the cleaner message alignment logic
+                        val isCurrentUser = isMessageFromCurrentUser(
+                            message = message,
+                            isCurrentUserWorker = isWorker,
+                            actualWorkerId = actualWorkerId,
+                            actualUserId = actualUserId
+                        )
 
                         MessageItem(
                             message = message,
-                            isCurrentUser = isCurrentUser
+                            isCurrentUser = isCurrentUser,
+                            currentUserType = if (isWorker) "Worker" else "Client"
                         )
                     }
                 }
@@ -236,6 +252,45 @@ fun MessagesScreen(
     }
 }
 
+// SIMPLIFIED AND FIXED: Clear logic for message alignment
+fun isMessageFromCurrentUser(
+    message: MessageDTO,
+    isCurrentUserWorker: Boolean,
+    actualWorkerId: Long?,
+    actualUserId: Long?
+): Boolean {
+    val result = if (isCurrentUserWorker) {
+        // Worker logic: Check if message has worker ID matching current worker
+        val isFromCurrentWorker = actualWorkerId != null && message.senderWorkerId == actualWorkerId
+
+        Log.d("MessageAlignment", """
+            [WORKER] Message: "${message.content.take(20)}..."
+            - actualWorkerId: $actualWorkerId
+            - message.senderWorkerId: ${message.senderWorkerId}
+            - isFromCurrentWorker: $isFromCurrentWorker
+            - Result: ${if (isFromCurrentWorker) "RIGHT" else "LEFT"}
+        """.trimIndent())
+
+        isFromCurrentWorker
+    } else {
+        // Client logic: Check if message has user ID matching current user
+        val isFromCurrentClient = actualUserId != null && message.senderUserId == actualUserId
+
+        Log.d("MessageAlignment", """
+            [CLIENT] Message: "${message.content.take(20)}..."
+            - actualUserId: $actualUserId
+            - message.senderUserId: ${message.senderUserId}
+            - message.senderWorkerId: ${message.senderWorkerId}
+            - isFromCurrentClient: $isFromCurrentClient
+            - Result: ${if (isFromCurrentClient) "RIGHT" else "LEFT"}
+        """.trimIndent())
+
+        isFromCurrentClient
+    }
+
+    return result
+}
+
 fun formatTimestamp(isoString: String): String {
     return try {
         val instant = Instant.parse(isoString)
@@ -287,7 +342,7 @@ fun ConnectionStatusBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFFFF3E0))
+                    .background(Color(0xFFF3E0))
                     .padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -314,15 +369,24 @@ fun ConnectionStatusBar(
 @Composable
 fun MessageItem(
     message: MessageDTO,
-    isCurrentUser: Boolean
+    isCurrentUser: Boolean,
+    currentUserType: String = ""
 ) {
+    // Enhanced debug background colors
+    val debugBackgroundColor = when {
+        isCurrentUser && currentUserType == "Client" -> Color.Green.copy(alpha = 0.2f) // Green for client's own messages
+        isCurrentUser && currentUserType == "Worker" -> Color.Blue.copy(alpha = 0.2f)  // Blue for worker's own messages
+        else -> Color.Red.copy(alpha = 0.1f) // Red for other user's messages
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(debugBackgroundColor) // Debug background
             .padding(horizontal = 8.dp),
         horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
     ) {
-        // Messages from the other party (left side)
+        // Messages from other users (left side)
         if (!isCurrentUser) {
             Column(
                 modifier = Modifier
@@ -330,13 +394,21 @@ fun MessageItem(
                     .padding(end = 16.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // Sender name for other party's messages
+                // Sender info with debug details
+                val otherUserType = when {
+                    message.senderWorkerId != null && message.senderUserId == null -> "Worker"
+                    message.senderUserId != null && message.senderWorkerId == null -> "Client"
+                    message.senderWorkerId != null && message.senderUserId != null -> "Worker"
+                    else -> "Unknown"
+                }
+
                 Text(
-                    text = message.senderName,
+                    text = "${message.senderName} ($otherUserType) [LEFT] W:${message.senderWorkerId} U:${message.senderUserId}",
                     style = MaterialTheme.typography.labelMedium,
                     color = Color(0xFF2962FF),
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = 4.dp, start = 4.dp),
+                    fontSize = 10.sp // Smaller for debug info
                 )
 
                 // Message bubble (grey for other party)
@@ -348,7 +420,7 @@ fun MessageItem(
                         bottomEnd = 12.dp
                     ),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFE0E0E0) // Grey for other party
+                        containerColor = Color(0xFFE0E0E0)
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
@@ -371,18 +443,28 @@ fun MessageItem(
                     modifier = Modifier.padding(start = 8.dp, top = 2.dp)
                 )
             }
-            Spacer(modifier = Modifier.weight(1f)) // Push other party's messages to the left
+            Spacer(modifier = Modifier.weight(1f))
         }
 
         // Messages from the current user (right side)
         if (isCurrentUser) {
-            Spacer(modifier = Modifier.weight(1f)) // Push current user's messages to the right
+            Spacer(modifier = Modifier.weight(1f))
             Column(
                 modifier = Modifier
                     .weight(1f, fill = false)
                     .padding(start = 16.dp),
                 horizontalAlignment = Alignment.End
             ) {
+                // Current user label with debug info
+                Text(
+                    text = "You ($currentUserType) [RIGHT] W:${message.senderWorkerId} U:${message.senderUserId}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color(0xFF2962FF),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 4.dp, end = 4.dp),
+                    fontSize = 10.sp // Smaller for debug info
+                )
+
                 // Message bubble (blue for current user)
                 Card(
                     shape = RoundedCornerShape(
@@ -392,7 +474,7 @@ fun MessageItem(
                         bottomEnd = 4.dp
                     ),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF2962FF) // Blue for current user
+                        containerColor = Color(0xFF2962FF)
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {

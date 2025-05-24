@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.RegisterRequest
 import com.example.mobile_tarabahoapp.model.User
+import com.example.mobile_tarabahoapp.utils.TokenManager
 import kotlinx.coroutines.launch
 
 class SignUpViewModel : ViewModel() {
@@ -18,6 +19,7 @@ class SignUpViewModel : ViewModel() {
                 val response = RetrofitClient.apiService.register(request)
                 if (response.isSuccessful) {
                     response.body()?.let {
+                        TokenManager.saveUserId(it.id)
                         newUser.value = it
                     } ?: run {
                         signUpError.value = "Empty response from server"

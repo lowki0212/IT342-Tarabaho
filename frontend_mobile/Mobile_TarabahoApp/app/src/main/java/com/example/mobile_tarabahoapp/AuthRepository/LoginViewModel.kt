@@ -26,6 +26,13 @@ class LoginViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     response.body()?.let { authResponse ->
                         TokenManager.saveToken(authResponse.token) // ✅ Save JWT to SharedPreferences
+                        // Fetch user profile to get user ID
+                        val userResponse = RetrofitClient.apiService.getCurrentUser()
+                        if (userResponse.isSuccessful) {
+                            userResponse.body()?.let { user ->
+                                TokenManager.saveUserId(user.id)
+                            }
+                        }
                         loginResult.value = authResponse
                     } ?: run {
                         loginError.value = "Empty response from server."
