@@ -4,10 +4,14 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.*
 import com.example.mobile_tarabahoapp.api.RetrofitClient
+import com.example.mobile_tarabahoapp.model.Certificate as AppCertificate
+import com.example.mobile_tarabahoapp.model.Category
 import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
+import com.example.mobile_tarabahoapp.model.CategoryRequestDTO
 import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
 import retrofit2.Response
 
 class WorkerViewModel : ViewModel() {
@@ -22,6 +26,15 @@ class WorkerViewModel : ViewModel() {
 
     private val _updateSuccess = MutableLiveData<Boolean>()
     val updateSuccess: LiveData<Boolean> = _updateSuccess
+
+    private val _certificateUploadSuccess = MutableLiveData<Boolean>()
+    val certificateUploadSuccess: LiveData<Boolean> = _certificateUploadSuccess
+
+    private val _categoryRequestSuccess = MutableLiveData<Boolean>()
+    val categoryRequestSuccess: LiveData<Boolean> = _categoryRequestSuccess
+
+    private val _categories = MutableLiveData<List<Category>>(emptyList())
+    val categories: LiveData<List<Category>> = _categories
 
     private val _isLoading = mutableStateOf(false)
     val isLoading get() = _isLoading
@@ -58,8 +71,6 @@ class WorkerViewModel : ViewModel() {
             }
         }
     }
-
-
 
     fun fetchWorkersByCategory(categoryName: String) {
         viewModelScope.launch {
@@ -99,7 +110,7 @@ class WorkerViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val booking = response.body()
                     if (booking != null) {
-                        onResult(booking.id) // ✅ pass bookingId
+                        onResult(booking.id)
                     }
                 }
             } catch (e: Exception) {
@@ -108,4 +119,66 @@ class WorkerViewModel : ViewModel() {
         }
     }
 
+    fun uploadCertificate(workerId: Long, certificate: AppCertificate, file: MultipartBody.Part?) {
+        viewModelScope.launch {
+            try {
+                val response = api.uploadCertificate(
+                    workerId,
+                    certificate.courseName ?: "",
+                    certificate.certificateNumber ?: "",
+                    certificate.issueDate ?: "",
+                    file
+                )
+                if (response.isSuccessful) {
+                    Log.d("WorkerViewModel", "Certificate upload response: ${response.body()}")
+                    _certificateUploadSuccess.postValue(true)
+                } else {
+                    val error = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("WorkerViewModel", "Certificate upload failed: $error")
+                    _certificateUploadSuccess.postValue(false)
+                }
+            } catch (e: Exception) {
+                Log.e("WorkerViewModel", "Certificate upload error: ${e.message}")
+                _certificateUploadSuccess.postValue(false)
+            }
+        }
+    }
+
+    fun fetchCategories() {
+        viewModelScope.launch {
+            try {
+                val response = api.getCategories()
+                if (response.isSuccessful && response.body() != null) {
+                    _categories.value = response.body()
+                    Log.d("WorkerViewModel", "Fetched categories: ${response.body()}")
+                } else {
+                    Log.e("WorkerViewModel", "Failed to fetch categories: ${response.code()} ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("WorkerViewModel", "Category fetch error: ${e.message}")
+            }
+        }
+    }
+
+    fun requestCategory(workerId: Long, categoryNames: List<String>) {
+        viewModelScope.launch {
+            var allSuccessful = true
+            try {
+                for (categoryName in categoryNames) {
+                    val request = CategoryRequestDTO(categoryName)
+                    val response = api.requestCategory(workerId, request)
+                    Log.d("WorkerViewModel", "Category request response for $categoryName: ${response.body()}")
+                    if (!response.isSuccessful) {
+                        val error = response.errorBody()?.string() ?: "Unknown error"
+                        Log.e("WorkerViewModel", "Category request failed for $categoryName: $error")
+                        allSuccessful = false
+                    }
+                }
+                _categoryRequestSuccess.postValue(allSuccessful)
+            } catch (e: Exception) {
+                Log.e("WorkerViewModel", "Category request error: ${e.message}")
+                _categoryRequestSuccess.postValue(false)
+            }
+        }
+    }
 }

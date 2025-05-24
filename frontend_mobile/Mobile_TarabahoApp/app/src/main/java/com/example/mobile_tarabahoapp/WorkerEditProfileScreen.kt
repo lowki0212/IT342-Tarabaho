@@ -1,13 +1,15 @@
 package com.example.mobile_tarabahoapp
 
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +21,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -29,9 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,11 +43,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
+import com.example.mobile_tarabahoapp.model.Certificate
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.utils.TokenManager
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,18 +63,34 @@ fun WorkerEditProfileScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var showSuccessMessage by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showCategoryRequestDialog by remember { mutableStateOf(false) }
+
+    // Certificate state
+    var courseName by remember { mutableStateOf("") }
+    var certificateNumber by remember { mutableStateOf("") }
+    var issueDate by remember { mutableStateOf("") }
+    var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
+    var showCertificateDatePicker by remember { mutableStateOf(false) }
+
+    // Category request state
+    var selectedCategories by remember { mutableStateOf<List<String>>(emptyList()) }
 
     LaunchedEffect(Unit) {
         val workerId = TokenManager.getWorkerId()
         if (workerId != -1L) {
             Log.d("WorkerEditProfileScreen", "Fetching worker with ID: $workerId")
             viewModel.fetchWorkerById(workerId.toString())
+            viewModel.fetchCategories()
         } else {
             Log.e("WorkerEditProfileScreen", "Invalid worker ID")
         }
     }
 
     val updateSuccess by viewModel.updateSuccess.observeAsState()
+    val certificateUploadSuccess by viewModel.certificateUploadSuccess.observeAsState()
+    val categoryRequestSuccess by viewModel.categoryRequestSuccess.observeAsState()
+    val categories by viewModel.categories.observeAsState(emptyList())
+    val worker by viewModel.selectedWorker.observeAsState()
 
     // Handle Toast and Navigation
     LaunchedEffect(updateSuccess) {
@@ -86,7 +105,34 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-    val worker by viewModel.selectedWorker.observeAsState()
+    LaunchedEffect(certificateUploadSuccess) {
+        certificateUploadSuccess?.let {
+            isLoading = false
+            if (it) {
+                Toast.makeText(context, "Certificate uploaded successfully", Toast.LENGTH_SHORT).show()
+                // Clear certificate fields
+                courseName = ""
+                certificateNumber = ""
+                issueDate = ""
+                selectedFileUri = null
+            } else {
+                Toast.makeText(context, "Failed to upload certificate", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    LaunchedEffect(categoryRequestSuccess) {
+        categoryRequestSuccess?.let {
+            if (it) {
+                Toast.makeText(context, "Category request submitted successfully", Toast.LENGTH_SHORT).show()
+                selectedCategories = emptyList()
+                showCategoryRequestDialog = false
+            } else {
+                Toast.makeText(context, "Failed to submit category request. Check input or login.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     var email by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") }
@@ -106,6 +152,14 @@ fun WorkerEditProfileScreen(navController: NavController) {
     // State for validation errors
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var certificateError by remember { mutableStateOf<String?>(null) }
+
+    // File picker launcher for certificate
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedFileUri = uri
+    }
 
     // Function to validate email
     fun validateEmail(email: String): Boolean {
@@ -126,6 +180,17 @@ fun WorkerEditProfileScreen(navController: NavController) {
             false
         } else {
             passwordError = null
+            true
+        }
+    }
+
+    // Function to validate certificate fields
+    fun validateCertificate(): Boolean {
+        return if (courseName.isEmpty() || certificateNumber.isEmpty() || issueDate.isEmpty()) {
+            certificateError = "All certificate fields are required"
+            false
+        } else {
+            certificateError = null
             true
         }
     }
@@ -158,6 +223,40 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
+    // Function to handle certificate upload
+    fun handleCertificateUpload() {
+        val workerId = TokenManager.getWorkerId()
+        if (workerId == -1L) {
+            Toast.makeText(context, "Invalid worker ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!validateCertificate()) {
+            return
+        }
+
+        isLoading = true
+        val certificate = Certificate(
+            courseName = courseName,
+            certificateNumber = certificateNumber,
+            issueDate = issueDate
+        )
+
+        // Create MultipartBody.Part for file, if selected
+        val filePart: MultipartBody.Part? = selectedFileUri?.let { uri ->
+            val file = File(context.cacheDir, "certificate_${System.currentTimeMillis()}")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            val requestFile = file.asRequestBody()
+            MultipartBody.Part.createFormData("certificateFile", file.name, requestFile)
+        }
+
+        viewModel.uploadCertificate(workerId, certificate, filePart)
+    }
+
     var initialized by remember { mutableStateOf(false) }
 
     LaunchedEffect(worker) {
@@ -167,7 +266,6 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 address = it.address ?: ""
                 birthday = it.birthday ?: ""
                 biography = it.biography ?: ""
-
                 initialized = true
             }
         }
@@ -365,7 +463,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = if (it.isVerified == true) Icons.Default.VerifiedUser else Icons.Default.ErrorOutline,
+                                    imageVector = if (it.isVerified == true) Icons.Default.Verified else Icons.Default.ErrorOutline,
                                     contentDescription = if (it.isVerified == true) "Verified" else "Not Verified",
                                     tint = if (it.isVerified == true) Color(0xFF4CAF50) else Color(0xFFE53935),
                                     modifier = Modifier.size(16.dp)
@@ -556,7 +654,8 @@ fun WorkerEditProfileScreen(navController: NavController) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(120.dp),
+                            .height(120.dp)
+                            .padding(bottom = 16.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.LightGray,
@@ -732,6 +831,192 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 }
             }
 
+            // Certificate Upload Section
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .offset(y = (-8).dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 24.dp)
+                ) {
+                    // Section title
+                    Text(
+                        text = "Add Certificate",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2962FF),
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Course Name
+                    OutlinedTextField(
+                        value = courseName,
+                        onValueChange = { courseName = it },
+                        label = { Text("Course Name") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = "Course Name",
+                                tint = Color(0xFF2962FF)
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        ),
+                        isError = certificateError != null
+                    )
+
+                    // Certificate Number
+                    OutlinedTextField(
+                        value = certificateNumber,
+                        onValueChange = { certificateNumber = it },
+                        label = { Text("Certificate Number") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ConfirmationNumber,
+                                contentDescription = "Certificate Number",
+                                tint = Color(0xFF2962FF)
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        ),
+                        isError = certificateError != null
+                    )
+
+                    // Issue Date
+                    OutlinedTextField(
+                        value = issueDate,
+                        onValueChange = { /* Handled by date picker */ },
+                        label = { Text("Issue Date") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Issue Date",
+                                tint = Color(0xFF2962FF)
+                            )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showCertificateDatePicker = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = "Select Date",
+                                    tint = Color.Gray
+                                )
+                            }
+                        },
+                        readOnly = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.LightGray,
+                            focusedBorderColor = Color(0xFF2962FF)
+                        ),
+                        isError = certificateError != null
+                    )
+
+                    // File Picker Button
+                    Button(
+                        onClick = { filePickerLauncher.launch("application/pdf,image/*") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2962FF)
+                        )
+                    ) {
+                        Text(
+                            text = if (selectedFileUri != null) "File Selected" else "Choose Certificate File",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Certificate Error
+                    if (certificateError != null) {
+                        Text(
+                            text = certificateError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
+                    // Upload Certificate Button
+                    Button(
+                        onClick = { handleCertificateUpload() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2962FF)
+                        ),
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading && selectedFileUri != null) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Upload Certificate",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Request Category Button (Conditional)
+            worker?.let { workerData ->
+                if (workerData.isVerified == true) {
+                    Button(
+                        onClick = { showCategoryRequestDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 16.dp)
+                            .offset(y = (-8).dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2962FF)
+                        ),
+                        enabled = !isLoading
+                    ) {
+                        Text(
+                            text = "Request Category",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
             // Cancel Button
             OutlinedButton(
                 onClick = { navController.navigateUp() },
@@ -771,7 +1056,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
-    // Date Picker Dialog
+    // Date Picker Dialog for Birthday
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
 
@@ -804,6 +1089,105 @@ fun WorkerEditProfileScreen(navController: NavController) {
         }
     }
 
+    // Date Picker Dialog for Certificate Issue Date
+    if (showCertificateDatePicker) {
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { showCertificateDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            val localDate = java.time.Instant.ofEpochMilli(it)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate()
+                            issueDate = localDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                        }
+                        showCertificateDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showCertificateDatePicker = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Category Request Dialog
+    if (showCategoryRequestDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showCategoryRequestDialog = false
+                selectedCategories = emptyList()
+            },
+            title = {
+                Text(
+                    "Request Category",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text("Select categories to request:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MultiSelectDropdown(
+                        categories = categories,
+                        selectedCategories = selectedCategories,
+                        onCategorySelected = { categoryName ->
+                            selectedCategories = if (selectedCategories.contains(categoryName)) {
+                                selectedCategories - categoryName
+                            } else {
+                                selectedCategories + categoryName
+                            }
+                        },
+                        workerCategories = worker?.categories?.map { it.name } ?: emptyList()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (selectedCategories.isNotEmpty()) {
+                            val workerId = TokenManager.getWorkerId()
+                            if (workerId != -1L) {
+                                viewModel.requestCategory(workerId, selectedCategories)
+                            } else {
+                                Toast.makeText(context, "Invalid worker ID", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(context, "Please select at least one category", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2962FF)
+                    )
+                ) {
+                    Text("Submit")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showCategoryRequestDialog = false
+                        selectedCategories = emptyList()
+                    },
+                    border = BorderStroke(1.dp, Color.Gray)
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     // Logout Confirmation Dialog
     if (showLogoutDialog) {
         AlertDialog(
@@ -821,7 +1205,6 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 Button(
                     onClick = {
                         showLogoutDialog = false
-                        // LOGOUT HERE
                         TokenManager.clearToken()
                         TokenManager.saveWorkerId(-1)
                         navController.navigate("worker_signin") {
@@ -844,6 +1227,59 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MultiSelectDropdown(
+    categories: List<com.example.mobile_tarabahoapp.model.Category>,
+    selectedCategories: List<String>,
+    onCategorySelected: (String) -> Unit,
+    workerCategories: List<String>
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val filteredCategories = categories.filter { !workerCategories.contains(it.name) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = if (selectedCategories.isEmpty()) "Select categories" else selectedCategories.joinToString(", "),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Categories") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(),
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.LightGray,
+                focusedBorderColor = Color(0xFF2962FF)
+            )
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            filteredCategories.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(category.name) },
+                    onClick = { onCategorySelected(category.name) },
+                    leadingIcon = {
+                        Checkbox(
+                            checked = selectedCategories.contains(category.name),
+                            onCheckedChange = { onCategorySelected(category.name) }
+                        )
+                    }
+                )
+            }
+        }
     }
 }
 

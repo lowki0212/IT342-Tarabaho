@@ -131,11 +131,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                         onClick = { isFavorite = !isFavorite },
                         modifier = Modifier.size(24.dp)
                     ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = Color.White
-                        )
+
                     }
                 }
             }

@@ -50,15 +50,7 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
                         fontWeight = FontWeight.Bold
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
+
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF2962FF))
             )
         }

@@ -89,7 +89,7 @@ fun EditProfileScreen(navController: NavController) {
             password = ""  //it.passowrd
             email = it.email
             phone = it.phoneNumber ?: ""
-            birthday = it.birthday
+            birthday = it.birthday ?: ""
             displayBirthday = convertDateForDisplay(it.birthday)
             address = it.location ?: ""
         }

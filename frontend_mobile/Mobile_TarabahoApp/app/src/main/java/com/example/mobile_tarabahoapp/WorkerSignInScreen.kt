@@ -97,7 +97,7 @@ fun WorkerSignInScreen(navController: NavController) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "T A R A B A H O",
+                        text = "T A R A B A H ",
                         color = Color.White,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold

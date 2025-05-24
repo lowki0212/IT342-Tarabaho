@@ -1,9 +1,13 @@
 package com.example.mobile_tarabahoapp.api
 
-import android.os.Message
 import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.Booking
+import com.example.mobile_tarabahoapp.model.BookingStatusResponse
+import com.example.mobile_tarabahoapp.model.Category
 import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
+import com.example.mobile_tarabahoapp.model.CategoryRequest
+import com.example.mobile_tarabahoapp.model.CategoryRequestDTO
+import com.example.mobile_tarabahoapp.model.Certificate
 import com.example.mobile_tarabahoapp.model.LoginRequest
 import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
 import com.example.mobile_tarabahoapp.model.RatingRequest
@@ -14,13 +18,9 @@ import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.model.WorkerRegisterRequest
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
 import com.example.mobile_tarabahoapp.model.MessageDTO
+import okhttp3.MultipartBody
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
-
+import retrofit2.http.*
 
 interface ApiService {
     @POST("api/user/token")
@@ -85,7 +85,7 @@ interface ApiService {
 
     @GET("api/booking/{bookingId}/status")
     suspend fun getBookingStatus(@Path("bookingId") bookingId: Long): Response<BookingStatusResponse>
-    data class BookingStatusResponse(val status: String)
+
 
     @GET("api/booking/{bookingId}")
     suspend fun getBookingById(@Path("bookingId") bookingId: Long): Response<Booking>
@@ -105,6 +105,28 @@ interface ApiService {
     @POST("/api/worker/register")
     suspend fun registerWorker(@Body request: WorkerRegisterRequest): Response<Worker>
 
+    @Multipart
+    @POST("api/certificate/worker/{workerId}")
+    suspend fun uploadCertificate(
+        @Path("workerId") workerId: Long,
+        @Part("courseName") courseName: String,
+        @Part("certificateNumber") certificateNumber: String,
+        @Part("issueDate") issueDate: String,
+        @Part certificateFile: MultipartBody.Part?
+    ): Response<Certificate>
+
+    @POST("api/worker/{workerId}/request-category")
+    suspend fun requestCategory(
+        @Path("workerId") workerId: Long,
+        @Body request: CategoryRequestDTO
+    ): Response<CategoryRequest>
+
+    @GET("api/categories")
+    suspend fun getCategories(): Response<List<Category>>
+
+    @GET("api/admin/category-requests/pending")
+    suspend fun getPendingCategoryRequests(): Response<List<CategoryRequest>>
+
     interface BookingApiService {
         @GET("/api/booking/user")
         suspend fun getUserBookings(): Response<List<Booking>>
@@ -112,6 +134,11 @@ interface ApiService {
 
     @GET("/api/booking/user")
     suspend fun getUserBookings(): Response<List<Booking>>
+
+
+
+
+
 
 
 }
