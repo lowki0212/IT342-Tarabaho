@@ -40,36 +40,37 @@ import com.example.mobile_tarabahoapp.model.User
 import com.example.mobile_tarabahoapp.AuthRepository.SignUpViewModel
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import androidx.navigation.compose.rememberNavController
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             TarabahoTheme {
-                val navController = rememberNavController() // ✅ create this
+                val navController = rememberNavController()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SignUpScreen(
-                        navController = navController, // ✅ pass it here
+                        navController = navController,
                         onSignUpSuccess = {
                             navController.navigate("login") {
-                                popUpTo(0) { inclusive = true } // clear backstack
+                                popUpTo(0) { inclusive = true }
                             }
                         }
                     )
                 }
             }
         }
-
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    navController: NavController, // ✅ required now
+    navController: NavController,
     onSignUpSuccess: () -> Unit,
     viewModel: SignUpViewModel = viewModel()
 ) {
@@ -78,7 +79,7 @@ fun SignUpScreen(
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var city by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }  // Backend format: YYYY-MM-DD
+    var date by remember { mutableStateOf("") } // Backend format: YYYY-MM-DD
     var displayDate by remember { mutableStateOf("") } // Display format: DD/MM/YYYY
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -86,6 +87,8 @@ fun SignUpScreen(
     var username by remember { mutableStateOf("") }
     var usernameError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
     // Observe ViewModel LiveData
     val newUser by viewModel.newUser.observeAsState()
     val errorMsg by viewModel.signUpError.observeAsState()
@@ -96,6 +99,34 @@ fun SignUpScreen(
     }
 
     val context = LocalContext.current
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Date(millis)
+                        val backendFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val displayFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        date = backendFormat.format(selectedDate)
+                        displayDate = displayFormat.format(selectedDate)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -113,7 +144,7 @@ fun SignUpScreen(
             // Back button
             IconButton(
                 onClick = {
-                    navController.popBackStack() // this goes back to the login screen
+                    navController.popBackStack()
                 },
                 modifier = Modifier
                     .padding(16.dp)
@@ -125,7 +156,6 @@ fun SignUpScreen(
                     tint = Color.White
                 )
             }
-
 
             // Sign Up title and login link
             Column(
@@ -268,13 +298,9 @@ fun SignUpScreen(
             // Date field
             OutlinedTextField(
                 value = displayDate,
-                onValueChange = {
-                    displayDate = it
-                    // You might want to add logic to convert between display format and backend format
-                    // For simplicity, we're just updating the display value here
-                },
+                onValueChange = { /* Handled by date picker */ },
                 label = null,
-                placeholder = { Text("BirthDate") },
+                placeholder = { Text("Birthdate (DD/MM/YYYY)") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(4.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -282,12 +308,15 @@ fun SignUpScreen(
                     focusedBorderColor = Color(0xFF2962FF)
                 ),
                 singleLine = true,
+                readOnly = true,
                 trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "Select Date",
-                        tint = Color.Gray
-                    )
+                    IconButton(onClick = { showDatePicker = true }) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = "Select Date",
+                            tint = Color.Gray
+                        )
+                    }
                 }
             )
 
@@ -310,17 +339,19 @@ fun SignUpScreen(
                 leadingIcon = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { /* Open country code selector */ }
+                        modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(
-                            text = "🇺🇸", // Flag emoji as placeholder
-                            fontSize = 20.sp
+                            text = "+63",
+                            fontSize = 14.sp,
+                            color = Color.DarkGray
                         )
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Select Country Code",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(16.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Divider(
+                            modifier = Modifier
+                                .height(24.dp)
+                                .width(1.dp),
+                            color = Color.LightGray
                         )
                     }
                 }
@@ -333,7 +364,7 @@ fun SignUpScreen(
                 value = password,
                 onValueChange = {
                     password = it
-                    passwordError = null // clear error when user types
+                    passwordError = null
                 },
                 label = null,
                 placeholder = { Text("Password") },
@@ -367,20 +398,12 @@ fun SignUpScreen(
                 )
             }
 
-
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sign Up button
             Button(
                 onClick = {
-                    // ✅ Validate
-                    val parsedDate = try {
-                        val parts = displayDate.split("/")
-                        if (parts.size == 3) "${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}" else ""
-                    } catch (e: Exception) {
-                        ""
-                    }
-
+                    // Validate
                     var valid = true
                     if (username.isBlank()) {
                         usernameError = "Username is required"
@@ -392,6 +415,7 @@ fun SignUpScreen(
                     }
 
                     if (valid) {
+                        val phoneNumber = if (phone.isNotBlank()) "+63$phone" else ""
                         viewModel.register(
                             RegisterRequest(
                                 firstname = firstName,
@@ -399,9 +423,9 @@ fun SignUpScreen(
                                 username = username.trim(),
                                 password = password,
                                 email = email.trim(),
-                                phoneNumber = phone.trim(),
+                                phoneNumber = phoneNumber,
                                 location = city.trim(),
-                                birthday = parsedDate // ✅ correctly formatted
+                                birthday = date
                             )
                         )
                     }
@@ -425,12 +449,12 @@ fun SignUpScreen(
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun SignUpScreenPreview() {
-    val navController = rememberNavController() // ✅ Add this
+    val navController = rememberNavController()
     TarabahoTheme {
         SignUpScreen(navController = navController, onSignUpSuccess = {})
     }
 }
-

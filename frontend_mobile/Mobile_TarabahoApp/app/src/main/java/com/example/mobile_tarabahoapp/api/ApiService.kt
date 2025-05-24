@@ -38,6 +38,12 @@ interface ApiService {
     @GET("api/user/me")
     suspend fun getCurrentUser(): Response<User>
 
+    @Multipart
+    @POST("api/user/upload-picture")
+    suspend fun uploadProfilePicture(
+        @Part file: MultipartBody.Part
+    ): Response<User>
+
     @POST("api/worker/token")
     suspend fun loginWorker(@Body loginRequest: LoginRequest): Response<AuthResponse>
 
@@ -86,7 +92,6 @@ interface ApiService {
     @GET("api/booking/{bookingId}/status")
     suspend fun getBookingStatus(@Path("bookingId") bookingId: Long): Response<BookingStatusResponse>
 
-
     @GET("api/booking/{bookingId}")
     suspend fun getBookingById(@Path("bookingId") bookingId: Long): Response<Booking>
 
@@ -127,6 +132,13 @@ interface ApiService {
     @GET("api/admin/category-requests/pending")
     suspend fun getPendingCategoryRequests(): Response<List<CategoryRequest>>
 
+    @Multipart
+    @POST("api/worker/{workerId}/upload-picture")
+    suspend fun uploadProfilePicture(
+        @Path("workerId") workerId: Long,
+        @Part file: MultipartBody.Part
+    ): Response<Worker>
+
     interface BookingApiService {
         @GET("/api/booking/user")
         suspend fun getUserBookings(): Response<List<Booking>>
@@ -134,11 +146,4 @@ interface ApiService {
 
     @GET("/api/booking/user")
     suspend fun getUserBookings(): Response<List<Booking>>
-
-
-
-
-
-
-
 }

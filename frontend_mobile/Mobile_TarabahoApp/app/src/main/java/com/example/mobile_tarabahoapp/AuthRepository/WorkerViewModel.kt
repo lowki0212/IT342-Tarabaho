@@ -30,6 +30,9 @@ class WorkerViewModel : ViewModel() {
     private val _certificateUploadSuccess = MutableLiveData<Boolean>()
     val certificateUploadSuccess: LiveData<Boolean> = _certificateUploadSuccess
 
+    private val _profilePictureUploadSuccess = MutableLiveData<Boolean>()
+    val profilePictureUploadSuccess: LiveData<Boolean> = _profilePictureUploadSuccess
+
     private val _categoryRequestSuccess = MutableLiveData<Boolean>()
     val categoryRequestSuccess: LiveData<Boolean> = _categoryRequestSuccess
 
@@ -140,6 +143,26 @@ class WorkerViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("WorkerViewModel", "Certificate upload error: ${e.message}")
                 _certificateUploadSuccess.postValue(false)
+            }
+        }
+    }
+
+    fun uploadProfilePicture(workerId: Long, file: MultipartBody.Part) {
+        viewModelScope.launch {
+            try {
+                val response = api.uploadProfilePicture(workerId, file)
+                if (response.isSuccessful && response.body() != null) {
+                    Log.d("WorkerViewModel", "Profile picture upload response: ${response.body()}")
+                    _selectedWorker.postValue(response.body()) // Update worker with new profile picture
+                    _profilePictureUploadSuccess.postValue(true)
+                } else {
+                    val error = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("WorkerViewModel", "Profile picture upload failed: $error")
+                    _profilePictureUploadSuccess.postValue(false)
+                }
+            } catch (e: Exception) {
+                Log.e("WorkerViewModel", "Profile picture upload error: ${e.message}")
+                _profilePictureUploadSuccess.postValue(false)
             }
         }
     }

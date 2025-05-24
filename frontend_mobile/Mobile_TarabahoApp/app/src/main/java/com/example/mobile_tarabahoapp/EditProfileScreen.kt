@@ -1,13 +1,14 @@
 package com.example.mobile_tarabahoapp
 
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,7 +31,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -38,19 +39,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
-import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
-import java.text.SimpleDateFormat
-import java.util.*
-import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.mobile_tarabahoapp.AuthRepository.EditProfileViewModel
 import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
+import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+import android.webkit.MimeTypeMap
+import androidx.compose.foundation.BorderStroke
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +79,10 @@ fun EditProfileScreen(navController: NavController) {
     var showSuccessToast by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var showSuccessMessage by remember { mutableStateOf(false) }
+    var selectedProfilePictureUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Profile picture upload state
+    val profilePictureUploadSuccess by viewModel.profilePictureUploadSuccess.observeAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadCurrentUser()
@@ -86,12 +93,49 @@ fun EditProfileScreen(navController: NavController) {
             firstName = it.firstname
             lastName = it.lastname
             username = it.username
-            password = ""  //it.passowrd
+            password = ""
             email = it.email
             phone = it.phoneNumber ?: ""
             birthday = it.birthday ?: ""
             displayBirthday = convertDateForDisplay(it.birthday)
             address = it.location ?: ""
+        }
+    }
+
+    LaunchedEffect(profilePictureUploadSuccess) {
+        profilePictureUploadSuccess?.let {
+            isLoading = false
+            if (it) {
+                Toast.makeText(context, "Profile picture uploaded successfully", Toast.LENGTH_SHORT).show()
+                selectedProfilePictureUri = null
+            } else {
+                Toast.makeText(context, "Failed to upload profile picture", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // File picker launcher for profile picture
+    val profilePicturePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedProfilePictureUri = uri
+        uri?.let {
+            isLoading = true
+            val file = File(context.cacheDir, "profile_picture_${System.currentTimeMillis()}")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            // Get MIME type from Uri or file extension
+            val mimeType = context.contentResolver.getType(uri) ?: run {
+                val extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
+            }
+            Log.d("EditProfileScreen", "Selected profile picture: Uri=$uri, File=${file.name}, Size=${file.length()} bytes, MIME=$mimeType")
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+            val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+            viewModel.uploadProfilePicture(filePart)
         }
     }
 
@@ -210,12 +254,12 @@ fun EditProfileScreen(navController: NavController) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profile placeholder with worker icon
+                    // Profile picture
                     Box(
                         modifier = Modifier
                             .size(120.dp)
                     ) {
-                        // Profile placeholder
+                        // Profile picture
                         Box(
                             modifier = Modifier
                                 .size(120.dp)
@@ -224,13 +268,25 @@ fun EditProfileScreen(navController: NavController) {
                                 .border(4.dp, Color.White, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Person icon as placeholder
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile Placeholder",
-                                tint = Color(0xFF2962FF),
-                                modifier = Modifier.size(64.dp)
-                            )
+                            user?.profilePicture?.let { profilePictureUrl ->
+                                key(profilePictureUrl) {
+                                    AsyncImage(
+                                        model = "$profilePictureUrl?cache=${System.currentTimeMillis()}",
+                                        contentDescription = "User Profile Picture",
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            } ?: run {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile Placeholder",
+                                    tint = Color(0xFF2962FF),
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
 
                             // Worker icon overlay
                             Box(
@@ -250,6 +306,27 @@ fun EditProfileScreen(navController: NavController) {
                                 )
                             }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Edit Profile Picture Button
+                    Button(
+                        onClick = { profilePicturePickerLauncher.launch("image/*") },
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2962FF)
+                        ),
+                        enabled = !isLoading
+                    ) {
+                        Text(
+                            text = if (selectedProfilePictureUri != null) "Picture Selected" else "Edit Profile Picture",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -591,7 +668,8 @@ fun EditProfileScreen(navController: NavController) {
                                 Icon(
                                     imageVector = Icons.Default.CalendarMonth,
                                     contentDescription = "Select Date",
-                                    tint = Color.Gray
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -636,9 +714,7 @@ fun EditProfileScreen(navController: NavController) {
                                 location = address,
                                 password = password
                             )
-
                             viewModel.updateProfile(request)
-                            // Simulate API call
                             showSuccessMessage = true
                             isLoading = false
                         },

@@ -36,6 +36,8 @@ import androidx.navigation.NavController
 import com.example.mobile_tarabahoapp.model.WorkerRegisterRequest
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerRegisterViewModel
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,8 +56,10 @@ fun WorkerRegisterScreen(
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var birthday by remember { mutableStateOf("") } // Format: YYYY-MM-DD
+    var displayBirthday by remember { mutableStateOf("") } // Format: DD/MM/YYYY
     var address by remember { mutableStateOf("") }
     var hourly by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Password visibility
     var passwordVisible by remember { mutableStateOf(false) }
@@ -76,7 +80,7 @@ fun WorkerRegisterScreen(
             it.onSuccess {
                 isLoading = false
                 registrationSuccess = true
-                delay(1500) // Show success message briefly
+                delay(1500)
                 Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
             }.onFailure { err ->
@@ -85,6 +89,34 @@ fun WorkerRegisterScreen(
                 errorMessage = err.message ?: "Registration failed. Please try again."
                 Toast.makeText(context, "Error: ${err.message}", Toast.LENGTH_LONG).show()
             }
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Date(millis)
+                        val backendFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val displayFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                        birthday = backendFormat.format(selectedDate)
+                        displayBirthday = displayFormat.format(selectedDate)
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 
@@ -512,11 +544,23 @@ fun WorkerRegisterScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = null,
-                                tint = Color(0xFF2962FF)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Text(
+                                    text = "+63",
+                                    fontSize = 14.sp,
+                                    color = Color.DarkGray
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Divider(
+                                    modifier = Modifier
+                                        .height(24.dp)
+                                        .width(1.dp),
+                                    color = Color.LightGray
+                                )
+                            }
                         }
                     )
 
@@ -524,12 +568,9 @@ fun WorkerRegisterScreen(
 
                     // Birthday field
                     OutlinedTextField(
-                        value = birthday,
-                        onValueChange = {
-                            birthday = it
-                            showErrors = false
-                        },
-                        label = { Text("Birthday (YYYY-MM-DD)") },
+                        value = displayBirthday,
+                        onValueChange = { /* Handled by date picker */ },
+                        label = { Text("Birthday (DD/MM/YYYY)") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -537,12 +578,22 @@ fun WorkerRegisterScreen(
                             focusedBorderColor = Color(0xFF2962FF)
                         ),
                         singleLine = true,
+                        readOnly = true,
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.CalendarMonth,
                                 contentDescription = null,
                                 tint = Color(0xFF2962FF)
                             )
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showDatePicker = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarMonth,
+                                    contentDescription = "Select Date",
+                                    tint = Color.Gray
+                                )
+                            }
                         }
                     )
 
@@ -621,6 +672,7 @@ fun WorkerRegisterScreen(
                                 )) {
                                 isLoading = true
                                 showErrors = false
+                                val phoneNumber = if (phone.isNotBlank()) "+63$phone" else null
                                 viewModel.registerWorker(
                                     WorkerRegisterRequest(
                                         username = username,
@@ -628,7 +680,7 @@ fun WorkerRegisterScreen(
                                         firstName = firstName,
                                         lastName = lastName,
                                         email = email,
-                                        phoneNumber = phone.ifBlank { null },
+                                        phoneNumber = phoneNumber,
                                         birthday = birthday.ifBlank { null },
                                         address = address.ifBlank { null },
                                         hourly = hourly.toDoubleOrNull() ?: 0.0

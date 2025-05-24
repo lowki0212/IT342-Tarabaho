@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
 import com.example.mobile_tarabahoapp.model.Certificate
 import com.example.mobile_tarabahoapp.model.WorkerUpdateRequest
@@ -52,6 +54,9 @@ import java.time.format.DateTimeFormatter
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import android.webkit.MimeTypeMap
+import androidx.core.net.toFile
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,11 +71,15 @@ fun WorkerEditProfileScreen(navController: NavController) {
     var showCategoryRequestDialog by remember { mutableStateOf(false) }
 
     // Certificate state
+    var fileError by remember { mutableStateOf<String?>(null) }
     var courseName by remember { mutableStateOf("") }
     var certificateNumber by remember { mutableStateOf("") }
     var issueDate by remember { mutableStateOf("") }
     var selectedFileUri by remember { mutableStateOf<Uri?>(null) }
     var showCertificateDatePicker by remember { mutableStateOf(false) }
+
+    // Profile picture state
+    var selectedProfilePictureUri by remember { mutableStateOf<Uri?>(null) }
 
     // Category request state
     var selectedCategories by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -88,6 +97,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
 
     val updateSuccess by viewModel.updateSuccess.observeAsState()
     val certificateUploadSuccess by viewModel.certificateUploadSuccess.observeAsState()
+    val profilePictureUploadSuccess by viewModel.profilePictureUploadSuccess.observeAsState()
     val categoryRequestSuccess by viewModel.categoryRequestSuccess.observeAsState()
     val categories by viewModel.categories.observeAsState(emptyList())
     val worker by viewModel.selectedWorker.observeAsState()
@@ -115,8 +125,21 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 certificateNumber = ""
                 issueDate = ""
                 selectedFileUri = null
+                fileError = null
             } else {
                 Toast.makeText(context, "Failed to upload certificate", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    LaunchedEffect(profilePictureUploadSuccess) {
+        profilePictureUploadSuccess?.let {
+            isLoading = false
+            if (it) {
+                Toast.makeText(context, "Profile picture uploaded successfully", Toast.LENGTH_SHORT).show()
+                selectedProfilePictureUri = null
+            } else {
+                Toast.makeText(context, "Failed to upload profile picture", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -159,6 +182,73 @@ fun WorkerEditProfileScreen(navController: NavController) {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedFileUri = uri
+        uri?.let {
+            val mimeType = context.contentResolver.getType(it)
+            val allowedMimeTypes = listOf("application/pdf", "image/jpeg", "image/png")
+            Log.d("WorkerEditProfileScreen", "Attempting to select file: Uri=$uri, MIME=$mimeType")
+            if (mimeType in allowedMimeTypes) {
+                val workerId = TokenManager.getWorkerId()
+                if (workerId != -1L) {
+                    val file = File(context.cacheDir, "certificate_${System.currentTimeMillis()}")
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        file.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    // Get MIME type from Uri or file extension
+                    val finalMimeType = mimeType ?: run {
+                        val extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                        MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
+                    }
+                    Log.d("WorkerEditProfileScreen", "Selected certificate file: Uri=$uri, File=${file.name}, Size=${file.length()} bytes, MIME=$finalMimeType")
+                    selectedFileUri = uri
+                    fileError = null
+                } else {
+                    Toast.makeText(context, "Invalid worker ID", Toast.LENGTH_SHORT).show()
+                    selectedFileUri = null
+                    fileError = null
+                }
+            } else {
+                fileError = "Only PDF, JPEG, or PNG files are allowed"
+                selectedFileUri = null
+                Toast.makeText(context, fileError, Toast.LENGTH_SHORT).show()
+                Log.w("WorkerEditProfileScreen", "Invalid file type: $mimeType")
+            }
+        } ?: run {
+            Log.d("WorkerEditProfileScreen", "File selection cancelled: Uri is null")
+            selectedFileUri = null
+            fileError = null
+        }
+    }
+
+    // File picker launcher for profile picture
+    val profilePicturePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        selectedProfilePictureUri = uri
+        uri?.let {
+            val workerId = TokenManager.getWorkerId()
+            if (workerId != -1L) {
+                isLoading = true
+                val file = File(context.cacheDir, "profile_picture_${System.currentTimeMillis()}")
+                context.contentResolver.openInputStream(uri)?.use { input ->
+                    file.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                // Get MIME type from Uri or file extension
+                val mimeType = context.contentResolver.getType(uri) ?: run {
+                    val extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
+                }
+                Log.d("WorkerEditProfileScreen", "Selected profile picture: Uri=$uri, File=${file.name}, Size=${file.length()} bytes, MIME=$mimeType")
+                val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
+                val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                viewModel.uploadProfilePicture(workerId, filePart)
+            } else {
+                Toast.makeText(context, "Invalid worker ID", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // Function to validate email
@@ -242,7 +332,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
             issueDate = issueDate
         )
 
-        // Create MultipartBody.Part for file, if selected
+        // Create MultipartBody.Part for file
         val filePart: MultipartBody.Part? = selectedFileUri?.let { uri ->
             val file = File(context.cacheDir, "certificate_${System.currentTimeMillis()}")
             context.contentResolver.openInputStream(uri)?.use { input ->
@@ -250,7 +340,13 @@ fun WorkerEditProfileScreen(navController: NavController) {
                     input.copyTo(output)
                 }
             }
-            val requestFile = file.asRequestBody()
+            // Get MIME type from Uri
+            val mimeType = context.contentResolver.getType(uri) ?: run {
+                val extension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "application/octet-stream"
+            }
+            Log.d("WorkerEditProfileScreen", "Uploading certificate: File=${file.name}, Size=${file.length()} bytes, MIME=$mimeType")
+            val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
             MultipartBody.Part.createFormData("certificateFile", file.name, requestFile)
         }
 
@@ -404,12 +500,12 @@ fun WorkerEditProfileScreen(navController: NavController) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Worker icon placeholder
+                    // Worker profile picture
                     Box(
                         modifier = Modifier
                             .size(120.dp)
                     ) {
-                        // Profile placeholder
+                        // Profile picture
                         Box(
                             modifier = Modifier
                                 .size(120.dp)
@@ -418,13 +514,26 @@ fun WorkerEditProfileScreen(navController: NavController) {
                                 .border(4.dp, Color.White, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Engineering icon as placeholder
-                            Icon(
-                                imageVector = Icons.Default.Engineering,
-                                contentDescription = "Worker Icon",
-                                tint = Color(0xFF2962FF),
-                                modifier = Modifier.size(64.dp)
-                            )
+                            worker?.profilePicture?.let { profilePictureUrl ->
+                                key(profilePictureUrl) {
+                                    AsyncImage(
+                                        model = "$profilePictureUrl?cache=${System.currentTimeMillis()}",
+                                        contentDescription = "Worker Profile Picture",
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                            } ?: run {
+                                // Fallback to Engineering icon
+                                Icon(
+                                    imageVector = Icons.Default.Engineering,
+                                    contentDescription = "Worker Icon",
+                                    tint = Color(0xFF2962FF),
+                                    modifier = Modifier.size(64.dp)
+                                )
+                            }
 
                             // Worker icon overlay
                             Box(
@@ -444,6 +553,27 @@ fun WorkerEditProfileScreen(navController: NavController) {
                                 )
                             }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Edit Profile Picture Button
+                    Button(
+                        onClick = { profilePicturePickerLauncher.launch("image/*") },
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2962FF)
+                        ),
+                        enabled = !isLoading
+                    ) {
+                        Text(
+                            text = if (selectedProfilePictureUri != null) "Picture Selected" else "Edit Profile Picture",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -936,7 +1066,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
 
                     // File Picker Button
                     Button(
-                        onClick = { filePickerLauncher.launch("application/pdf,image/*") },
+                        onClick = { filePickerLauncher.launch("*/*") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp)
@@ -950,6 +1080,16 @@ fun WorkerEditProfileScreen(navController: NavController) {
                             text = if (selectedFileUri != null) "File Selected" else "Choose Certificate File",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // File Error
+                    if (fileError != null) {
+                        Text(
+                            text = fileError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
                         )
                     }
 
