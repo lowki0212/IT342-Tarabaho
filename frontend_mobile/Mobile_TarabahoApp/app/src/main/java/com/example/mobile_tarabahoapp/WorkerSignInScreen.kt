@@ -1,9 +1,7 @@
 package com.example.mobile_tarabahoapp
 
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -19,13 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,8 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerLoginViewModel
-import com.example.mobile_tarabahoapp.api.RetrofitClient
-
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.utils.TokenManager
 
@@ -42,39 +34,20 @@ import com.example.mobile_tarabahoapp.utils.TokenManager
 @Composable
 fun WorkerSignInScreen(navController: NavController) {
     val viewModel: WorkerLoginViewModel = viewModel()
-
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var rememberMe by remember { mutableStateOf(false) }
-    var username by remember { mutableStateOf("") }
-
+    var rememberMe by remember { mutableStateOf(TokenManager.isRememberMe()) }
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
 
     LaunchedEffect(loginResult) {
         loginResult?.let {
-            try {
-                val response = RetrofitClient.apiService.getWorkerByUsername(username)
-                if (response.isSuccessful) {
-                    val worker = response.body()
-                    if (worker != null) {
-                        TokenManager.saveWorkerId(worker.id ?: -1L)
-                        navController.navigate("worker_home") {
-                            popUpTo("worker_signin") { inclusive = true }
-                        }
-                    } else {
-                        Log.e("WorkerSignIn", "Worker is null in response")
-                    }
-                } else {
-                    Log.e("WorkerSignIn", "Failed to fetch worker by username: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("WorkerSignIn", "Exception while fetching worker: ${e.localizedMessage}")
+            navController.navigate("worker_home") {
+                popUpTo("worker_signin") { inclusive = true }
             }
         }
     }
-
 
     Column(
         modifier = Modifier
@@ -82,7 +55,6 @@ fun WorkerSignInScreen(navController: NavController) {
             .background(Color.White)
             .verticalScroll(rememberScrollState())
     ) {
-        // Blue header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,7 +98,6 @@ fun WorkerSignInScreen(navController: NavController) {
             }
         }
 
-        // Login form
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -142,7 +113,6 @@ fun WorkerSignInScreen(navController: NavController) {
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Worker icon
                 Box(
                     modifier = Modifier
                         .size(64.dp)
@@ -170,8 +140,8 @@ fun WorkerSignInScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = username, // <-- use username here
-                    onValueChange = { username = it }, // <-- and here
+                    value = username,
+                    onValueChange = { username = it },
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(4.dp),
@@ -189,10 +159,8 @@ fun WorkerSignInScreen(navController: NavController) {
                     }
                 )
 
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Password field
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -224,9 +192,17 @@ fun WorkerSignInScreen(navController: NavController) {
                     }
                 )
 
+                if (loginError?.isNotEmpty() == true) {
+                    Text(
+                        text = loginError!!,
+                        color = Color.Red,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Remember me and Forgot password
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -259,9 +235,8 @@ fun WorkerSignInScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Login button
                 Button(
-                    onClick = {  viewModel.login(username, password)},
+                    onClick = { viewModel.login(username, password, rememberMe) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -279,7 +254,6 @@ fun WorkerSignInScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Switch to client mode
                 TextButton(
                     onClick = { navController.navigate("login") },
                     modifier = Modifier.fillMaxWidth()
@@ -293,7 +267,6 @@ fun WorkerSignInScreen(navController: NavController) {
             }
         }
 
-        // Sign up text
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -319,7 +292,6 @@ fun WorkerSignInScreen(navController: NavController) {
             }
         }
 
-        // Information section
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -339,9 +311,7 @@ fun WorkerSignInScreen(navController: NavController) {
                         tint = Color(0xFF2962FF),
                         modifier = Modifier.size(24.dp)
                     )
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     Text(
                         text = "Worker Benefits",
                         fontSize = 16.sp,
@@ -349,32 +319,25 @@ fun WorkerSignInScreen(navController: NavController) {
                         color = Color(0xFF2962FF)
                     )
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
-
                 BenefitItem(
                     icon = Icons.Default.MonetizationOn,
                     text = "Earn competitive rates for your services"
                 )
-
                 BenefitItem(
                     icon = Icons.Default.Schedule,
                     text = "Flexible working hours that fit your schedule"
                 )
-
                 BenefitItem(
                     icon = Icons.Default.Star,
                     text = "Build your reputation with client reviews"
                 )
-
                 BenefitItem(
                     icon = Icons.Default.Security,
                     text = "Secure payment processing system"
                 )
             }
         }
-
-        // Add some bottom padding
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
@@ -394,9 +357,7 @@ fun BenefitItem(
             tint = Color(0xFF2962FF),
             modifier = Modifier.size(16.dp)
         )
-
         Spacer(modifier = Modifier.width(8.dp))
-
         Text(
             text = text,
             fontSize = 14.sp,

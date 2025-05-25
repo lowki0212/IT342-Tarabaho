@@ -10,6 +10,7 @@ import com.example.mobile_tarabahoapp.model.CategoryRequestDTO
 import com.example.mobile_tarabahoapp.model.Certificate
 import com.example.mobile_tarabahoapp.model.LoginRequest
 import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
+import com.example.mobile_tarabahoapp.model.Rating
 import com.example.mobile_tarabahoapp.model.RatingRequest
 import com.example.mobile_tarabahoapp.model.RegisterRequest
 import com.example.mobile_tarabahoapp.model.SendMessageRequest
@@ -138,6 +139,9 @@ interface ApiService {
         @Path("workerId") workerId: Long,
         @Part file: MultipartBody.Part
     ): Response<Worker>
+
+    @GET("api/rating/worker/{workerId}")
+    suspend fun getRatingsByWorkerId(@Path("workerId") workerId: Long): Response<List<Rating>>
 
     interface BookingApiService {
         @GET("/api/booking/user")

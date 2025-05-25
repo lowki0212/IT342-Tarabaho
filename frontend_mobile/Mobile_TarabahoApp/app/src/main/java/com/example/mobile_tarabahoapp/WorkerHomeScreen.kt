@@ -28,12 +28,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
 import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
-import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.Booking
 import com.example.mobile_tarabahoapp.model.Worker
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
@@ -41,6 +39,7 @@ import com.example.mobile_tarabahoapp.utils.TokenManager
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.delay
+
 enum class JobStatus {
     PENDING_ACCEPTANCE,
     UPCOMING,
@@ -74,7 +73,6 @@ fun Booking.toJob(): Job {
         } catch (e: Exception) {
             Date()
         },
-
         payment = 0.0, // Set appropriate payment value if available in your Booking model
         status = when (this.status) {
             "PENDING" -> JobStatus.PENDING_ACCEPTANCE
@@ -206,7 +204,7 @@ fun WorkerHomeScreen(
 
                 StatCard(
                     icon = Icons.Default.Star,
-                    value = "4.8",
+                    value = worker?.stars?.let { String.format("%.1f", it) } ?: "N/A",
                     label = "Rating",
                     color = Color(0xFFFFC107),
                     modifier = Modifier.weight(1f)
@@ -326,7 +324,6 @@ fun WorkerHomeScreen(
                     }
                 }
             }
-
         }
     }
 }

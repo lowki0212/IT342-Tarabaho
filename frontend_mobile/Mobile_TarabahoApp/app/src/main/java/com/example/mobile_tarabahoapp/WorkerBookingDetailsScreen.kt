@@ -323,9 +323,9 @@ fun WorkerBookingDetailsScreen(
 
                         // Type
                         BookingDetailRow(
-                            label = "Type",
-                            value = bookingDetail.type,
-                            icon = Icons.Default.Label
+                            label = "Category",
+                            value = bookingDetail.category.name,
+                            icon = Icons.Default.Category
                         )
 
                         Divider(modifier = Modifier.padding(vertical = 8.dp))

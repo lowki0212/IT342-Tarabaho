@@ -7,8 +7,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-
-
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -30,29 +28,21 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.mobile_tarabahoapp.AppNavigation
-import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
-
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
-
-
+import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
-
-    val workerViewModel: WorkerViewModel = viewModel() // 1️⃣ declare ViewModel FIRST
-
+    val workerViewModel: WorkerViewModel = viewModel()
     val workers by workerViewModel.workers.observeAsState(emptyList())
-    var selectedCategoryIndex by remember { mutableStateOf(1) } // Gardener selected by default
-
+    var selectedCategoryIndex by remember { mutableStateOf(0) } // Cleaning selected by default
 
     LaunchedEffect(Unit) {
-        workerViewModel.fetchWorkers()
+        workerViewModel.fetchWorkersByCategory("Cleaning")
     }
 
     val categories = listOf(
-        "All" to R.drawable.ic_work,
         "Cleaning" to R.drawable.ic_work,
         "Gardening" to R.drawable.ic_gardener,
         "Errands" to R.drawable.ic_errands,
@@ -66,14 +56,11 @@ fun HomeScreen(navController: NavController) {
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Settings") },
-                    selected = false, // You can update this based on currentDestination if needed
+                    selected = false,
                     onClick = {
-                        navController.navigate("settings") {
-
-                        }
+                        navController.navigate("settings")
                     },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
@@ -81,7 +68,6 @@ fun HomeScreen(navController: NavController) {
                         unselectedIconColor = Color.Gray
                     )
                 )
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
@@ -102,7 +88,6 @@ fun HomeScreen(navController: NavController) {
                         unselectedIconColor = Color.Gray
                     )
                 )
-
             }
         }
     ) { paddingValues ->
@@ -159,11 +144,7 @@ fun HomeScreen(navController: NavController) {
                                     .padding(horizontal = 4.dp)
                                     .clickable {
                                         selectedCategoryIndex = index
-                                        if (name == "All") {
-                                            workerViewModel.fetchWorkers()
-                                        } else {
-                                            workerViewModel.fetchWorkersByCategory(name)
-                                        }
+                                        workerViewModel.fetchWorkersByCategory(name)
                                     }
                             ) {
                                 Box(
@@ -215,7 +196,6 @@ fun HomeScreen(navController: NavController) {
                     fontWeight = FontWeight.Medium
                 )
 
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -231,6 +211,7 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,10 +220,10 @@ fun HomeScreen(navController: NavController) {
             ) {
                 items(workers) { worker ->
                     WorkerCard(worker = worker) {
-                        navController.navigate("worker_details/${worker.id}")
+                        val categoryName = categories[selectedCategoryIndex].first
+                        navController.navigate("worker_details/${worker.id}/$categoryName")
                     }
                 }
-                // Add some bottom padding
                 item {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -250,11 +231,11 @@ fun HomeScreen(navController: NavController) {
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     TarabahoTheme {
-        val navController = rememberNavController()
-        HomeScreen(navController = navController)
+        HomeScreen(navController = rememberNavController())
     }
 }

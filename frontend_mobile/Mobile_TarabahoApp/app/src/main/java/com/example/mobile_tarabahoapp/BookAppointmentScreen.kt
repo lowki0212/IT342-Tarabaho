@@ -32,27 +32,24 @@ import com.example.mobile_tarabahoapp.model.PaymentMethod
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BookAppointmentScreen(navController: NavController, workerId: Long) {
+fun BookAppointmentScreen(navController: NavController, workerId: Long, category: String) {
     // State for job details
     var jobDetails by remember { mutableStateOf("") }
     val viewModel: BookingViewModel = viewModel()
     // State for payment method
-    // ✅ FIXED → Replace String list with enum list (PaymentMethod)
     val paymentOptions = listOf(PaymentMethod.CASH, PaymentMethod.GCASH)
-
-    // ✅ FIXED → selectedPaymentOption is now PaymentMethod (not String)
     var selectedPaymentOption by remember { mutableStateOf(paymentOptions[0]) }
+
     Scaffold(
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = { navController.navigate("settings")  },
+                    onClick = { navController.navigate("settings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -62,7 +59,7 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = {  navController.navigateUp() },
+                    onClick = { navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -162,7 +159,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
             }
 
             // Payment Method Section
-            // Payment Method Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,7 +183,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                             .padding(16.dp)
                             .selectableGroup()
                     ) {
-                        // ✅ Loop through PaymentMethod enum
                         paymentOptions.forEach { option ->
                             Row(
                                 modifier = Modifier
@@ -211,7 +206,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
 
                                 Spacer(modifier = Modifier.width(16.dp))
 
-                                // ✅ Icon based on option
                                 val icon = when (option) {
                                     PaymentMethod.CASH -> Icons.Default.Money
                                     PaymentMethod.GCASH -> Icons.Default.AccountBalance
@@ -227,7 +221,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
 
                                 Spacer(modifier = Modifier.width(16.dp))
 
-                                // ✅ Display proper name: Cash / GCash (not all uppercase)
                                 Text(
                                     text = option.name.lowercase().replaceFirstChar { it.uppercase() },
                                     fontSize = 16.sp,
@@ -235,7 +228,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                                 )
                             }
 
-                            // ✅ Divider after each option (clean version)
                             Divider(
                                 modifier = Modifier.padding(vertical = 8.dp),
                                 color = Color.LightGray
@@ -250,17 +242,15 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
                 onClick = {
                     viewModel.createBooking(
                         workerId = workerId,
-                        categoryName = "Cleaning",
+                        categoryName = category,
                         paymentMethod = selectedPaymentOption,
                         jobDetails = jobDetails,
                         onSuccess = { newBookingId ->
                             if (newBookingId > 0) {
-                                // ✅ Valid booking ID, proceed to navigate
                                 navController.navigate("booking_status/$newBookingId") {
                                     launchSingleTop = true
                                 }
                             } else {
-                                // ✅ Invalid booking ID (booking failed or returned null), show error
                                 Log.e("BookAppointment", "Booking failed: Invalid Booking ID ($newBookingId)")
                             }
                         },
@@ -295,6 +285,6 @@ fun BookAppointmentScreen(navController: NavController, workerId: Long) {
 @Composable
 fun BookAppointmentScreenPreview() {
     TarabahoTheme {
-        BookAppointmentScreen(rememberNavController(), workerId = 1L)
+        BookAppointmentScreen(rememberNavController(), workerId = 1L, category = "Cleaning")
     }
 }

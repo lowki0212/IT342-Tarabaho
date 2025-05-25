@@ -77,7 +77,6 @@ fun UserBookingScreen(
                         popUpTo("user_bookings") { inclusive = true }
                         launchSingleTop = true
                     }
-
                 },
                 modifier = Modifier
                     .padding(16.dp)
@@ -205,12 +204,16 @@ fun UserBookingScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                navController.navigate("booking_details/${booking.id}")
+                                if (booking.status.uppercase() == "PENDING") {
+                                    navController.navigate("booking_status/${booking.id}")
+                                } else {
+                                    navController.navigate("booking_details/${booking.id}")
+                                }
                             },
                         shape = RoundedCornerShape(16.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
@@ -376,4 +379,10 @@ fun UserBookingScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun UserBookingScreenPreview() {
+    UserBookingScreen(navController = rememberNavController())
 }

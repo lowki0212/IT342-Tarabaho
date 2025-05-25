@@ -348,9 +348,9 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     // Type
                     DetailRow(
-                        label = "Type",
-                        value = bookingDetail.type,
-                        icon = Icons.Default.Label
+                        label = "Category",
+                        value = bookingDetail.category,
+                        icon = Icons.Default.Category
                     )
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))

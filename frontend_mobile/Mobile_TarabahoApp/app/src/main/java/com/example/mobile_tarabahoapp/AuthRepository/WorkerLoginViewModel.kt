@@ -7,7 +7,6 @@ import androidx.navigation.NavController
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.AuthResponse
 import com.example.mobile_tarabahoapp.model.LoginRequest
-
 import com.example.mobile_tarabahoapp.utils.TokenManager
 import kotlinx.coroutines.launch
 
@@ -16,7 +15,7 @@ class WorkerLoginViewModel : ViewModel() {
     val loginResult = MutableLiveData<AuthResponse>()
     val loginError = MutableLiveData<String>()
 
-    fun login(username: String, password: String) {
+    fun login(username: String, password: String, rememberMe: Boolean = false) {
         viewModelScope.launch {
             try {
                 val loginRequest = LoginRequest(username, password)
@@ -24,19 +23,16 @@ class WorkerLoginViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     response.body()?.let { authResponse ->
-                        // ✅ Save JWT token
-                        TokenManager.saveToken(authResponse.token)
-
-                        // ✅ Save workerId directly from AuthResponse
+                        TokenManager.saveToken(authResponse.token, rememberMe)
+                        TokenManager.setUserType(true) // Explicitly set as worker
                         if (authResponse.workerId != null) {
                             TokenManager.saveWorkerId(authResponse.workerId)
-                            loginResult.value = authResponse // ✅ Trigger success
+                            loginResult.value = authResponse
                         } else {
-                            loginError.value = "⚠️ Login succeeded but worker ID is missing."
+                            loginError.value = "Login succeeded but worker ID is missing."
                         }
-
                     } ?: run {
-                        loginError.value = "⚠️ Empty response from server."
+                        loginError.value = "Empty response from server."
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
@@ -47,20 +43,15 @@ class WorkerLoginViewModel : ViewModel() {
                     loginError.value = message
                 }
             } catch (e: Exception) {
-                loginError.value = "⚠️ An error occurred: ${e.localizedMessage}"
+                loginError.value = "An error occurred: ${e.localizedMessage}"
             }
         }
     }
 
     fun logout(navController: NavController) {
-        // Clear the saved token and worker ID
-        TokenManager.clearToken()
-        TokenManager.saveWorkerId(-1)
-
-        // Navigate to worker_signin and clear backstack so user can't press back
+        TokenManager.clearAll() // Clear all auth data, including token, worker ID, and rememberMe
         navController.navigate("worker_signin") {
             popUpTo(0) { inclusive = true }
         }
     }
-
 }

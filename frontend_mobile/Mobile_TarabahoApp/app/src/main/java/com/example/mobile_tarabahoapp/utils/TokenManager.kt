@@ -11,10 +11,14 @@ object TokenManager {
     private const val USER_TYPE_KEY = "user_type"
     private const val USER_TYPE_WORKER = "worker"
     private const val USER_TYPE_CLIENT = "client"
+    private const val REMEMBER_ME_KEY = "remember_me" // Added for Remember me
 
-    fun saveToken(token: String) {
+    fun saveToken(token: String, rememberMe: Boolean = false) {
         val prefs = App.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(TOKEN_KEY, token).apply()
+        prefs.edit()
+            .putString(TOKEN_KEY, token)
+            .putBoolean(REMEMBER_ME_KEY, rememberMe)
+            .apply()
     }
 
     fun getToken(): String? {
@@ -39,8 +43,6 @@ object TokenManager {
         return prefs.getLong(WORKER_ID_KEY, -1L)
     }
 
-    // New methods needed for MainActivity
-
     fun saveUserId(id: Long) {
         val prefs = App.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().putLong(USER_ID_KEY, id).apply()
@@ -59,7 +61,6 @@ object TokenManager {
     fun getCurrentUserId(): Long {
         val prefs = App.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val userType = prefs.getString(USER_TYPE_KEY, USER_TYPE_CLIENT)
-
         return if (userType == USER_TYPE_WORKER) {
             getWorkerId()
         } else {
@@ -79,7 +80,13 @@ object TokenManager {
         prefs.edit().putString(USER_TYPE_KEY, if (isWorker) USER_TYPE_WORKER else USER_TYPE_CLIENT).apply()
     }
 
-    // Clear all auth data
+    // Check if "Remember me" is enabled
+    fun isRememberMe(): Boolean {
+        val prefs = App.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getBoolean(REMEMBER_ME_KEY, false)
+    }
+
+    // Clear all auth data, including "Remember me"
     fun clearAll() {
         val prefs = App.instance.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.edit().clear().apply()

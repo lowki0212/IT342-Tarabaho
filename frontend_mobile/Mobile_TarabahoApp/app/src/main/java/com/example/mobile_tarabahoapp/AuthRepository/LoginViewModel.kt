@@ -17,7 +17,7 @@ class LoginViewModel : ViewModel() {
     val logoutResult = MutableLiveData<String>()
     val logoutError = MutableLiveData<String>()
 
-    fun login(username: String, password: String) {
+    fun login(username: String, password: String, rememberMe: Boolean = false) {
         viewModelScope.launch {
             try {
                 val loginRequest = LoginRequest(username, password)
@@ -25,8 +25,8 @@ class LoginViewModel : ViewModel() {
 
                 if (response.isSuccessful) {
                     response.body()?.let { authResponse ->
-                        TokenManager.saveToken(authResponse.token) // ✅ Save JWT to SharedPreferences
-                        // Fetch user profile to get user ID
+                        TokenManager.saveToken(authResponse.token, rememberMe)
+                        TokenManager.setUserType(false) // Explicitly set as client
                         val userResponse = RetrofitClient.apiService.getCurrentUser()
                         if (userResponse.isSuccessful) {
                             userResponse.body()?.let { user ->
@@ -58,7 +58,7 @@ class LoginViewModel : ViewModel() {
             try {
                 val response = RetrofitClient.apiService.logout()
                 if (response.isSuccessful) {
-                    TokenManager.clearToken() // ✅ Clear token on logout
+                    TokenManager.clearAll()
                     logoutResult.value = response.body() ?: "Logged out successfully"
                 } else {
                     logoutError.value = response.errorBody()?.string() ?: "Logout failed"

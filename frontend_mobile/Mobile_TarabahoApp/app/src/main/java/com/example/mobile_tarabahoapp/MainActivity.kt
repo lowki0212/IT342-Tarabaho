@@ -7,8 +7,6 @@ import WorkerBookingDetailsScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,9 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -55,7 +51,12 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = "login") {
+                    val startDestination = if (TokenManager.isRememberMe() && TokenManager.getToken() != null) {
+                        if (TokenManager.isWorker()) "worker_home" else "home"
+                    } else {
+                        "login"
+                    }
+                    NavHost(navController = navController, startDestination = startDestination) {
                         composable("login") {
                             LoginScreen(navController)
                         }
@@ -89,9 +90,16 @@ class MainActivity : ComponentActivity() {
                         composable("worker_edit_profile") {
                             WorkerEditProfileScreen(navController = navController)
                         }
-                        composable(route = "book_appointment/{workerId}") { backStackEntry ->
-                            val workerId = backStackEntry.arguments?.getString("workerId")?.toLongOrNull() ?: 0L
-                            BookAppointmentScreen(navController = navController, workerId = workerId)
+                        composable(
+                            route = "book_appointment/{workerId}/{category}",
+                            arguments = listOf(
+                                navArgument("workerId") { type = NavType.LongType },
+                                navArgument("category") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val workerId = backStackEntry.arguments?.getLong("workerId") ?: 0L
+                            val category = backStackEntry.arguments?.getString("category") ?: "Cleaning"
+                            BookAppointmentScreen(navController = navController, workerId = workerId, category = category)
                         }
                         composable("booking_status/{bookingId}") { backStackEntry ->
                             val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
@@ -104,17 +112,23 @@ class MainActivity : ComponentActivity() {
                             val bookingId = backStackEntry.arguments?.getString("bookingId") ?: ""
                             BookingDetailsScreen(navController, bookingId = bookingId)
                         }
-                        composable("worker_details/{workerId}") { backStackEntry ->
-                            val workerIdString = backStackEntry.arguments?.getString("workerId") ?: return@composable
-                            val workerId = workerIdString.toLongOrNull() ?: return@composable
-                            WorkerDetailsScreen(navController = navController, workerId = workerId)
+                        composable(
+                            route = "worker_details/{workerId}/{category}",
+                            arguments = listOf(
+                                navArgument("workerId") { type = NavType.LongType },
+                                navArgument("category") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val workerId = backStackEntry.arguments?.getLong("workerId") ?: 0L
+                            val category = backStackEntry.arguments?.getString("category") ?: "Cleaning"
+                            WorkerDetailsScreen(navController = navController, workerId = workerId, category = category)
                         }
                         composable("rate_worker/{bookingId}") { backStackEntry ->
                             val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
                             RateWorkerScreen(navController = navController, bookingId = bookingId)
                         }
                         composable("worker_booking_details/{bookingId}") { backStackEntry ->
-                            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: return@composable
+                            val bookingId = backStackEntry.arguments?.getString("bookingId")?.toLongOrNull() ?: 0L
                             WorkerBookingDetailsScreen(navController = navController, bookingId = bookingId)
                         }
                         composable("worker_register") {
@@ -151,6 +165,10 @@ class MainActivity : ComponentActivity() {
                                 chatViewModel = chatViewModel
                             )
                         }
+                        composable("worker_reviews/{workerId}") { backStackEntry ->
+                            val workerId = backStackEntry.arguments?.getString("workerId")?.toLong() ?: 0L
+                            WorkerReviewsScreen(navController = navController, workerId = workerId)
+                        }
                     }
                 }
             }
@@ -164,12 +182,12 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var rememberMe by remember { mutableStateOf(false) }
+    var rememberMe by remember { mutableStateOf(TokenManager.isRememberMe()) }
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
 
-    loginResult?.let { token ->
-        LaunchedEffect(token) {
+    loginResult?.let { authResponse ->
+        LaunchedEffect(authResponse) {
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
@@ -234,36 +252,6 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedButton(
-                    onClick = { /* Handle Google login */ },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
-                    border = BorderStroke(1.dp, Color.LightGray)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_google),
-                            contentDescription = "Google Icon",
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Unspecified
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Continue with Google")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Or login with",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
@@ -352,7 +340,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
 
                 Button(
                     onClick = {
-                        viewModel.login(email, password)
+                        viewModel.login(email, password, rememberMe)
                     },
                     modifier = Modifier
                         .fillMaxWidth()

@@ -1,8 +1,8 @@
 package com.example.mobile_tarabahoapp
 
-import com.example.mobile_tarabahoapp.model.PaymentMethod
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,12 +30,11 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
-import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
+fun WorkerDetailsScreen(navController: NavController, workerId: Long, category: String) {
     val viewModel: WorkerViewModel = viewModel()
     val worker by viewModel.selectedWorker.observeAsState()
 
@@ -45,18 +44,16 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
         viewModel.fetchWorkerById(workerId.toString())
     }
 
-
     Scaffold(
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
                 contentColor = Color(0xFF2962FF)
             ) {
-
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
                     selected = false,
-                    onClick = {  navController.navigate("settings")},
+                    onClick = { navController.navigate("settings") },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -66,7 +63,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
                     selected = true,
-                    onClick = { navController.navigateUp()},
+                    onClick = { navController.navigateUp() },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
                         selectedIconColor = Color(0xFF2962FF),
@@ -83,7 +80,6 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                         unselectedIconColor = Color.Gray
                     )
                 )
-
             }
         }
     ) { paddingValues ->
@@ -131,7 +127,7 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                         onClick = { isFavorite = !isFavorite },
                         modifier = Modifier.size(24.dp)
                     ) {
-
+                        
                     }
                 }
             }
@@ -156,13 +152,12 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                     ) {
                         // Profile image
                         AsyncImage(
-                            model = worker?.profilePicture ?: "", // Dynamically load image URL
+                            model = worker?.profilePicture ?: "",
                             contentDescription = "Profile picture of ${worker?.firstName}",
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
-                                // Optional fallback
                         )
 
                         // Worker details
@@ -176,9 +171,6 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
 
                             Spacer(modifier = Modifier.height(4.dp))
 
@@ -247,15 +239,16 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 // Rating
                 StatItem(
                     icon = Icons.Default.Star,
-                    value = "5",
+                    value = worker?.stars?.let { String.format("%.1f", it) } ?: "N/A",
                     label = "rating"
                 )
 
                 // Reviews
                 StatItem(
                     icon = Icons.Default.Comment,
-                    value = "1,872",
-                    label = "reviews"
+                    value = worker?.ratingCount?.toString() ?: "0",
+                    label = "reviews",
+                    onClick = { navController.navigate("worker_reviews/$workerId") }
                 )
             }
 
@@ -411,8 +404,6 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 }
             }
 
-            // Working time section
-
             // Action buttons
             Row(
                 modifier = Modifier
@@ -421,14 +412,13 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Book button
-
                 Button(
                     onClick = {
                         worker?.let {
-                            navController.navigate("book_appointment/${it.id}")
+                            navController.navigate("book_appointment/${it.id}/$category")
                         }
                     },
-                    enabled = worker != null, // Disable the button if worker is null (optional, good for UX)
+                    enabled = worker != null,
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp),
@@ -444,7 +434,6 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
                     )
                 }
                 // Message button
-
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -454,11 +443,14 @@ fun WorkerDetailsScreen(navController: NavController, workerId: Long) {
 
 @Composable
 fun StatItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     value: String,
-    label: String
+    label: String,
+    onClick: (() -> Unit)? = null
 ) {
     Column(
+        modifier = Modifier
+            .clickable(enabled = onClick != null) { onClick?.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -504,7 +496,8 @@ fun WorkerDetailsScreenPreview() {
     TarabahoTheme {
         WorkerDetailsScreen(
             navController = rememberNavController(),
-            workerId = 1L
+            workerId = 1L,
+            category = "Cleaning"
         )
     }
 }
