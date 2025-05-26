@@ -49,12 +49,7 @@ fun AppNavigation(navController: NavHostController) {
         composable(route = "profilesettings") {
             EditProfileScreen(navController = navController)
         }
-        composable("search_results") {
-            SearchResultsScreen(navController)
-        }
-        composable("change_payment_method") {
-            ChangePaymentMethodScreen(navController)
-        }
+
         composable("worker_signin") {
             WorkerSignInScreen(navController)
         }

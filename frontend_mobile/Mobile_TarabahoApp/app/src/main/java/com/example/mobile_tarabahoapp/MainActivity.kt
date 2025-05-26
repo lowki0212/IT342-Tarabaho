@@ -208,12 +208,12 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF8F9FA))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
+                .height(240.dp)
                 .background(Color(0xFF2962FF)),
             contentAlignment = Alignment.Center
         ) {
@@ -226,7 +226,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     Text(
                         text = "T A R A B A H",
                         color = Color.White,
-                        fontSize = 24.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -234,14 +234,15 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search Icon",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Tara Trabaho!",
-                    color = Color.White,
-                    fontSize = 12.sp
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -249,46 +250,63 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .offset(y = (-20).dp),
-            shape = RoundedCornerShape(8.dp),
+                .padding(24.dp)
+                .offset(y = (-30).dp),
+            shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Welcome Back",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = "Sign in to your account",
+                    fontSize = 14.sp,
+                    color = Color(0xFF666666),
+                    modifier = Modifier.padding(bottom = 32.dp)
+                )
 
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = null,
-                    placeholder = { Text("Username") },
+                    label = { Text("Email or Username") },
+                    placeholder = { Text("Enter your email") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2962FF)
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
                     ),
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = null,
-                    placeholder = { Text("Password") },
+                    label = { Text("Password") },
+                    placeholder = { Text("Enter your password") },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(4.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2962FF)
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
                     ),
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -298,22 +316,30 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                tint = Color.Gray
+                                tint = Color(0xFF666666)
                             )
                         }
                     }
                 )
 
                 if (errorMessage.isNotEmpty()) {
-                    Text(
-                        text = errorMessage,
-                        color = Color.Red,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -332,7 +358,8 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         )
                         Text(
                             text = "Remember me",
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            color = Color(0xFF666666)
                         )
                     }
 
@@ -340,12 +367,13 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                         Text(
                             text = "Switch to Worker?",
                             color = Color(0xFF2962FF),
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
                 Button(
                     onClick = {
@@ -353,23 +381,29 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(4.dp),
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2962FF)
-                    )
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
                 ) {
                     Text(
                         text = "Log In",
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
                 }
             }
         }
 
+        Spacer(modifier = Modifier.weight(1f))
+
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -378,7 +412,7 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
                 Text(
                     text = "Don't have an account?",
                     fontSize = 14.sp,
-                    color = Color.Gray
+                    color = Color(0xFF666666)
                 )
                 TextButton(onClick = { navController.navigate("signup") }) {
                     Text(

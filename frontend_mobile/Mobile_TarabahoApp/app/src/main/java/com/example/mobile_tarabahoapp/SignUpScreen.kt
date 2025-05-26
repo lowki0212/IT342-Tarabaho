@@ -128,12 +128,12 @@ fun SignUpScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text("OK", color = Color(0xFF2962FF), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text("Cancel", color = Color(0xFF666666))
                 }
             }
         ) {
@@ -144,14 +144,14 @@ fun SignUpScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFFF8F9FA))
             .verticalScroll(rememberScrollState())
     ) {
-        // Blue header
+        // Header Section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp)
+                .height(180.dp)
                 .background(Color(0xFF2962FF))
         ) {
             // Back button
@@ -166,7 +166,8 @@ fun SignUpScreen(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back",
-                    tint = Color.White
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
@@ -178,9 +179,9 @@ fun SignUpScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Sign Up",
+                    text = "Create Account",
                     color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -191,11 +192,11 @@ fun SignUpScreen(
                 ) {
                     Text(
                         text = "Already have an account? ",
-                        color = Color.White,
+                        color = Color.White.copy(alpha = 0.9f),
                         fontSize = 14.sp
                     )
                     Text(
-                        text = "Log In",
+                        text = "Sign In",
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
@@ -206,260 +207,320 @@ fun SignUpScreen(
             }
         }
 
-        // Form content
-        Column(
+        // Form Card
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(top = 16.dp)
+                .offset(y = (-30).dp),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
         ) {
-            // Name fields (First and Last name in a row)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // First name
-                OutlinedTextField(
-                    value = firstName,
-                    onValueChange = { firstName = it },
-                    label = null,
-                    placeholder = { Text("First Name") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2962FF)
-                    ),
-                    singleLine = true
-                )
-
-                // Last name
-                OutlinedTextField(
-                    value = lastName,
-                    onValueChange = { lastName = it },
-                    label = null,
-                    placeholder = { Text("Last Name") },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2962FF)
-                    ),
-                    singleLine = true
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = username,
-                onValueChange = {
-                    username = it
-                    usernameError = null
-                },
-                placeholder = { Text("Username") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true,
-                isError = usernameError != null
-            )
-
-            usernameError?.let {
-                Text(text = it, color = Color.Red, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Email field
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = null,
-                placeholder = { Text("Email") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // City field
-            OutlinedTextField(
-                value = city,
-                onValueChange = { city = it },
-                label = null,
-                placeholder = { Text("City") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Date field
-            OutlinedTextField(
-                value = displayDate,
-                onValueChange = { /* Handled by date picker */ },
-                label = null,
-                placeholder = { Text("Birthdate (DD/MM/YYYY)") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true,
-                readOnly = true,
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Select Date",
-                            tint = Color.Gray
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Phone field with country code
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = null,
-                placeholder = { Text("Phone Number") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                leadingIcon = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = 8.dp)
-                    ) {
-                        Text(
-                            text = "+63",
-                            fontSize = 14.sp,
-                            color = Color.DarkGray
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Divider(
-                            modifier = Modifier
-                                .height(24.dp)
-                                .width(1.dp),
-                            color = Color.LightGray
-                        )
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Password field
-            OutlinedTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                    passwordError = null
-                },
-                label = null,
-                placeholder = { Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(4.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = Color(0xFF2962FF)
-                ),
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            tint = Color.Gray
-                        )
-                    }
-                },
-                isError = passwordError != null
-            )
-
-            passwordError?.let {
-                Text(
-                    text = it,
-                    color = Color.Red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.padding(start = 4.dp, top = 2.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sign Up button
-            Button(
-                onClick = {
-                    // Validate
-                    var valid = true
-                    if (username.isBlank()) {
-                        usernameError = "Username is required"
-                        valid = false
-                    }
-                    if (password.length < 8) {
-                        passwordError = "Password must be at least 8 characters"
-                        valid = false
-                    }
-
-                    if (valid) {
-                        val phoneNumber = if (phone.isNotBlank()) "+63$phone" else ""
-                        viewModel.register(
-                            RegisterRequest(
-                                firstname = firstName,
-                                lastname = lastName,
-                                username = username.trim(),
-                                password = password,
-                                email = email.trim(),
-                                phoneNumber = phoneNumber,
-                                location = city.trim(),
-                                birthday = date
-                            )
-                        )
-                    }
-                },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(4.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2962FF)
-                )
+                    .padding(28.dp)
             ) {
                 Text(
-                    text = "Sign Up",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "Personal Information",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A),
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
+
+                // Name fields (First and Last name in a row)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // First name
+                    OutlinedTextField(
+                        value = firstName,
+                        onValueChange = { firstName = it },
+                        label = { Text("First Name") },
+                        placeholder = { Text("Enter first name") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color(0xFFE0E0E0),
+                            focusedBorderColor = Color(0xFF2962FF),
+                            unfocusedLabelColor = Color(0xFF666666),
+                            focusedLabelColor = Color(0xFF2962FF)
+                        ),
+                        singleLine = true
+                    )
+
+                    // Last name
+                    OutlinedTextField(
+                        value = lastName,
+                        onValueChange = { lastName = it },
+                        label = { Text("Last Name") },
+                        placeholder = { Text("Enter last name") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color(0xFFE0E0E0),
+                            focusedBorderColor = Color(0xFF2962FF),
+                            unfocusedLabelColor = Color(0xFF666666),
+                            focusedLabelColor = Color(0xFF2962FF)
+                        ),
+                        singleLine = true
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = {
+                        username = it
+                        usernameError = null
+                    },
+                    label = { Text("Username") },
+                    placeholder = { Text("Choose a username") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true,
+                    isError = usernameError != null
+                )
+
+                usernameError?.let {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    ) {
+                        Text(
+                            text = it,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Email field
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email Address") },
+                    placeholder = { Text("Enter your email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // City field
+                OutlinedTextField(
+                    value = city,
+                    onValueChange = { city = it },
+                    label = { Text("Address") },
+                    placeholder = { Text("Enter your address") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Date field
+                OutlinedTextField(
+                    value = displayDate,
+                    onValueChange = { /* Handled by date picker */ },
+                    label = { Text("Date of Birth") },
+                    placeholder = { Text("Select your birthdate") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true,
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = "Select Date",
+                                tint = Color(0xFF2962FF)
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Phone field with country code
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("Phone Number") },
+                    placeholder = { Text("Enter phone number") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    leadingIcon = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(start = 12.dp)
+                        ) {
+                            Text(
+                                text = "+63",
+                                fontSize = 14.sp,
+                                color = Color(0xFF666666),
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Divider(
+                                modifier = Modifier
+                                    .height(20.dp)
+                                    .width(1.dp),
+                                color = Color(0xFFE0E0E0)
+                            )
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Password field
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
+                    label = { Text("Password") },
+                    placeholder = { Text("Create a password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedBorderColor = Color(0xFF2962FF),
+                        unfocusedLabelColor = Color(0xFF666666),
+                        focusedLabelColor = Color(0xFF2962FF)
+                    ),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                tint = Color(0xFF666666)
+                            )
+                        }
+                    },
+                    isError = passwordError != null
+                )
+
+                passwordError?.let {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
+                    ) {
+                        Text(
+                            text = it,
+                            color = Color(0xFFD32F2F),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Sign Up button
+                Button(
+                    onClick = {
+                        // Validate
+                        var valid = true
+                        if (username.isBlank()) {
+                            usernameError = "Username is required"
+                            valid = false
+                        }
+                        if (password.length < 8) {
+                            passwordError = "Password must be at least 8 characters"
+                            valid = false
+                        }
+
+                        if (valid) {
+                            val phoneNumber = if (phone.isNotBlank()) "+63$phone" else ""
+                            viewModel.register(
+                                RegisterRequest(
+                                    firstname = firstName,
+                                    lastname = lastName,
+                                    username = username.trim(),
+                                    password = password,
+                                    email = email.trim(),
+                                    phoneNumber = phoneNumber,
+                                    location = city.trim(),
+                                    birthday = date
+                                )
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2962FF)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                ) {
+                    Text(
+                        text = "Create Account",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
-            // Add some bottom padding
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        // Add some bottom padding
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 

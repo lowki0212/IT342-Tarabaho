@@ -30,6 +30,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.AuthRepository.WorkerViewModel
+import com.example.mobile_tarabahoapp.ui.MainNavigationBar
+import com.example.mobile_tarabahoapp.ui.NavScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,43 +54,16 @@ fun HomeScreen(navController: NavController) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                contentColor = Color(0xFF2962FF)
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Person, contentDescription = "Settings") },
-                    selected = false,
-                    onClick = {
-                        navController.navigate("settings")
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
-                    selected = true,
-                    onClick = { /* Handle navigation */ },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Outlined.Description, contentDescription = "Tasks") },
-                    selected = false,
-                    onClick = { navController.navigate("user_bookings") },
-                    colors = NavigationBarItemDefaults.colors(
-                        indicatorColor = Color.White,
-                        selectedIconColor = Color(0xFF2962FF),
-                        unselectedIconColor = Color.Gray
-                    )
-                )
-            }
+            MainNavigationBar(
+                selectedScreen = NavScreen.Home,
+                onScreenSelected = { screen ->
+                    when (screen) {
+                        is NavScreen.Profile -> navController.navigate("settings")
+                        is NavScreen.Home -> { /* Already on Home, do nothing */ }
+                        is NavScreen.Tasks -> navController.navigate("user_bookings")
+                    }
+                }
+            )
         }
     ) { paddingValues ->
         Column(
