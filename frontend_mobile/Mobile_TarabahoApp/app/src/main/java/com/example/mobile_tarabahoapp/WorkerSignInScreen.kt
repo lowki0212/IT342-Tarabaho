@@ -1,6 +1,7 @@
 package com.example.mobile_tarabahoapp
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -40,12 +42,20 @@ fun WorkerSignInScreen(navController: NavController) {
     var rememberMe by remember { mutableStateOf(TokenManager.isRememberMe()) }
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(loginResult) {
         loginResult?.let {
+            Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
             navController.navigate("worker_home") {
                 popUpTo("worker_signin") { inclusive = true }
             }
+        }
+    }
+
+    if (loginError?.isNotEmpty() == true) {
+        LaunchedEffect(loginError) {
+            Toast.makeText(context, loginError ?: "Login failed", Toast.LENGTH_LONG).show()
         }
     }
 

@@ -1347,6 +1347,7 @@ fun WorkerEditProfileScreen(navController: NavController) {
                         showLogoutDialog = false
                         TokenManager.clearToken()
                         TokenManager.saveWorkerId(-1)
+                        Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
                         navController.navigate("worker_signin") {
                             popUpTo(0) { inclusive = true }
                         }

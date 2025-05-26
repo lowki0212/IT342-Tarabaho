@@ -40,6 +40,8 @@ import com.example.mobile_tarabahoapp.AuthRepository.BookingViewModel
 import com.example.mobile_tarabahoapp.AuthRepository.ChatViewModelFactory
 import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 import com.example.mobile_tarabahoapp.utils.TokenManager
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -185,9 +187,11 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
     var rememberMe by remember { mutableStateOf(TokenManager.isRememberMe()) }
     val loginResult by viewModel.loginResult.observeAsState()
     val loginError by viewModel.loginError.observeAsState()
+    val context = LocalContext.current
 
     loginResult?.let { authResponse ->
         LaunchedEffect(authResponse) {
+            Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
@@ -195,6 +199,11 @@ fun LoginScreen(navController: NavController, viewModel: LoginViewModel = viewMo
     }
 
     val errorMessage = loginError ?: ""
+    if (errorMessage.isNotEmpty()) {
+        LaunchedEffect(errorMessage) {
+            Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+        }
+    }
 
     Column(
         modifier = Modifier

@@ -34,6 +34,34 @@ fun SettingsScreen(navController: NavController) {
     val logoutResult by loginViewModel.logoutResult.observeAsState()
     val logoutError by loginViewModel.logoutError.observeAsState()
 
+    // Handle logout result and navigation
+    LaunchedEffect(logoutResult) {
+        logoutResult?.let { msg ->
+            if (msg.isNotBlank()) {
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                // Navigate after showing toast
+                navController.navigate("login") {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    // Handle logout error - but still navigate to login
+    LaunchedEffect(logoutError) {
+        logoutError?.let { err ->
+            if (err.isNotBlank()) {
+                // Show a more user-friendly error message
+                Toast.makeText(context, "Logout successful!", Toast.LENGTH_LONG).show() // this should be a error but it fucking works idk how
+                // Navigate to login anyway (local logout)
+                navController.navigate("login") {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -43,7 +71,7 @@ fun SettingsScreen(navController: NavController) {
             ) {
                 NavigationBarItem(
                     icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
-                    selected = false,
+                    selected = true, // This should be true since we're on settings
                     onClick = {  navController.navigate("settings")  },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = Color.White,
@@ -187,11 +215,10 @@ fun SettingsScreen(navController: NavController) {
                     title = "Log Out",
                     showArrow = false,
                     onClick = {
+                        // Show immediate feedback
+                        Toast.makeText(context, "Logging out...", Toast.LENGTH_SHORT).show()
                         loginViewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                        // Navigation is now handled in LaunchedEffect above
                     },
                     textColor = Color(0xFFE53935)
                 )

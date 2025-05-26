@@ -3,6 +3,7 @@ package com.example.mobile_tarabahoapp
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -93,12 +94,24 @@ fun SignUpScreen(
     val newUser by viewModel.newUser.observeAsState()
     val errorMsg by viewModel.signUpError.observeAsState()
 
-    // On successful registration, invoke callback
+    val context = LocalContext.current
+
+    // On successful registration, invoke callback and show Toast
     newUser?.let {
-        LaunchedEffect(it) { onSignUpSuccess() }
+        LaunchedEffect(it) {
+            Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+            onSignUpSuccess()
+        }
     }
 
-    val context = LocalContext.current
+    // On registration error, show Toast
+    errorMsg?.let { msg ->
+        if (msg.isNotBlank()) {
+            LaunchedEffect(msg) {
+                Toast.makeText(context, "Registration failed: $msg", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
