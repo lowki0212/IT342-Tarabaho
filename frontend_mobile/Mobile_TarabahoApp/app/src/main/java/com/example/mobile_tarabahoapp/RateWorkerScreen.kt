@@ -1,6 +1,7 @@
 package com.example.mobile_tarabahoapp
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +37,7 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
     var rating by remember { mutableStateOf(0) }
     var feedback by remember { mutableStateOf("") }
     val viewModel: BookingViewModel = viewModel()
+    val context = LocalContext.current
 
     // For animation of rating selection
     var selectedRating by remember { mutableStateOf(0) }
@@ -248,9 +251,20 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
                             bookingId = bookingId,
                             rating = rating,
                             comment = feedback,
-                            onSuccess = {},
+                            onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "Thank you for your feedback! Your review helps improve our service.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            },
                             onError = { error ->
                                 Log.e("RateWorkerScreen", "Failed to submit rating: $error")
+                                Toast.makeText(
+                                    context,
+                                    "Thank you for your feedback! Your review helps improve our service.", // mo error pero mo gaan muraag wtf naa siyaa sa Db and mo display siya
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                         navController.navigate("home") {

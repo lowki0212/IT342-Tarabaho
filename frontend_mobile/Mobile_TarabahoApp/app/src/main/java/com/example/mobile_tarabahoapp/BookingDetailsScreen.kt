@@ -103,7 +103,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { navController.navigate("home") }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
@@ -302,7 +302,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Updated Booking Details Card to include amount
+            // Updated Booking Details Card with amount removed
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -351,14 +351,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         label = "Job Details",
                         value = bookingDetail.jobDetails,
                         icon = Icons.Default.Description
-                    )
-
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-                    DetailRow(
-                        label = "Amount",
-                        value = bookingDetail.amount,
-                        icon = Icons.Default.MonetizationOn
                     )
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))

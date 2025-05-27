@@ -51,7 +51,7 @@ fun BookingStatusScreen(
 ) {
     val context = LocalContext.current
 
-    // ✅ Add ViewModel here
+    //  Add ViewModel here
     val viewModel: BookingViewModel = viewModel()
 
     val booking = viewModel.selectedBooking.observeAsState().value
@@ -93,7 +93,7 @@ fun BookingStatusScreen(
                         navController.popBackStack()
                     }
                 } else {
-                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    // Removed error Toast
                 }
             }
         }
@@ -139,7 +139,7 @@ fun BookingStatusScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { navController.navigate("home") }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
@@ -371,9 +371,6 @@ fun BookingStatusScreen(
                     BookingDetailRow("Payment Method", booking?.paymentMethod ?: "Loading...")
 
                     Divider(modifier = Modifier.padding(vertical = 12.dp))
-
-                    // Total Amount (Optional → No price from backend → you can calculate or remove this part)
-                    BookingDetailRow("Total Amount", "₱148") // You can make this dynamic later
                 }
             }
 

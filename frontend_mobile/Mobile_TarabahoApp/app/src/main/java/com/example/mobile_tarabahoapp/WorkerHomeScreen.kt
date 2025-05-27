@@ -260,22 +260,6 @@ fun WorkerHomeScreen(
                 )
             }
 
-            // Display error message if any
-            error?.let {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE))
-                ) {
-                    Text(
-                        text = it,
-                        color = Color(0xFFD32F2F),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-
             // Content based on selected tab
             when (selectedTab) {
                 0 -> {

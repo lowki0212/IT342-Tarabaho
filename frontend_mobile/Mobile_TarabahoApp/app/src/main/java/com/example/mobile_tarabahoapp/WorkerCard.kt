@@ -1,6 +1,4 @@
 package com.example.mobile_tarabahoapp
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,10 +14,9 @@ import com.example.mobile_tarabahoapp.model.Worker
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+
 
 
 @Composable
@@ -76,7 +73,7 @@ fun WorkerCard(worker: Worker, onClick: () -> Unit) {
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "${worker.stars} Stars (${worker.ratingCount} reviews)",
+                        text = "${"%.1f".format(worker.stars)} Stars (${worker.ratingCount} reviews)",
                         fontSize = 12.sp,
                         color = Color.Gray,
                         modifier = Modifier.padding(start = 4.dp)
