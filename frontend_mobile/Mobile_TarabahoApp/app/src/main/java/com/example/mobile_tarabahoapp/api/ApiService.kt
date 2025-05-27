@@ -149,4 +149,7 @@ interface ApiService {
 
     @GET("/api/booking/user")
     suspend fun getUserBookings(): Response<List<Booking>>
+
+    @POST("/api/booking/{bookingId}/in-progress")
+    suspend fun markBookingInProgress(@Path("bookingId") bookingId: Long): Response<Booking>
 }

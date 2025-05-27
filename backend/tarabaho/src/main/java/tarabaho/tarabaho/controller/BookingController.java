@@ -402,6 +402,31 @@ public class BookingController {
         }
     }
 
+    @Operation(summary = "Revert booking to IN_PROGRESS", description = "Client is not satisfied, revert booking status to IN_PROGRESS")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Booking reverted to IN_PROGRESS"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or booking not in correct state"),
+        @ApiResponse(responseCode = "401", description = "User not authenticated"),
+        @ApiResponse(responseCode = "404", description = "Booking or user not found")
+    })
+    @PostMapping("/{bookingId}/in-progress")
+    public ResponseEntity<?> markBookingInProgress(
+            @PathVariable Long bookingId,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated.");
+            }
+            User user = userService.findByUsername(authentication.getName())
+                .orElseThrow(() -> new Exception("User not found"));
+            Booking booking = bookingService.markBookingInProgress(bookingId, user.getId());
+            return ResponseEntity.ok(booking);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("⚠️ " + e.getMessage());
+        }
+    }
+
     static class BookingStatusResponse {
         private String status;
 

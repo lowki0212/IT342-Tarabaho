@@ -476,6 +476,44 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+                if (bookingDetail.status == "WORKER_COMPLETED") {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            viewModel.markBookingInProgress(
+                                bookingId = bookingDetail.id.toLong(),
+                                onSuccess = {
+                                    viewModel.getBookingById(bookingDetail.id.toLong())
+                                },
+                                onError = { errorMessage ->
+                                    Log.e("BookingDetailsScreen", "Failed to revert to in progress: $errorMessage")
+                                }
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE53935),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Undo,
+                            contentDescription = null
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = "Not Satisfied",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

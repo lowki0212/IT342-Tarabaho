@@ -280,4 +280,22 @@ public class BookingService {
         return bookingRepository.findById(bookingId)
             .orElseThrow(() -> new Exception("Booking not found"));
     }
+
+    public Booking markBookingInProgress(Long bookingId, Long userId) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new Exception("User not found"));
+
+        if (!booking.getUser().equals(user)) {
+            throw new Exception("User not authorized to update this booking");
+        }
+        if (booking.getStatus() != BookingStatus.WORKER_COMPLETED) {
+            throw new Exception("Only bookings marked as WORKER_COMPLETED can be reverted to IN_PROGRESS");
+        }
+
+        booking.setStatus(BookingStatus.IN_PROGRESS);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
 }

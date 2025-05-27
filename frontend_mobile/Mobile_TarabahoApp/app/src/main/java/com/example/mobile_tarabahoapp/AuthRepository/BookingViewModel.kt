@@ -118,23 +118,23 @@ class BookingViewModel : ViewModel() {
                         getBookingById(bookingId)
                         onSuccess()
                     } else {
-                        onError("Failed to complete booking: No booking data returned")
+                        onError("Failed to complete booking. Please try again.")
                     }
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     Log.e("BookingViewModel", "CompleteBooking Error Response: $errorBody (Code: ${response.code()})")
-                    onError("Failed to complete booking: $errorBody (Code: ${response.code()})")
+                    onError("Failed to complete booking. Please try again.")
                 }
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string() ?: "HTTP error"
                 Log.e("BookingViewModel", "CompleteBooking HTTP Exception: $errorBody")
-                onError("Failed to complete booking: $errorBody")
+                onError("Failed to complete booking. Please try again.")
             } catch (e: IOException) {
                 Log.e("BookingViewModel", "CompleteBooking Network Exception: ${e.message}")
-                onError("Network error: ${e.message}")
+                onError("Network error. Please check your connection.")
             } catch (e: Exception) {
                 Log.e("BookingViewModel", "CompleteBooking Exception: ${e.message}")
-                onError(e.message ?: "Unknown error")
+
             }
         }
     }
@@ -154,23 +154,23 @@ class BookingViewModel : ViewModel() {
                         getBookingById(bookingId)
                         onSuccess()
                     } else {
-                        onError("Failed to confirm payment: No booking data returned")
+                        onError("Failed to confirm payment. Please try again.")
                     }
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                    Log.e("BookingViewModel", "ConfirmPayment Error Response: $errorBody")
-                    onError("Failed to confirm payment: $errorBody (Code: ${response.code()})")
+                    Log.e("BookingViewModel", "ConfirmPayment Error Response: $errorBody (Code: ${response.code()})")
+                    onError("Failed to confirm payment. Please try again.")
                 }
             } catch (e: HttpException) {
                 val errorBody = e.response()?.errorBody()?.string() ?: "HTTP error"
                 Log.e("BookingViewModel", "ConfirmPayment HTTP Exception: $errorBody")
-                onError("Failed to confirm payment: $errorBody")
+                onError("Failed to confirm payment. Please try again.")
             } catch (e: IOException) {
                 Log.e("BookingViewModel", "ConfirmPayment Network Exception: ${e.message}")
-                onError("Network error: ${e.message}")
+                onError("Network error. Please check your connection.")
             } catch (e: Exception) {
                 Log.e("BookingViewModel", "ConfirmPayment Exception: ${e.message}")
-                onError(e.message ?: "Unknown error")
+
             }
         }
     }
@@ -267,13 +267,15 @@ class BookingViewModel : ViewModel() {
                         getBookingById(bookingId)
                         onSuccess()
                     } else {
-                        onError("Failed to start booking: No booking data returned")
+                        onError("Failed to start booking. Please try again.")
                     }
                 } else {
-                    onError("Failed to start booking: ${response.code()}")
+                    Log.e("BookingViewModel", "StartBooking Error Response: ${response.code()}")
+                    onError("Failed to start booking. Please try again.")
                 }
             } catch (e: Exception) {
-                onError(e.message ?: "Unknown error")
+                Log.e("BookingViewModel", "StartBooking Exception: ${e.message}")
+
             }
         }
     }
@@ -288,13 +290,15 @@ class BookingViewModel : ViewModel() {
                         getBookingById(bookingId)
                         onSuccess()
                     } else {
-                        onError("Failed to complete the booking: No booking data returned")
+                        onError("Failed to complete the booking. Please try again.")
                     }
                 } else {
-                    onError("Failed to complete the booking: ${response.code()}")
+                    Log.e("BookingViewModel", "AcceptCompletion Error Response: ${response.code()}")
+                    onError("Failed to complete the booking. Please try again.")
                 }
             } catch (e: Exception) {
-                onError(e.message ?: "Unknown error")
+                Log.e("BookingViewModel", "AcceptCompletion Exception: ${e.message}")
+
             }
         }
     }
@@ -331,6 +335,29 @@ class BookingViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 onResult(false, "Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun markBookingInProgress(bookingId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                val response = api.markBookingInProgress(bookingId)
+                if (response.isSuccessful) {
+                    if (response.body() != null) {
+                        updateBookingStatus(bookingId, "IN_PROGRESS")
+                        getBookingById(bookingId)
+                        onSuccess()
+                    } else {
+                        onError("Failed to revert booking. Please try again.")
+                    }
+                } else {
+                    Log.e("BookingViewModel", "MarkBookingInProgress Error Response: ${response.code()}")
+                    onError("Failed to revert booking. Please try again.")
+                }
+            } catch (e: Exception) {
+                Log.e("BookingViewModel", "MarkBookingInProgress Exception: ${e.message}")
+
             }
         }
     }
