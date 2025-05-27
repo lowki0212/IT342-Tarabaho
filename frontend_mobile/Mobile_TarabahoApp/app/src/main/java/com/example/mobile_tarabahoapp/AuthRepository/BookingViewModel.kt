@@ -8,9 +8,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.mobile_tarabahoapp.api.RetrofitClient
 import com.example.mobile_tarabahoapp.model.Booking
 import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
+import com.example.mobile_tarabahoapp.model.CompleteBookingRequest
 import com.example.mobile_tarabahoapp.model.PaymentMethod
 import com.example.mobile_tarabahoapp.model.RatingRequest
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 class BookingViewModel : ViewModel() {
 
@@ -18,9 +22,16 @@ class BookingViewModel : ViewModel() {
     val activeBookings = MutableLiveData<List<Booking>>()
     val pastBookings = MutableLiveData<List<Booking>>()
     val error = MutableLiveData<String>()
+    val selectedBooking = MutableLiveData<Booking?>()
+
+    private val _userBookings = MutableLiveData<List<Booking>>()
+    val userBookings: LiveData<List<Booking>> = _userBookings
+
+    private val _userBookingError = MutableLiveData<String?>()
+    val userBookingError: LiveData<String?> = _userBookingError
 
     fun fetchWorkerBookings() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 val response = api.getWorkerBookings()
                 if (response.isSuccessful) {
@@ -40,13 +51,33 @@ class BookingViewModel : ViewModel() {
         }
     }
 
-    fun acceptBooking(bookingId: Long) {
+    fun fetchUserBookings() {
         viewModelScope.launch {
+            try {
+                val response = api.getUserBookings()
+                if (response.isSuccessful) {
+                    _userBookings.postValue(response.body() ?: emptyList())
+                } else {
+                    val msg = response.errorBody()?.string() ?: "Failed to fetch bookings"
+                    _userBookingError.postValue(msg)
+                }
+            } catch (e: Exception) {
+                _userBookingError.postValue("Error: ${e.localizedMessage}")
+            }
+        }
+    }
+
+    fun acceptBooking(bookingId: Long) {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 val response = api.acceptBooking(bookingId)
                 if (response.isSuccessful) {
-                    updateBookingStatus(bookingId, "ACCEPTED")
-                    getBookingById(bookingId)
+                    if (response.body() != null) {
+                        updateBookingStatus(bookingId, "ACCEPTED")
+                        getBookingById(bookingId)
+                    } else {
+                        Log.e("BookingViewModel", "Accept booking: No booking data returned")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("BookingViewModel", "Accept error: ${e.message}")
@@ -55,11 +86,15 @@ class BookingViewModel : ViewModel() {
     }
 
     fun rejectBooking(bookingId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 val response = api.rejectBooking(bookingId)
                 if (response.isSuccessful) {
-                    updateBookingStatus(bookingId, "REJECTED")
+                    if (response.body() != null) {
+                        updateBookingStatus(bookingId, "REJECTED")
+                    } else {
+                        Log.e("BookingViewModel", "Reject booking: No booking data returned")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("BookingViewModel", "Reject error: ${e.message}")
@@ -67,59 +102,128 @@ class BookingViewModel : ViewModel() {
         }
     }
 
-    fun completeBooking(bookingId: Long) {
-        viewModelScope.launch {
+    fun completeBooking(bookingId: Long, amount: Double, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
-                val response = api.completeBooking(bookingId)
-                if (response.isSuccessful) {
-                    updateBookingStatus(bookingId, "WORKER_COMPLETED")
-                    getBookingById(bookingId)
+                // Validate amount before sending
+                if (amount <= 0) {
+                    onError("Amount must be greater than 0")
+                    return@launch
                 }
+                val request = CompleteBookingRequest(amount)
+                val response = api.completeBooking(bookingId, request)
+                if (response.isSuccessful) {
+                    if (response.body() != null) {
+                        updateBookingStatus(bookingId, "WORKER_COMPLETED")
+                        getBookingById(bookingId)
+                        onSuccess()
+                    } else {
+                        onError("Failed to complete booking: No booking data returned")
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("BookingViewModel", "CompleteBooking Error Response: $errorBody (Code: ${response.code()})")
+                    onError("Failed to complete booking: $errorBody (Code: ${response.code()})")
+                }
+            } catch (e: HttpException) {
+                val errorBody = e.response()?.errorBody()?.string() ?: "HTTP error"
+                Log.e("BookingViewModel", "CompleteBooking HTTP Exception: $errorBody")
+                onError("Failed to complete booking: $errorBody")
+            } catch (e: IOException) {
+                Log.e("BookingViewModel", "CompleteBooking Network Exception: ${e.message}")
+                onError("Network error: ${e.message}")
             } catch (e: Exception) {
-                Log.e("BookingViewModel", "Complete error: ${e.message}")
+                Log.e("BookingViewModel", "CompleteBooking Exception: ${e.message}")
+                onError(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun confirmPayment(bookingId: Long, amount: Double, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
+                // Validate amount before sending
+                if (amount <= 0) {
+                    onError("Amount must be greater than 0")
+                    return@launch
+                }
+                val request = CompleteBookingRequest(amount)
+                val response = api.confirmPayment(bookingId, request)
+                if (response.isSuccessful) {
+                    if (response.body() != null) {
+                        getBookingById(bookingId)
+                        onSuccess()
+                    } else {
+                        onError("Failed to confirm payment: No booking data returned")
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("BookingViewModel", "ConfirmPayment Error Response: $errorBody")
+                    onError("Failed to confirm payment: $errorBody (Code: ${response.code()})")
+                }
+            } catch (e: HttpException) {
+                val errorBody = e.response()?.errorBody()?.string() ?: "HTTP error"
+                Log.e("BookingViewModel", "ConfirmPayment HTTP Exception: $errorBody")
+                onError("Failed to confirm payment: $errorBody")
+            } catch (e: IOException) {
+                Log.e("BookingViewModel", "ConfirmPayment Network Exception: ${e.message}")
+                onError("Network error: ${e.message}")
+            } catch (e: Exception) {
+                Log.e("BookingViewModel", "ConfirmPayment Exception: ${e.message}")
+                onError(e.message ?: "Unknown error")
             }
         }
     }
 
     private fun updateBookingStatus(bookingId: Long, newStatus: String) {
-        val updated = activeBookings.value?.map {
+        val updatedActive = activeBookings.value?.map {
             if (it.id == bookingId) it.copy(status = newStatus) else it
         } ?: emptyList()
 
-        activeBookings.value = updated.filter {
+        val updatedPast = pastBookings.value?.map {
+            if (it.id == bookingId) it.copy(status = newStatus) else it
+        } ?: emptyList()
+
+        activeBookings.value = updatedActive.filter {
+            it.status in listOf("PENDING", "ACCEPTED", "IN_PROGRESS", "WORKER_COMPLETED")
+        } + updatedPast.filter {
             it.status in listOf("PENDING", "ACCEPTED", "IN_PROGRESS", "WORKER_COMPLETED")
         }
-        pastBookings.value = updated.filter {
+
+        pastBookings.value = updatedActive.filter {
+            it.status in listOf("REJECTED", "CANCELLED", "COMPLETED")
+        } + updatedPast.filter {
             it.status in listOf("REJECTED", "CANCELLED", "COMPLETED")
         }
     }
 
-    // ✅ Fixed version → paymentMethod is now PaymentMethod enum type
-        fun createBooking(
-            workerId: Long,
-            categoryName: String,
-            paymentMethod: PaymentMethod, // <-- ENUM, not String anymore
-            jobDetails: String,
-            onSuccess: (Long) -> Unit,
-            onError: (String) -> Unit
-        ) {
-            viewModelScope.launch {
-                try {
-                    // ✅ Automatically sends "CASH", "GCASH", etc. → backend will accept
-                    val request = CategoryBookingRequest(workerId, categoryName, paymentMethod, jobDetails)
-                    val response = api.createCategoryBooking(request)
-
-                    if (response.isSuccessful) {
-                        val booking = response.body()
-                        onSuccess(booking?.id ?: 0)
+    fun createBooking(
+        workerId: Long,
+        categoryName: String,
+        paymentMethod: PaymentMethod,
+        jobDetails: String,
+        onSuccess: (Long) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                val request = CategoryBookingRequest(workerId, categoryName, paymentMethod, jobDetails)
+                val response = api.createCategoryBooking(request)
+                if (response.isSuccessful) {
+                    val booking = response.body()
+                    if (booking != null) {
+                        onSuccess(booking.id)
                     } else {
-                        onError("Booking failed")
+                        onError("Booking failed: No booking data returned")
                     }
-                } catch (e: Exception) {
-                    onError(e.message ?: "Unknown error")
+                } else {
+                    onError("Booking failed: ${response.code()}")
                 }
+            } catch (e: Exception) {
+                onError(e.message ?: "Unknown error")
             }
         }
+    }
 
     fun checkBookingStatus(bookingId: Long, onStatusFetched: (String) -> Unit) {
         viewModelScope.launch {
@@ -128,40 +232,45 @@ class BookingViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     response.body()?.let { statusResponse ->
                         onStatusFetched(statusResponse.status)
-                    }
+                    } ?: Log.e("BookingViewModel", "Check status: No status data returned")
                 }
             } catch (e: Exception) {
-                // Handle errors
+                Log.e("BookingViewModel", "Status check error: ${e.message}")
             }
         }
     }
 
-    val selectedBooking = MutableLiveData<Booking?>()
-
     fun getBookingById(bookingId: Long) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 val response = api.getBookingById(bookingId)
                 if (response.isSuccessful) {
                     selectedBooking.value = response.body()
                 } else {
                     selectedBooking.value = null
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Log.e("BookingViewModel", "Get booking error: $errorBody (Code: ${response.code()})")
                 }
             } catch (e: Exception) {
                 selectedBooking.value = null
+                Log.e("BookingViewModel", "Get booking error: ${e.message}")
             }
         }
     }
 
     fun startBooking(bookingId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 val response = api.startBooking(bookingId)
                 if (response.isSuccessful) {
-                    getBookingById(bookingId) // refresh booking to update UI
-                    onSuccess()
+                    if (response.body() != null) {
+                        getBookingById(bookingId)
+                        onSuccess()
+                    } else {
+                        onError("Failed to start booking: No booking data returned")
+                    }
                 } else {
-                    onError("Failed to start booking")
+                    onError("Failed to start booking: ${response.code()}")
                 }
             } catch (e: Exception) {
                 onError(e.message ?: "Unknown error")
@@ -170,13 +279,19 @@ class BookingViewModel : ViewModel() {
     }
 
     fun acceptCompletion(bookingId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
-                val response = api.acceptBookingCompletion(bookingId)
+                val response = api.acceptCompletion(bookingId)
                 if (response.isSuccessful) {
-                    onSuccess()
+                    if (response.body() != null) {
+                        updateBookingStatus(bookingId, "COMPLETED")
+                        getBookingById(bookingId)
+                        onSuccess()
+                    } else {
+                        onError("Failed to complete the booking: No booking data returned")
+                    }
                 } else {
-                    onError("Failed to complete the booking.")
+                    onError("Failed to complete the booking: ${response.code()}")
                 }
             } catch (e: Exception) {
                 onError(e.message ?: "Unknown error")
@@ -192,20 +307,25 @@ class BookingViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     onSuccess()
                 } else {
-                    onError("Failed to submit rating.")
+                    onError("Failed to submit rating: ${response.code()}")
                 }
             } catch (e: Exception) {
                 onError(e.message ?: "Unknown error")
             }
         }
     }
+
     fun cancelBooking(bookingId: Long, onResult: (Boolean, String) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             try {
-                val response = RetrofitClient.apiService.cancelBooking(bookingId)
+                val response = api.cancelBooking(bookingId)
                 if (response.isSuccessful) {
-                    onResult(true, "Booking cancelled successfully.")
-                    fetchWorkerBookings() // Optional reload
+                    if (response.body() != null) {
+                        onResult(true, "Booking cancelled successfully.")
+                        fetchWorkerBookings()
+                    } else {
+                        onResult(false, "Failed to cancel booking: No booking data returned")
+                    }
                 } else {
                     onResult(false, "Failed to cancel booking: ${response.code()}")
                 }
@@ -214,33 +334,4 @@ class BookingViewModel : ViewModel() {
             }
         }
     }
-
-
-
-    private val _userBookings = MutableLiveData<List<Booking>>()
-    val userBookings: LiveData<List<Booking>> = _userBookings
-
-    private val _userBookingError = MutableLiveData<String?>()
-    val userBookingError: LiveData<String?> = _userBookingError
-
-    fun fetchUserBookings() {
-        viewModelScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getUserBookings()
-                if (response.isSuccessful) {
-                    _userBookings.postValue(response.body() ?: emptyList())
-                } else {
-                    val msg = response.errorBody()?.string() ?: "Failed to fetch bookings"
-                    _userBookingError.postValue(msg)
-                }
-            } catch (e: Exception) {
-                _userBookingError.postValue("Error: ${e.localizedMessage}")
-            }
-        }
-    }
-
-
-
 }
-
-

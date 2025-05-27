@@ -297,7 +297,7 @@ fun UserBookingScreen(
                                 )
 
                                 Text(
-                                    booking.jobDetails,
+                                    booking.jobDetails ?: "No Booking Details",
                                     fontSize = 14.sp,
                                     color = Color.Black
                                 )

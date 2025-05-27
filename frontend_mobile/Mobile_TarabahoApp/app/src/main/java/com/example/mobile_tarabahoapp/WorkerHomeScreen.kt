@@ -1,4 +1,5 @@
 package com.example.mobile_tarabahoapp
+
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -73,7 +74,7 @@ fun Booking.toJob(): Job {
         } catch (e: Exception) {
             Date()
         },
-        payment = 0.0, // Set appropriate payment value if available in your Booking model
+        payment = this.amount ?: 0.0, // Updated to use booking.amount if available
         status = when (this.status) {
             "PENDING" -> JobStatus.PENDING_ACCEPTANCE
             "ACCEPTED" -> JobStatus.UPCOMING
@@ -214,7 +215,7 @@ fun WorkerHomeScreen(
 
                 StatCard(
                     icon = Icons.Default.MonetizationOn,
-                    value = "₱5,240",
+                    value = "₱5,240", // This could be updated to reflect actual earnings
                     label = "Earned",
                     color = Color(0xFF2962FF),
                     modifier = Modifier.weight(1f)
@@ -282,12 +283,12 @@ fun WorkerHomeScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp) // ➡️ Added padding for better spacing
+                            .padding(horizontal = 16.dp)
                     ) {
                         items(activeBookings) { booking ->
                             JobCard(
                                 job = booking.toJob(),
-                                dateFormat = dateFormat, // ➡️ FIXED: Added dateFormat so it shows proper dates
+                                dateFormat = dateFormat,
                                 onAccept = if (booking.status == "PENDING") {
                                     { bookingViewModel.acceptBooking(booking.id) }
                                 } else null,
@@ -295,7 +296,20 @@ fun WorkerHomeScreen(
                                     { bookingViewModel.rejectBooking(booking.id) }
                                 } else null,
                                 onComplete = if (booking.status == "IN_PROGRESS") {
-                                    { bookingViewModel.completeBooking(booking.id) }
+                                    {
+                                        bookingViewModel.completeBooking(
+                                            bookingId = booking.id,
+                                            amount = 0.0, // Default amount; will be updated in WorkerBookingDetailsScreen
+                                            onSuccess = {
+                                                // Refresh bookings after completion
+                                                bookingViewModel.fetchWorkerBookings()
+                                            },
+                                            onError = { errorMessage ->
+                                                // Handle error (e.g., show a toast or log)
+                                                println("Error completing booking: $errorMessage")
+                                            }
+                                        )
+                                    }
                                 } else null,
                                 onViewDetails = {
                                     navController.navigate("worker_booking_details/${booking.id}")
@@ -310,12 +324,12 @@ fun WorkerHomeScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp) // ➡️ Added padding here as well
+                            .padding(horizontal = 16.dp)
                     ) {
                         items(pastBookings) { booking ->
                             JobCard(
                                 job = booking.toJob(),
-                                dateFormat = dateFormat, // ➡️ FIXED: Added dateFormat here also
+                                dateFormat = dateFormat,
                                 onViewDetails = {
                                     navController.navigate("worker_booking_details/${booking.id}")
                                 }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -18,10 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +31,7 @@ import kotlinx.coroutines.delay
 import com.example.mobile_tarabahoapp.ui.MainNavigationBar
 import com.example.mobile_tarabahoapp.ui.NavScreen
 
+// Updated BookingDetail to include amount and paymentConfirmationStatus
 data class BookingDetail(
     val id: String,
     val category: String,
@@ -44,7 +41,9 @@ data class BookingDetail(
     val createdAt: String,
     val updatedAt: String,
     val type: String,
-    val worker: String
+    val worker: String,
+    val amount: String, // New field
+    val paymentConfirmationStatus: String // New field
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,19 +57,22 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
         viewModel.getBookingById(bookingId.toLong())
     }
 
-    // Polling mechanism to check for status updates
+    // Updated polling to redirect to rate_worker when COMPLETED and CONFIRMED
     LaunchedEffect(bookingId) {
         while (true) {
             viewModel.getBookingById(bookingId.toLong())
-            // Stop polling if the booking is in a terminal state
-            if (booking?.status in listOf("COMPLETED", "REJECTED", "CANCELLED")) {
+            if (booking?.status == "COMPLETED" && booking?.paymentConfirmationStatus == "CONFIRMED") {
+                navController.navigate("rate_worker/$bookingId")
+                break
+            }
+            if (booking?.status in listOf("REJECTED", "CANCELLED")) {
                 break
             }
             delay(5000) // Check every 5 seconds
         }
     }
 
-    // Sample booking data
+    // Updated booking data with new fields
     val bookingDetail = remember(booking) {
         BookingDetail(
             id = booking?.id?.toString() ?: "",
@@ -81,7 +83,9 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
             createdAt = booking?.createdAt ?: "",
             updatedAt = booking?.updatedAt ?: "",
             type = booking?.type ?: "",
-            worker = "${booking?.worker?.firstName ?: "Unknown"} ${booking?.worker?.lastName ?: ""}"
+            worker = "${booking?.worker?.firstName ?: "Unknown"} ${booking?.worker?.lastName ?: ""}",
+            amount = booking?.amount?.let { "₱%.2f".format(it) } ?: "Not set",
+            paymentConfirmationStatus = booking?.paymentConfirmationStatus ?: "Not set"
         )
     }
 
@@ -132,7 +136,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                 .background(Color(0xFFF5F5F5))
                 .verticalScroll(rememberScrollState())
         ) {
-            // Status Card
+            // Updated Status Card to show paymentConfirmationStatus
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -148,54 +152,87 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = when (bookingDetail.status) {
-                            "ACCEPTED" -> Icons.Default.CheckCircle
-                            "IN_PROGRESS" -> Icons.Default.Pending
-                            "COMPLETED" -> Icons.Default.Done
-                            else -> Icons.Default.Schedule
-                        },
-                        contentDescription = null,
-                        tint = when (bookingDetail.status) {
-                            "ACCEPTED" -> Color(0xFF4CAF50)
-                            "IN_PROGRESS" -> Color(0xFF2196F3)
-                            "COMPLETED" -> Color(0xFF00BCD4)
-                            else -> Color(0xFFFF9800)
-                        },
-                        modifier = Modifier.size(32.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Column {
-                        Text(
-                            text = "Status",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
-
-                        Text(
-                            text = bookingDetail.status,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = when (bookingDetail.status) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = when (bookingDetail.status) {
+                                "ACCEPTED" -> Icons.Default.CheckCircle
+                                "IN_PROGRESS" -> Icons.Default.Pending
+                                "COMPLETED" -> Icons.Default.Done
+                                else -> Icons.Default.Schedule
+                            },
+                            contentDescription = null,
+                            tint = when (bookingDetail.status) {
                                 "ACCEPTED" -> Color(0xFF4CAF50)
                                 "IN_PROGRESS" -> Color(0xFF2196F3)
                                 "COMPLETED" -> Color(0xFF00BCD4)
                                 else -> Color(0xFFFF9800)
-                            }
+                            },
+                            modifier = Modifier.size(32.dp)
                         )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
+                            Text(
+                                text = "Status",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+
+                            Text(
+                                text = bookingDetail.status,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = when (bookingDetail.status) {
+                                    "ACCEPTED" -> Color(0xFF4CAF50)
+                                    "IN_PROGRESS" -> Color(0xFF2196F3)
+                                    "COMPLETED" -> Color(0xFF00BCD4)
+                                    else -> Color(0xFFFF9800)
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Verified,
+                            contentDescription = null,
+                            tint = if (bookingDetail.paymentConfirmationStatus == "CONFIRMED") Color(0xFF4CAF50) else Color(0xFFFF9800),
+                            modifier = Modifier.size(32.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
+                            Text(
+                                text = "Payment Confirmation",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+
+                            Text(
+                                text = bookingDetail.paymentConfirmationStatus,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (bookingDetail.paymentConfirmationStatus == "CONFIRMED") Color(0xFF4CAF50) else Color(0xFFFF9800)
+                            )
+                        }
                     }
                 }
             }
 
-            // Worker Info Card
+            // Worker Info Card (unchanged)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -210,7 +247,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Worker avatar
                     Box(
                         modifier = Modifier
                             .size(60.dp)
@@ -266,7 +302,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Booking Details Card
+            // Updated Booking Details Card to include amount
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -287,7 +323,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
 
-                    // Booking ID
                     DetailRow(
                         label = "Booking ID",
                         value = bookingDetail.id,
@@ -296,7 +331,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Category
                     DetailRow(
                         label = "Category",
                         value = bookingDetail.category,
@@ -305,7 +339,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Payment Method
                     DetailRow(
                         label = "Payment Method",
                         value = bookingDetail.paymentMethod,
@@ -314,7 +347,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Job Details
                     DetailRow(
                         label = "Job Details",
                         value = bookingDetail.jobDetails,
@@ -323,16 +355,14 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Type
                     DetailRow(
-                        label = "Category",
-                        value = bookingDetail.category,
-                        icon = Icons.Default.Category
+                        label = "Amount",
+                        value = bookingDetail.amount,
+                        icon = Icons.Default.MonetizationOn
                     )
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Created At
                     DetailRow(
                         label = "Created At",
                         value = bookingDetail.createdAt,
@@ -341,7 +371,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
-                    // Updated At
                     DetailRow(
                         label = "Updated At",
                         value = bookingDetail.updatedAt,
@@ -352,18 +381,17 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action Buttons
+            // Action Buttons (unchanged except dialog behavior)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-                // Chat Button - Only visible for ACCEPTED, IN_PROGRESS, WORKER_COMPLETED, or COMPLETED status
                 if (bookingDetail.status in listOf("ACCEPTED", "IN_PROGRESS", "WORKER_COMPLETED", "COMPLETED")) {
                     Button(
                         onClick = {
-                            val currentUserId = TokenManager.getUserId() ?: 0L // Adjust based on your auth
-                            val isWorker = false // Client perspective
+                            val currentUserId = TokenManager.getUserId() ?: 0L
+                            val isWorker = false
                             val chatTitle = bookingDetail.worker
                             navController.navigate("chat/$bookingId?currentUserId=$currentUserId&isWorker=$isWorker&chatTitle=$chatTitle")
                         },
@@ -393,13 +421,12 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // Start Button
                 Button(
                     onClick = {
                         viewModel.startBooking(
                             bookingId.toLong(),
                             onSuccess = {
-                                viewModel.getBookingById(bookingId.toLong()) // Refresh booking data
+                                viewModel.getBookingById(bookingId.toLong())
                             },
                             onError = { errorMessage ->
                                 Log.e("BookingDetailsScreen", "Failed to start job: $errorMessage")
@@ -432,7 +459,6 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Accept Completion Button
                 Button(
                     onClick = { showCompletionDialog = true },
                     modifier = Modifier
@@ -464,7 +490,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
         }
     }
 
-    // Job Completion Dialog
+    // Updated dialog to not navigate immediately
     if (showCompletionDialog) {
         AlertDialog(
             onDismissRequest = { showCompletionDialog = false },
@@ -472,7 +498,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
             text = {
                 Text(
                     "Are you satisfied with the work done by ${bookingDetail.worker}? " +
-                            "Confirming completion will finalize the payment and close this booking."
+                            "Confirming completion will notify the worker to confirm payment."
                 )
             },
             confirmButton = {
@@ -482,8 +508,7 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                         viewModel.acceptCompletion(
                             bookingId = bookingDetail.id.toLong(),
                             onSuccess = {
-                                viewModel.getBookingById(bookingDetail.id.toLong()) // Refresh booking data
-                                navController.navigate("rate_worker/${bookingDetail.id}")
+                                viewModel.getBookingById(bookingDetail.id.toLong())
                             },
                             onError = { errorMessage ->
                                 Log.e("BookingDetailsScreen", "Failed to accept completion: $errorMessage")

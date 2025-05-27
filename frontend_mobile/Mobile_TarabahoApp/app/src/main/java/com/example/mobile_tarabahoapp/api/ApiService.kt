@@ -8,6 +8,7 @@ import com.example.mobile_tarabahoapp.model.CategoryBookingRequest
 import com.example.mobile_tarabahoapp.model.CategoryRequest
 import com.example.mobile_tarabahoapp.model.CategoryRequestDTO
 import com.example.mobile_tarabahoapp.model.Certificate
+import com.example.mobile_tarabahoapp.model.CompleteBookingRequest
 import com.example.mobile_tarabahoapp.model.LoginRequest
 import com.example.mobile_tarabahoapp.model.ProfileUpdateRequest
 import com.example.mobile_tarabahoapp.model.Rating
@@ -76,16 +77,19 @@ interface ApiService {
     suspend fun rejectBooking(@Path("bookingId") bookingId: Long): Response<Booking>
 
     @POST("/api/booking/{bookingId}/complete")
-    suspend fun completeBooking(@Path("bookingId") bookingId: Long): Response<String>
+    suspend fun completeBooking(@Path("bookingId") bookingId: Long, @Body request: CompleteBookingRequest): Response<Booking>
+
+    @POST("/api/booking/{bookingId}/payment/confirm")
+    suspend fun confirmPayment(@Path("bookingId") bookingId: Long, @Body request: CompleteBookingRequest): Response<Booking>
 
     @POST("/api/booking/{bookingId}/cancel")
-    suspend fun cancelBooking(@Path("bookingId") bookingId: Long): Response<String>
+    suspend fun cancelBooking(@Path("bookingId") bookingId: Long): Response<Booking>
 
     @POST("/api/booking/{bookingId}/start")
-    suspend fun startBooking(@Path("bookingId") bookingId: Long): Response<Void>
+    suspend fun startBooking(@Path("bookingId") bookingId: Long): Response<Booking>
 
     @POST("/api/booking/{bookingId}/complete/accept")
-    suspend fun acceptCompletion(@Path("bookingId") bookingId: Long): Response<String>
+    suspend fun acceptCompletion(@Path("bookingId") bookingId: Long): Response<Booking>
 
     @POST("/api/booking/category")
     suspend fun createCategoryBooking(@Body request: CategoryBookingRequest): Response<Booking>
@@ -97,10 +101,10 @@ interface ApiService {
     suspend fun getBookingById(@Path("bookingId") bookingId: Long): Response<Booking>
 
     @POST("/api/booking/{bookingId}/complete/accept")
-    suspend fun acceptBookingCompletion(@Path("bookingId") bookingId: Long): Response<Void>
+    suspend fun acceptBookingCompletion(@Path("bookingId") bookingId: Long): Response<Void> // Note: Duplicate endpoint; remove or fix
 
     @POST("/api/booking/rating")
-    suspend fun submitRating(@Body request: RatingRequest): Response<Void>
+    suspend fun submitRating(@Body request: RatingRequest): Response<String>
 
     @GET("/api/message/booking/{bookingId}")
     suspend fun getMessages(@Path("bookingId") bookingId: Long): Response<List<MessageDTO>>
@@ -142,11 +146,6 @@ interface ApiService {
 
     @GET("api/rating/worker/{workerId}")
     suspend fun getRatingsByWorkerId(@Path("workerId") workerId: Long): Response<List<Rating>>
-
-    interface BookingApiService {
-        @GET("/api/booking/user")
-        suspend fun getUserBookings(): Response<List<Booking>>
-    }
 
     @GET("/api/booking/user")
     suspend fun getUserBookings(): Response<List<Booking>>

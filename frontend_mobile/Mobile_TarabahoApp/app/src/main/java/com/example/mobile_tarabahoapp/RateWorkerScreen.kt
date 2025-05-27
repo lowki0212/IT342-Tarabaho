@@ -32,7 +32,6 @@ import com.example.mobile_tarabahoapp.ui.theme.TarabahoTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RateWorkerScreen(navController: NavController, bookingId: Long) {
-
     var rating by remember { mutableStateOf(0) }
     var feedback by remember { mutableStateOf("") }
     val viewModel: BookingViewModel = viewModel()
@@ -50,7 +49,15 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
                         fontWeight = FontWeight.Bold
                     )
                 },
-
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF2962FF))
             )
         }
@@ -236,19 +243,20 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
             // Submit button
             Button(
                 onClick = {
-                    viewModel.submitRating(
-                        bookingId = bookingId,
-                        rating = rating,
-                        comment = feedback,
-                        onSuccess = {
-                            navController.navigate("home") {
-                                popUpTo("home") { inclusive = true }
+                    if (rating > 0) {
+                        viewModel.submitRating(
+                            bookingId = bookingId,
+                            rating = rating,
+                            comment = feedback,
+                            onSuccess = {},
+                            onError = { error ->
+                                Log.e("RateWorkerScreen", "Failed to submit rating: $error")
                             }
-                        },
-                        onError = { error ->
-                            Log.e("RateWorkerScreen", "Failed to submit rating: $error")
+                        )
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
                         }
-                    )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
