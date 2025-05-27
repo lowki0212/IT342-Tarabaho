@@ -44,6 +44,13 @@ public class Booking {
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private PaymentConfirmationStatus paymentConfirmationStatus;
+
+    @Column(nullable = true)
+    private Double amount;
+
     @Column(nullable = true)
     private Double latitude;
 
@@ -76,6 +83,10 @@ public class Booking {
     public void setStatus(BookingStatus status) { this.status = status; }
     public PaymentMethod getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
+    public PaymentConfirmationStatus getPaymentConfirmationStatus() { return paymentConfirmationStatus; }
+    public void setPaymentConfirmationStatus(PaymentConfirmationStatus paymentConfirmationStatus) { this.paymentConfirmationStatus = paymentConfirmationStatus; }
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
     public Double getLatitude() { return latitude; }
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }

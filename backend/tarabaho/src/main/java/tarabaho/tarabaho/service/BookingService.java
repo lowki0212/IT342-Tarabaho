@@ -11,6 +11,7 @@ import tarabaho.tarabaho.entity.Booking;
 import tarabaho.tarabaho.entity.BookingStatus;
 import tarabaho.tarabaho.entity.BookingType;
 import tarabaho.tarabaho.entity.Category;
+import tarabaho.tarabaho.entity.PaymentConfirmationStatus;
 import tarabaho.tarabaho.entity.PaymentMethod;
 import tarabaho.tarabaho.entity.User;
 import tarabaho.tarabaho.entity.Worker;
@@ -41,7 +42,6 @@ public class BookingService {
             throw new Exception("User not verified");
         }
 
-        // Check for existing bookings
         List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS, BookingStatus.WORKER_COMPLETED));
         if (!existingBookings.isEmpty()) {
             throw new Exception("User already has an active or pending booking");
@@ -58,6 +58,7 @@ public class BookingService {
         booking.setType(BookingType.URGENT);
         booking.setStatus(BookingStatus.PENDING);
         booking.setPaymentMethod(PaymentMethod.valueOf(paymentMethod));
+        booking.setPaymentConfirmationStatus(PaymentConfirmationStatus.PENDING);
         booking.setLatitude(latitude);
         booking.setLongitude(longitude);
         booking.setRadius(radius);
@@ -74,7 +75,6 @@ public class BookingService {
             throw new Exception("User not verified");
         }
 
-        // Check for existing bookings
         List<Booking> existingBookings = bookingRepository.findByUserAndStatusIn(user, Arrays.asList(BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.IN_PROGRESS, BookingStatus.WORKER_COMPLETED));
         if (!existingBookings.isEmpty()) {
             throw new Exception("User already has an active or pending booking");
@@ -98,6 +98,7 @@ public class BookingService {
         booking.setType(BookingType.CATEGORY);
         booking.setStatus(BookingStatus.PENDING);
         booking.setPaymentMethod(PaymentMethod.valueOf(paymentMethod));
+        booking.setPaymentConfirmationStatus(PaymentConfirmationStatus.PENDING);
         booking.setJobDetails(jobDetails);
         booking.setCreatedAt(LocalDateTime.now());
 
@@ -183,7 +184,7 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
-    public Booking completeBooking(Long bookingId, Long workerId) throws Exception {
+    public Booking completeBooking(Long bookingId, Long workerId, Double amount) throws Exception {
         Booking booking = bookingRepository.findById(bookingId)
             .orElseThrow(() -> new Exception("Booking not found"));
         Worker worker = workerRepository.findById(workerId)
@@ -196,7 +197,38 @@ public class BookingService {
             throw new Exception("Booking must be in progress to mark as completed");
         }
 
+        // Remove the amount validation; allow amount to be 0.0 or null
         booking.setStatus(BookingStatus.WORKER_COMPLETED);
+        booking.setPaymentConfirmationStatus(PaymentConfirmationStatus.PENDING);
+        // Optionally set the amount if provided (not required at this stage)
+        if (amount != null && amount > 0) {
+            booking.setAmount(amount);
+        }
+        booking.setUpdatedAt(LocalDateTime.now());
+        return bookingRepository.save(booking);
+    }
+
+    public Booking confirmPayment(Long bookingId, Long workerId, Double amount) throws Exception {
+        Booking booking = bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new Exception("Booking not found"));
+        Worker worker = workerRepository.findById(workerId)
+            .orElseThrow(() -> new Exception("Worker not found"));
+
+        if (!booking.getWorker().equals(worker)) {
+            throw new Exception("Worker not assigned to this booking");
+        }
+        if (booking.getStatus() != BookingStatus.COMPLETED) {
+            throw new Exception("Booking must be marked as completed by client");
+        }
+        if (booking.getPaymentConfirmationStatus() != PaymentConfirmationStatus.PENDING) {
+            throw new Exception("Payment confirmation is not pending");
+        }
+        if (amount == null || amount <= 0) {
+            throw new Exception("Invalid amount provided");
+        }
+
+        booking.setAmount(amount);
+        booking.setPaymentConfirmationStatus(PaymentConfirmationStatus.CONFIRMED);
         booking.setUpdatedAt(LocalDateTime.now());
         return bookingRepository.save(booking);
     }
@@ -213,6 +245,10 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.WORKER_COMPLETED) {
             throw new Exception("Booking must be marked as completed by worker");
         }
+        // Removed the payment confirmation check
+        // if (booking.getPaymentConfirmationStatus() != PaymentConfirmationStatus.CONFIRMED) {
+        //     throw new Exception("Payment must be confirmed by worker before accepting completion");
+        // }
 
         booking.setStatus(BookingStatus.COMPLETED);
         booking.setUpdatedAt(LocalDateTime.now());
