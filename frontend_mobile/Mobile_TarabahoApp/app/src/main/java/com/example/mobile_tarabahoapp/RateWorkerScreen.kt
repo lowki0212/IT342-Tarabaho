@@ -262,7 +262,7 @@ fun RateWorkerScreen(navController: NavController, bookingId: Long) {
                                 Log.e("RateWorkerScreen", "Failed to submit rating: $error")
                                 Toast.makeText(
                                     context,
-                                    "Thank you for your feedback! Your review helps improve our service.", // mo error pero mo gaan muraag wtf naa siyaa sa Db and mo display siya
+                                    "Thank you for your feedback! Your review helps improve our service.",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

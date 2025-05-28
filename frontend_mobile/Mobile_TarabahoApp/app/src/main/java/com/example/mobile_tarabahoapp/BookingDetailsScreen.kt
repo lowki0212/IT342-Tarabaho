@@ -348,6 +348,14 @@ fun BookingDetailsScreen(navController: NavController, bookingId: String) {
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
                     DetailRow(
+                        label = "Amount",
+                        value = bookingDetail.amount,
+                        icon = Icons.Default.Payments
+                    )
+
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    DetailRow(
                         label = "Job Details",
                         value = bookingDetail.jobDetails,
                         icon = Icons.Default.Description

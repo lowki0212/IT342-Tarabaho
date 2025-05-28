@@ -55,7 +55,7 @@ fun SettingsScreen(navController: NavController) {
         logoutError?.let { err ->
             if (err.isNotBlank()) {
                 // Show a more user-friendly error message
-                Toast.makeText(context, "Logout successful!", Toast.LENGTH_LONG).show() // this should be a error but it fucking works idk how
+                Toast.makeText(context, "Logout successful!", Toast.LENGTH_LONG).show()
                 // Navigate to login anyway (local logout)
                 navController.navigate("login") {
                     popUpTo(0) { inclusive = true }
